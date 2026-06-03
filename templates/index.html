@@ -6,16 +6,15 @@
 <title>Kaizen Voice — Aditya Birla Grasim</title>
 <style>
   :root{
-    --bg1:#0a0f1f; --accent:#22d3ee; --accent2:#6366f1;
-    --good:#34d399; --warn:#fbbf24; --bad:#fb7185; --text:#eaf2ff; --muted:#9fb3d1;
-    --card:rgba(255,255,255,.06); --line:rgba(255,255,255,.12);
+    --accent:#22d3ee; --accent2:#6366f1; --good:#34d399; --warn:#fbbf24; --bad:#fb7185;
+    --text:#eaf2ff; --muted:#9fb3d1; --card:rgba(255,255,255,.06); --line:rgba(255,255,255,.12);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%}
   body{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--text);
-    background:radial-gradient(1200px 800px at 50% -10%,#16245a 0%,var(--bg1) 55%,#060912 100%);overflow-x:hidden}
+    background:radial-gradient(1200px 800px at 50% -10%,#16245a 0%,#0a0f1f 55%,#060912 100%);overflow-x:hidden}
   .wrap{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding:18px}
-  header{display:flex;align-items:center;gap:10px;padding:6px 2px 14px}
+  header{display:flex;align-items:center;gap:10px;padding:6px 2px 10px}
   .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;color:#06121f}
   header .t{font-size:13px;line-height:1.15}
   header .t b{display:block;font-size:15px}
@@ -31,29 +30,64 @@
   .langbtn:active{transform:scale(.97)}
   .langbtn:hover{border-color:var(--accent);box-shadow:0 0 0 2px rgba(34,211,238,.15)}
 
-  .convo{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px}
-  .orb{position:relative;width:170px;height:170px;border-radius:50%;display:flex;align-items:center;justify-content:center}
-  .orb .core{width:115px;height:115px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a5f3ff,var(--accent) 45%,var(--accent2));box-shadow:0 0 60px rgba(34,211,238,.55),inset 0 0 30px rgba(255,255,255,.35);transition:.25s}
+  /* ---- voice stage ---- */
+  .stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;text-align:center}
+  .orb{position:relative;width:210px;height:210px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .orb .halo{position:absolute;inset:-30px;border-radius:50%;background:radial-gradient(circle,rgba(34,211,238,.28),transparent 65%);filter:blur(8px);opacity:.6;transition:.4s}
+  .orb .core{width:130px;height:130px;border-radius:50%;
+    background:radial-gradient(circle at 35% 28%,#bff7ff,var(--accent) 45%,var(--accent2));
+    box-shadow:0 0 70px rgba(34,211,238,.55),inset 0 0 34px rgba(255,255,255,.4);transition:.3s;position:relative;z-index:2}
   .orb .ring{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(34,211,238,.5);opacity:0}
-  .orb.idle .core{animation:breathe 3.4s ease-in-out infinite}
-  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
-  .orb.live .core{background:radial-gradient(circle at 35% 30%,#fff,#fb7185 50%,#f43f5e);box-shadow:0 0 80px rgba(244,63,133,.7),inset 0 0 30px rgba(255,255,255,.5)}
-  .orb.live .ring{opacity:1;animation:pulse 1.4s ease-out infinite}
-  .orb.live .ring.r2{animation-delay:.5s}.orb.live .ring.r3{animation-delay:1s}
-  @keyframes pulse{0%{transform:scale(.7);opacity:.8}100%{transform:scale(1.7);opacity:0}}
-  .orb.speak .core{background:radial-gradient(circle at 35% 30%,#d9fbff,#22d3ee 50%,#6366f1);animation:talk .6s ease-in-out infinite}
-  @keyframes talk{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
-  .orb.think .core{animation:spin 1s linear infinite;background:conic-gradient(from 0deg,var(--accent),var(--accent2),var(--accent))}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .micicon{position:absolute;font-size:40px}
-  .status{color:var(--accent);font-size:14px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;min-height:18px}
-  .status.cue{font-size:20px;color:var(--bad);text-transform:none;letter-spacing:0;animation:cuepulse 1.1s ease-in-out infinite}
-  @keyframes cuepulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
-  .bubble{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px 16px;font-size:17px;line-height:1.5;width:100%;min-height:64px}
-  .bubble.you{background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.35)}
-  .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+  .glyph{position:absolute;z-index:3;font-size:44px;transition:.2s}
+  .bars{position:absolute;z-index:3;display:flex;gap:6px;align-items:center;height:60px;opacity:0;transition:.2s;pointer-events:none}
+  .bars span{width:7px;height:14px;background:#fff;border-radius:4px;box-shadow:0 0 10px rgba(255,255,255,.7)}
 
-  .btn{display:block;width:100%;padding:15px;border-radius:16px;border:none;font-size:16px;font-weight:700;cursor:pointer;margin-top:10px;transition:.15s}
+  /* idle */
+  .orb.idle .core{animation:breathe 3.6s ease-in-out infinite}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+
+  /* listening (your turn) */
+  .orb.live .core{background:radial-gradient(circle at 35% 28%,#fff,#fb7185 50%,#f43f5e);box-shadow:0 0 90px rgba(244,63,133,.7),inset 0 0 34px rgba(255,255,255,.5)}
+  .orb.live .halo{background:radial-gradient(circle,rgba(244,63,133,.35),transparent 65%);opacity:1}
+  .orb.live .ring{opacity:1;animation:pulse 1.5s ease-out infinite;border-color:rgba(244,63,133,.6)}
+  .orb.live .ring.r2{animation-delay:.5s}.orb.live .ring.r3{animation-delay:1s}
+  @keyframes pulse{0%{transform:scale(.7);opacity:.85}100%{transform:scale(1.75);opacity:0}}
+
+  /* speaking (AI talking) */
+  .orb.speak .core{background:radial-gradient(circle at 35% 28%,#e6fdff,var(--accent) 48%,var(--accent2));animation:talk .55s ease-in-out infinite}
+  .orb.speak .halo{opacity:1;animation:halopulse 1.1s ease-in-out infinite}
+  @keyframes talk{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+  @keyframes halopulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.12);opacity:.9}}
+  .orb.speak .glyph{opacity:0}
+  .orb.speak .bars{opacity:1}
+  .orb.speak .bars span{animation:eq .7s ease-in-out infinite}
+  .orb.speak .bars span:nth-child(1){animation-delay:0s}
+  .orb.speak .bars span:nth-child(2){animation-delay:.12s}
+  .orb.speak .bars span:nth-child(3){animation-delay:.24s}
+  .orb.speak .bars span:nth-child(4){animation-delay:.12s}
+  .orb.speak .bars span:nth-child(5){animation-delay:0s}
+  @keyframes eq{0%,100%{height:12px}50%{height:46px}}
+
+  /* thinking (processing) */
+  .orb.think .core{background:conic-gradient(from 0deg,var(--accent),var(--accent2),var(--accent));animation:spin 1.1s linear infinite}
+  .orb.think .halo{opacity:.8}
+  .orb.think .glyph{opacity:0}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .status{font-size:21px;font-weight:700;min-height:26px;letter-spacing:.2px}
+  .status.live{color:var(--bad);animation:cuepulse 1.1s ease-in-out infinite}
+  .status.speak{color:var(--accent)}
+  .status.think{color:var(--accent)}
+  @keyframes cuepulse{0%,100%{opacity:.65}50%{opacity:1}}
+  .dots{display:inline-block;width:1.4em;text-align:left}
+  .dots::after{content:"";animation:dots 1.4s steps(4,end) infinite}
+  @keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}100%{content:""}}
+
+  .caption{font-size:18px;line-height:1.55;color:var(--text);max-width:440px;min-height:56px;
+    background:linear-gradient(135deg,rgba(99,102,241,.14),rgba(34,211,238,.08));
+    border:1px solid rgba(34,211,238,.28);border-radius:18px;padding:16px 18px}
+
+  .btn{display:block;width:100%;padding:15px;border-radius:16px;border:none;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px;transition:.15s}
   .btn:active{transform:scale(.98)}
   .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#04121d}
   .btn.ghost{background:var(--card);border:1px solid var(--line);color:var(--text)}
@@ -63,7 +97,7 @@
   .pill{display:inline-block;padding:3px 11px;border-radius:999px;font-size:13px;font-weight:800}
   .t1{background:rgba(52,211,153,.18);color:var(--good)}.t2{background:rgba(251,191,36,.18);color:var(--warn)}.t3{background:rgba(251,113,133,.18);color:var(--bad)}
   .err{background:rgba(251,113,133,.15);border:1px solid var(--bad);color:#ffd7de;border-radius:12px;padding:12px;font-size:14px;margin-top:10px;display:none}
-  footer{color:var(--muted);font-size:11px;text-align:center;padding:16px 0 6px}
+  footer{color:var(--muted);font-size:11px;text-align:center;padding:14px 0 6px}
   .done{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px}
   .check{width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,#34d399,#10b981);display:flex;align-items:center;justify-content:center;font-size:46px;color:#04241a;box-shadow:0 0 50px rgba(52,211,153,.5)}
 </style>
@@ -75,14 +109,13 @@
     <div class="t"><b>Kaizen Voice</b><span>Aditya Birla Grasim — VSF Unit</span></div>
   </header>
 
-  <!-- START (tap to enable voice) -->
+  <!-- START -->
   <div class="screen active" id="s-start">
-    <div class="convo" style="text-align:center">
-      <div class="orb idle"><div class="core"></div><div class="micicon">🙏</div></div>
+    <div class="stage">
+      <div class="orb idle"><div class="halo"></div><div class="core"></div><div class="glyph">🙏</div></div>
       <h1 id="startTitle" style="font-size:30px">नमस्ते! 🙏</h1>
-      <div class="sub" id="startSub">शुरू करने के लिए नीचे दबाएँ</div>
-      <button class="btn primary" id="startBtn">▶ शुरू करें / Start</button>
-      <div class="sub" style="margin-top:8px">🎤 माइक की अनुमति दें — कुछ दबाने की ज़रूरत नहीं, बस बोलिए।</div>
+      <div class="sub" id="startSub">शुरू करने के लिए नीचे दबाएँ — फिर मैं आपसे बात करूँगा</div>
+      <button class="btn primary" id="startBtn" style="max-width:300px">▶ शुरू करें / Start</button>
     </div>
   </div>
 
@@ -96,27 +129,23 @@
       <button class="langbtn" data-lang="en">English<small>English</small></button>
       <button class="langbtn" data-lang="ta">தமிழ்<small>Tamil</small></button>
     </div>
-    <div class="sub" style="margin-top:18px">🎤 बस अपनी भाषा चुनिए और बोलना शुरू कीजिए।</div>
+    <div class="sub" style="margin-top:18px">🎤 बस अपनी भाषा चुनिए और आराम से बोलिए।</div>
   </div>
 
   <!-- CONVERSATION -->
   <div class="screen" id="s-convo">
-    <div class="convo">
+    <div class="stage">
       <div class="orb idle" id="orb">
+        <div class="halo"></div>
         <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
-        <div class="core"></div><div class="micicon">🎤</div>
+        <div class="core"></div>
+        <div class="glyph">🎤</div>
+        <div class="bars"><span></span><span></span><span></span><span></span><span></span></div>
       </div>
-      <div class="status" id="status">starting…</div>
-      <div style="width:100%">
-        <div class="lbl">Kaizen Voice</div>
-        <div class="bubble" id="aiBubble">…</div>
-      </div>
-      <div style="width:100%">
-        <div class="lbl">You</div>
-        <div class="bubble you" id="youBubble">…</div>
-      </div>
+      <div class="status" id="status">…</div>
+      <div class="caption" id="caption">…</div>
     </div>
-    <button class="btn ghost" id="stopBtn">⏸ Pause listening</button>
+    <button class="btn ghost" id="stopBtn">⏸ रोकें / Pause</button>
     <div class="err" id="convoErr"></div>
   </div>
 
@@ -124,8 +153,8 @@
   <div class="screen" id="s-done">
     <div class="done">
       <div class="check">✓</div>
-      <h1 id="doneTitle">Thank you!</h1>
-      <div class="sub" id="doneSub">Your Kaizen idea has been recorded.</div>
+      <h1 id="doneTitle">धन्यवाद!</h1>
+      <div class="sub" id="doneSub">आपका सुझाव दर्ज हो गया है।</div>
       <div class="card">
         <div class="row"><span class="k">Ticket</span><span class="v" id="dTicket">—</span></div>
         <div class="row"><span class="k">By</span><span class="v" id="dName">—</span></div>
@@ -139,31 +168,44 @@
     </div>
   </div>
 
-  <footer>Kaizen Voice MVP · Hands-free · Continuous Improvement</footer>
+  <footer>Kaizen Voice · Hands-free · Continuous Improvement</footer>
 </div>
 
 <script>
 /* ---------- language pack ---------- */
 const L = {
-  hi:{code:"hi-IN",name:"हिंदी",welcome:n=>`नमस्ते ${n}! मैं कैज़ेन वॉइस हूँ। बताइए, आपके काम में सुधार के लिए क्या सुझाव है? आराम से बोलिए।`,again:"+ एक और सुझाव दें",listening:"सुन रहे हैं",speaking:"बोल रहे हैं",thinking:"सोच रहे हैं",yourTurn:"🎤 अब आप बोलिए",doneTitle:"धन्यवाद!"},
-  gu:{code:"gu-IN",name:"ગુજરાતી",welcome:n=>`નમસ્તે ${n}! હું કૈઝેન વોઈસ છું. કહો, તમારા કામમાં સુધારા માટે શું સૂચન છે? આરામથી બોલો.`,again:"+ બીજો વિચાર આપો",listening:"સાંભળી રહ્યા છીએ",speaking:"બોલી રહ્યા છીએ",thinking:"વિચારી રહ્યા છીએ",yourTurn:"🎤 હવે તમે બોલો",doneTitle:"આભાર!"},
-  en:{code:"en-IN",name:"English",welcome:n=>`Hello ${n}! I'm Kaizen Voice. Tell me — what improvement idea do you have for your work? Just speak naturally.`,again:"+ Submit another idea",listening:"Listening",speaking:"Speaking",thinking:"Thinking",yourTurn:"🎤 Your turn — speak now",doneTitle:"Thank you!"},
-  ta:{code:"ta-IN",name:"தமிழ்",welcome:n=>`வணக்கம் ${n}! நான் கைசன் வாய்ஸ். உங்கள் வேலையில் முன்னேற்றத்துக்கு என்ன யோசனை இருக்கு? நிதானமாகச் சொல்லுங்கள்.`,again:"+ மற்றொரு யோசனை",listening:"கேட்கிறோம்",speaking:"பேசுகிறோம்",thinking:"யோசிக்கிறோம்",yourTurn:"🎤 இப்போது நீங்கள் பேசுங்கள்",doneTitle:"நன்றி!"}
+  hi:{code:"hi-IN",name:"हिंदी",welcome:n=>`नमस्ते ${n}! मैं कैज़ेन वॉइस हूँ। बताइए, आपके काम में सुधार के लिए क्या सुझाव है? आराम से बोलिए।`,again:"+ एक और सुझाव दें",yourTurn:"🎤 अब आप बोलिए",speaking:"🔊 सुनिए",thinking:"समझ रहे हैं",doneTitle:"धन्यवाद!"},
+  gu:{code:"gu-IN",name:"ગુજરાતી",welcome:n=>`નમસ્તે ${n}! હું કૈઝેન વોઈસ છું. કહો, તમારા કામમાં સુધારા માટે શું સૂચન છે? આરામથી બોલો.`,again:"+ બીજો વિચાર આપો",yourTurn:"🎤 હવે તમે બોલો",speaking:"🔊 સાંભળો",thinking:"સમજી રહ્યા છીએ",doneTitle:"આભાર!"},
+  en:{code:"en-IN",name:"English",welcome:n=>`Hello ${n}! I'm Kaizen Voice. Tell me — what improvement idea do you have for your work? Just speak naturally.`,again:"+ Submit another idea",yourTurn:"🎤 Your turn — speak now",speaking:"🔊 Listen",thinking:"Understanding your idea",doneTitle:"Thank you!"},
+  ta:{code:"ta-IN",name:"தமிழ்",welcome:n=>`வணக்கம் ${n}! நான் கைசன் வாய்ஸ். உங்கள் வேலையில் முன்னேற்றத்துக்கு என்ன யோசனை இருக்கு? நிதானமாகச் சொல்லுங்கள்.`,again:"+ மற்றொரு யோசனை",yourTurn:"🎤 இப்போது பேசுங்கள்",speaking:"🔊 கேளுங்கள்",thinking:"புரிந்துகொள்கிறோம்",doneTitle:"நன்றி!"}
 };
 
 const params = new URLSearchParams(location.search);
 const NAME = (params.get("name")||params.get("emp")||"Saathi").trim();
 let lang="hi", recog=null, listenEnabled=false, silenceTimer=null;
-let turnBuffer="", history=[], finalResult=null, lastEntry=null, ending=false;
+let turnBuffer="", history=[], lastEntry=null, ending=false;
 const SILENCE_MS = 2200;
+
+const $ = id => document.getElementById(id);
+const show = id => { document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active")); $(id).classList.add("active"); };
+const setOrb = cls => { const o=$("orb"); if(o) o.className="orb "+cls; };
+function setStatus(txt, mode){ const s=$("status"); s.className="status"+(mode?(" "+mode):""); s.innerHTML = txt + (mode==="think" ? '<span class="dots"></span>' : ""); }
+const setCaption = txt => $("caption").textContent = txt;
+
+$("startTitle").textContent = `नमस्ते, ${NAME}! 🙏`;
+$("welcomeTitle").textContent = `नमस्ते, ${NAME}! 🙏`;
+const HINDI_GREETING = `नमस्ते ${NAME}! मैं कैज़ेन वॉइस हूँ। कृपया अपनी भाषा चुनें: हिंदी, गुजराती, अंग्रेज़ी, या तमिल।`;
+
+/* first tap unlocks audio */
+$("startBtn").onclick = async ()=>{ show("s-lang"); await say(HINDI_GREETING); };
+
+/* ---------- audio cue ---------- */
 let audioCtx=null;
-// soft "ding" so the worker clearly knows it is their turn to speak
 function cueBeep(){
   try{
     audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
     const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-    o.connect(g); g.connect(audioCtx.destination);
-    o.frequency.value=880; o.type="sine";
+    o.connect(g); g.connect(audioCtx.destination); o.frequency.value=880; o.type="sine";
     g.gain.setValueAtTime(0.0001,audioCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.2,audioCtx.currentTime+0.05);
     g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+0.35);
@@ -171,62 +213,40 @@ function cueBeep(){
   }catch(e){}
 }
 
-const $ = id => document.getElementById(id);
-const show = id => { document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active")); $(id).classList.add("active"); };
-const setOrb = cls => $("orb").className = "orb "+cls;
-const setStatus = txt => { $("status").textContent = txt; $("status").classList.remove("cue"); };
-
-// Hindi greeting on the start + language screens
-$("startTitle").textContent = `नमस्ते, ${NAME}! 🙏`;
-$("welcomeTitle").textContent = `नमस्ते, ${NAME}! 🙏`;
-const HINDI_GREETING = `नमस्ते ${NAME}! मैं कैज़ेन वॉइस हूँ। कृपया अपनी भाषा चुनें: हिंदी, गुजराती, अंग्रेज़ी, या तमिल।`;
-
-// First tap unlocks audio (browsers block sound until a user gesture),
-// then we greet by name in Hindi and show the language list.
-$("startBtn").onclick = async ()=>{
-  show("s-lang");
-  await say(HINDI_GREETING);
-};
-
 /* ---------- TTS ---------- */
 function say(text){
   return new Promise(resolve=>{
     try{
       pauseListening();
-      setOrb("speak"); setStatus(L[lang].speaking);
+      setOrb("speak"); setStatus(L[lang].speaking,"speak");
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = L[lang].code; u.rate=.96;
+      u.lang=L[lang].code; u.rate=.96;
       const v = speechSynthesis.getVoices().find(x=>x.lang===u.lang) || speechSynthesis.getVoices().find(x=>x.lang.startsWith(u.lang.split("-")[0]));
       if(v) u.voice=v;
-      u.onend = ()=>resolve();
-      u.onerror = ()=>resolve();
+      u.onend=()=>resolve(); u.onerror=()=>resolve();
       speechSynthesis.speak(u);
-      // safety timeout in case onend never fires
-      setTimeout(resolve, Math.min(12000, 1500 + text.length*70));
+      setTimeout(resolve, Math.min(14000, 1500+text.length*70));
     }catch(e){ resolve(); }
   });
 }
 
-/* ---------- speech recognition ---------- */
+/* ---------- speech recognition (no on-screen transcript) ---------- */
 function buildRecog(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR){ showErr("This browser has no voice support. Please use Google Chrome."); return null; }
-  const r = new SR();
-  r.lang=L[lang].code; r.continuous=true; r.interimResults=true;
+  const r=new SR(); r.lang=L[lang].code; r.continuous=true; r.interimResults=true;
   r.onresult = e=>{
-    let finalT="",interim="";
+    let finalT="",heard=false;
     for(let i=e.resultIndex;i<e.results.length;i++){
       const seg=e.results[i][0].transcript;
-      if(e.results[i].isFinal) finalT+=seg+" "; else interim+=seg;
+      if(e.results[i].isFinal) finalT+=seg+" ";
+      if(seg.trim()) heard=true;
     }
-    if(finalT) turnBuffer += finalT;
-    const disp=(turnBuffer+interim).trim();
-    if(disp){ $("youBubble").textContent=disp; }
-    // reset silence timer whenever we hear something
-    if(silenceTimer) clearTimeout(silenceTimer);
-    if(turnBuffer.trim().length>1){
-      silenceTimer=setTimeout(endUserTurn, SILENCE_MS);
+    if(finalT) turnBuffer+=finalT;
+    if(heard){                       // we are hearing the worker — no text shown, just keep cue
+      if(silenceTimer) clearTimeout(silenceTimer);
+      if(turnBuffer.trim().length>1) silenceTimer=setTimeout(endUserTurn, SILENCE_MS);
     }
   };
   r.onerror = e=>{ if(e.error==="not-allowed"){ showErr("Microphone blocked. Allow mic access and reload."); listenEnabled=false; } };
@@ -238,10 +258,8 @@ function startListening(){
   if(!recog) return;
   listenEnabled=true;
   try{ recog.start(); }catch(e){}
-  setOrb("live");
-  cueBeep();                          // audible "your turn" ding
-  setStatus(L[lang].yourTurn);        // big clear cue
-  $("status").classList.add("cue");
+  setOrb("live"); cueBeep(); setStatus(L[lang].yourTurn,"live");
+  setCaption("…");
 }
 function pauseListening(){
   listenEnabled=false;
@@ -251,23 +269,20 @@ function pauseListening(){
 
 /* ---------- conversation turns ---------- */
 async function endUserTurn(){
-  const text = turnBuffer.trim();
-  turnBuffer="";
+  const text=turnBuffer.trim(); turnBuffer="";
   if(silenceTimer) clearTimeout(silenceTimer);
   if(text.length<2 || ending) return;
   pauseListening();
-  setOrb("think"); setStatus(L[lang].thinking);
+  setOrb("think"); setStatus(L[lang].thinking,"think"); setCaption("…");
   history.push({role:"user",content:text});
   try{
-    const r = await fetch("/api/converse",{
-      method:"POST",headers:{"content-type":"application/json"},
-      body:JSON.stringify({lang,name:NAME,messages:history})
-    });
-    const data = await r.json();
+    const r=await fetch("/api/converse",{method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify({lang,name:NAME,messages:history})});
+    const data=await r.json();
     if(data.error) throw new Error(data.error);
     history.push({role:"assistant",content:JSON.stringify(data)});
-    if(data.action==="final"){ await finish(data); }
-    else { await ask(data.speech); }
+    if(data.action==="final") await finish(data);
+    else await ask(data.speech);
   }catch(err){
     showErr("Error: "+(err.message||err));
     await say("Maaf kijiye, dobara boliye.");
@@ -275,8 +290,7 @@ async function endUserTurn(){
   }
 }
 async function ask(speech){
-  $("aiBubble").textContent = speech;
-  $("youBubble").textContent = "…";
+  setCaption(speech);
   await say(speech);
   startListening();
 }
@@ -284,14 +298,13 @@ async function ask(speech){
 /* ---------- finish ---------- */
 async function finish(data){
   ending=true;
-  finalResult=data;
-  $("aiBubble").textContent = data.speech;
+  setCaption(data.speech);
   await say(data.speech);
-  const ticket = "KZN-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+Math.floor(1000+Math.random()*9000);
-  lastEntry = {ticket,name:NAME,language:L[lang].name,title:data.title,description:data.description,
+  const ticket="KZN-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+Math.floor(1000+Math.random()*9000);
+  lastEntry={ticket,name:NAME,language:L[lang].name,title:data.title,description:data.description,
     department:data.department,tier:data.tier,tier_reason:data.tier_reason,cost_estimate:data.cost_estimate,
     submitted_at:new Date().toISOString()};
-  $("doneTitle").textContent = L[lang].doneTitle;
+  $("doneTitle").textContent=L[lang].doneTitle;
   $("dTicket").textContent=ticket; $("dName").textContent=NAME;
   $("dTitle").textContent=data.title; $("dDept").textContent=data.department;
   $("dTier").innerHTML=`<span class="pill t${data.tier}">Tier ${data.tier}</span> ${data.tier_reason||""}`;
@@ -305,18 +318,19 @@ document.querySelectorAll(".langbtn").forEach(b=>{
   b.onclick = async ()=>{
     lang=b.dataset.lang;
     show("s-convo");
-    // request mic permission up front
-    try{ await navigator.mediaDevices.getUserMedia({audio:true}); }catch(e){ showErr("Please allow microphone access, then reload."); return; }
+    setStatus("…"); setCaption("…"); setOrb("idle");
+    try{ await navigator.mediaDevices.getUserMedia({audio:true}); }
+    catch(e){ showErr("Please allow microphone access, then reload."); return; }
     history=[]; ending=false; turnBuffer="";
-    $("aiBubble").textContent = L[lang].welcome(NAME);
+    setCaption(L[lang].welcome(NAME));
     await say(L[lang].welcome(NAME));
     startListening();
   };
 });
 
 $("stopBtn").onclick = ()=>{
-  if(listenEnabled){ pauseListening(); setOrb("idle"); setStatus("paused"); $("stopBtn").textContent="▶ Resume listening"; }
-  else { startListening(); $("stopBtn").textContent="⏸ Pause listening"; }
+  if(listenEnabled){ pauseListening(); setOrb("idle"); setStatus("⏸ रुका हुआ / Paused"); $("stopBtn").textContent="▶ जारी रखें / Resume"; }
+  else { startListening(); $("stopBtn").textContent="⏸ रोकें / Pause"; }
 };
 $("againBtn").onclick = ()=> location.reload();
 $("downloadBtn").onclick = ()=>{
@@ -326,7 +340,6 @@ $("downloadBtn").onclick = ()=>{
 };
 function showErr(m){ $("convoErr").style.display="block"; $("convoErr").textContent=m; }
 
-/* preload voices */
 window.speechSynthesis && speechSynthesis.getVoices();
 window.speechSynthesis && (speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices());
 </script>
