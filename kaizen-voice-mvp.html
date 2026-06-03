@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Kaizen Voice — Aditya Birla Grasim</title>
+<style>
+  :root{
+    --bg1:#0a0f1f; --bg2:#101a3a; --accent:#22d3ee; --accent2:#6366f1;
+    --good:#34d399; --warn:#fbbf24; --bad:#fb7185; --text:#eaf2ff; --muted:#9fb3d1;
+    --card:rgba(255,255,255,.06); --line:rgba(255,255,255,.12);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+    color:var(--text);
+    background:radial-gradient(1200px 800px at 50% -10%,#16245a 0%,var(--bg1) 55%,#060912 100%);
+    overflow-x:hidden;
+  }
+  .wrap{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding:18px}
+  header{display:flex;align-items:center;gap:10px;padding:6px 2px 14px}
+  .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;color:#06121f}
+  header .t{font-size:13px;line-height:1.15}
+  header .t b{display:block;font-size:15px}
+  header .t span{color:var(--muted)}
+  .screen{flex:1;display:none;flex-direction:column;animation:fade .4s ease}
+  .screen.active{display:flex}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  h1{font-size:24px;margin:8px 0 2px;font-weight:800;letter-spacing:.2px}
+  .sub{color:var(--muted);font-size:15px;margin-bottom:18px}
+  .langgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+  .langbtn{padding:22px 12px;border-radius:18px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:20px;font-weight:700;cursor:pointer;transition:.2s;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .langbtn small{font-size:12px;color:var(--muted);font-weight:500}
+  .langbtn:active{transform:scale(.97)}
+  .langbtn:hover{border-color:var(--accent);box-shadow:0 0 0 2px rgba(34,211,238,.15)}
+
+  /* Mic orb */
+  .orbwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px}
+  .orb{position:relative;width:180px;height:180px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .orb .core{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a5f3ff,var(--accent) 45%,var(--accent2));box-shadow:0 0 60px rgba(34,211,238,.55),inset 0 0 30px rgba(255,255,255,.35);transition:.25s}
+  .orb .ring{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(34,211,238,.5)}
+  .orb.idle .core{animation:breathe 3.4s ease-in-out infinite}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+  .orb.live .core{background:radial-gradient(circle at 35% 30%,#fff,#fb7185 50%,#f43f5e);box-shadow:0 0 80px rgba(244,63,133,.7),inset 0 0 30px rgba(255,255,255,.5)}
+  .orb.live .ring{animation:pulse 1.4s ease-out infinite}
+  .orb.live .ring.r2{animation-delay:.5s}
+  .orb.live .ring.r3{animation-delay:1s}
+  @keyframes pulse{0%{transform:scale(.75);opacity:.8}100%{transform:scale(1.7);opacity:0}}
+  .orb.think .core{animation:spin 1s linear infinite;background:conic-gradient(from 0deg,var(--accent),var(--accent2),var(--accent))}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .micicon{position:absolute;font-size:42px}
+  .hint{color:var(--muted);font-size:15px;text-align:center;min-height:22px}
+  .transcript{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;min-height:90px;font-size:17px;line-height:1.5;margin-top:6px}
+  .transcript.empty{color:var(--muted);font-style:italic}
+
+  .btn{display:block;width:100%;padding:16px;border-radius:16px;border:none;font-size:17px;font-weight:700;cursor:pointer;margin-top:12px;transition:.15s}
+  .btn:active{transform:scale(.98)}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#04121d}
+  .btn.green{background:linear-gradient(135deg,#34d399,#10b981);color:#04241a}
+  .btn.ghost{background:var(--card);border:1px solid var(--line);color:var(--text)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:14px}
+  .row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:15px}
+  .row:last-child{border-bottom:none}
+  .row .k{color:var(--muted)}
+  .row .v{text-align:right;font-weight:600;max-width:62%}
+  .pill{display:inline-block;padding:3px 11px;border-radius:999px;font-size:13px;font-weight:800}
+  .t1{background:rgba(52,211,153,.18);color:var(--good)}
+  .t2{background:rgba(251,191,36,.18);color:var(--warn)}
+  .t3{background:rgba(251,113,133,.18);color:var(--bad)}
+  .readback{background:linear-gradient(135deg,rgba(99,102,241,.18),rgba(34,211,238,.12));border:1px solid rgba(34,211,238,.35);border-radius:16px;padding:16px;font-size:17px;line-height:1.55}
+  .keybar{display:flex;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-top:10px}
+  .keybar input{flex:1;background:transparent;border:none;color:var(--text);font-size:13px;outline:none}
+  .keybar small{color:var(--muted);font-size:11px}
+  .err{background:rgba(251,113,133,.15);border:1px solid var(--bad);color:#ffd7de;border-radius:12px;padding:12px;font-size:14px;margin-top:10px;display:none}
+  footer{color:var(--muted);font-size:11px;text-align:center;padding:16px 0 6px}
+  .done{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px}
+  .check{width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,#34d399,#10b981);display:flex;align-items:center;justify-content:center;font-size:46px;color:#04241a;box-shadow:0 0 50px rgba(52,211,153,.5)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">क</div>
+    <div class="t"><b>Kaizen Voice</b><span>Aditya Birla Grasim — VSF Unit</span></div>
+  </header>
+
+  <!-- API KEY SETUP (shown once) -->
+  <div class="screen active" id="s-key">
+    <h1>Setup</h1>
+    <div class="sub">Enter your Anthropic API key to enable the AI. It stays only in this browser.</div>
+    <div class="keybar">
+      <input id="apikey" type="password" placeholder="sk-ant-..." autocomplete="off" />
+    </div>
+    <small style="color:var(--muted);display:block;margin-top:6px">Get one at console.anthropic.com → API Keys. For internal demo use on a trusted device.</small>
+    <button class="btn primary" id="saveKey" style="margin-top:18px">Start</button>
+    <div class="err" id="keyErr"></div>
+  </div>
+
+  <!-- LANGUAGE -->
+  <div class="screen" id="s-lang">
+    <h1 id="welcomeTitle">Welcome 👋</h1>
+    <div class="sub" id="welcomeSub">Please choose your language / अपनी भाषा चुनें</div>
+    <div class="langgrid">
+      <button class="langbtn" data-lang="hi">हिंदी<small>Hindi</small></button>
+      <button class="langbtn" data-lang="gu">ગુજરાતી<small>Gujarati</small></button>
+      <button class="langbtn" data-lang="en">English<small>English</small></button>
+      <button class="langbtn" data-lang="ta">தமிழ்<small>Tamil</small></button>
+    </div>
+    <div class="hint" id="langHint" style="margin-top:18px">🔊 You can also say the language name.</div>
+  </div>
+
+  <!-- LISTEN -->
+  <div class="screen" id="s-listen">
+    <h1 id="listenTitle">Tell us your idea</h1>
+    <div class="orbwrap">
+      <div class="orb idle" id="orb">
+        <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+        <div class="core"></div>
+        <div class="micicon">🎤</div>
+      </div>
+      <div class="hint" id="listenHint">Tap the mic and speak</div>
+    </div>
+    <div class="transcript empty" id="transcript">Your words will appear here…</div>
+    <button class="btn primary" id="processBtn" disabled>Done — understand my idea</button>
+    <div class="err" id="listenErr"></div>
+  </div>
+
+  <!-- CONFIRM -->
+  <div class="screen" id="s-confirm">
+    <h1 id="confirmTitle">Did I understand right?</h1>
+    <div class="readback" id="readback">…</div>
+    <div class="card">
+      <div class="row"><span class="k" id="lblTitle">Idea</span><span class="v" id="fTitle">—</span></div>
+      <div class="row"><span class="k" id="lblDept">Department</span><span class="v" id="fDept">—</span></div>
+      <div class="row"><span class="k" id="lblTier">Tier</span><span class="v" id="fTier">—</span></div>
+      <div class="row"><span class="k" id="lblCost">Cost</span><span class="v" id="fCost">—</span></div>
+    </div>
+    <button class="btn green" id="confirmYes">✓ Yes, submit it</button>
+    <button class="btn ghost" id="confirmNo">↺ No, let me speak again</button>
+    <div class="err" id="confirmErr"></div>
+  </div>
+
+  <!-- DONE -->
+  <div class="screen" id="s-done">
+    <div class="done">
+      <div class="check">✓</div>
+      <h1 id="doneTitle">Submitted!</h1>
+      <div class="sub" id="doneSub">Thank you. Your Kaizen idea has been recorded.</div>
+      <div class="card" style="width:100%;text-align:left">
+        <div class="row"><span class="k">Ticket</span><span class="v" id="dTicket">—</span></div>
+        <div class="row"><span class="k">By</span><span class="v" id="dName">—</span></div>
+        <div class="row"><span class="k">Idea</span><span class="v" id="dTitle">—</span></div>
+        <div class="row"><span class="k">Department</span><span class="v" id="dDept">—</span></div>
+        <div class="row"><span class="k">Tier</span><span class="v" id="dTier">—</span></div>
+      </div>
+      <button class="btn primary" id="downloadBtn">⬇ Download entry</button>
+      <button class="btn ghost" id="againBtn">+ Submit another idea</button>
+    </div>
+  </div>
+
+  <footer>Kaizen Voice MVP · Continuous Improvement · No login required</footer>
+</div>
+
+<script>
+/* ---------- config ---------- */
+const MODEL = "claude-sonnet-4-6";
+const DEPARTMENTS = ["Pulp","Viscose","Spinning","Spin Bath / Acid","Auxiliary & CS2","Aftertreatment","Quality Control","Mechanical Maintenance","Electrical Maintenance","Instrumentation","Power & Utilities","Effluent / ETP","Stores & Logistics","Packing & Dispatch","Safety","Security","HR / Admin"];
+
+/* language pack: speech code + UI strings */
+const L = {
+  hi:{code:"hi-IN", name:"हिंदी",
+    welcome:n=>`नमस्ते ${n}! आप किस भाषा में बात करना चाहेंगे?`,
+    listenTitle:"अपना सुझाव बताइए", tapHint:"माइक दबाएँ और बोलिए",
+    listening:"सुन रहे हैं… बोलिए", done:"हो गया — मेरा सुझाव समझिए",
+    confirmTitle:"क्या मैंने सही समझा?", yes:"✓ हाँ, जमा करें", no:"↺ नहीं, फिर से बोलूँगा",
+    lblIdea:"सुझाव", lblDept:"विभाग", lblTier:"श्रेणी", lblCost:"लागत",
+    doneTitle:"जमा हो गया!", doneSub:"धन्यवाद! आपका कैज़ेन सुझाव दर्ज हो गया है।",
+    again:"+ एक और सुझाव दें"},
+  gu:{code:"gu-IN", name:"ગુજરાતી",
+    welcome:n=>`નમસ્તે ${n}! તમે કઈ ભાષામાં વાત કરવા માંગો છો?`,
+    listenTitle:"તમારો સુધારો જણાવો", tapHint:"માઇક દબાવો અને બોલો",
+    listening:"સાંભળી રહ્યા છીએ… બોલો", done:"થઈ ગયું — મારો વિચાર સમજો",
+    confirmTitle:"શું મેં બરાબર સમજ્યું?", yes:"✓ હા, સબમિટ કરો", no:"↺ ના, ફરી બોલીશ",
+    lblIdea:"વિચાર", lblDept:"વિભાગ", lblTier:"સ્તર", lblCost:"ખર્ચ",
+    doneTitle:"સબમિટ થયું!", doneSub:"આભાર! તમારો કૈઝેન વિચાર નોંધાયો છે.",
+    again:"+ બીજો વિચાર આપો"},
+  en:{code:"en-IN", name:"English",
+    welcome:n=>`Hello ${n}! Which language would you like to use?`,
+    listenTitle:"Tell us your idea", tapHint:"Tap the mic and speak",
+    listening:"Listening… please speak", done:"Done — understand my idea",
+    confirmTitle:"Did I understand right?", yes:"✓ Yes, submit it", no:"↺ No, let me speak again",
+    lblIdea:"Idea", lblDept:"Department", lblTier:"Tier", lblCost:"Cost",
+    doneTitle:"Submitted!", doneSub:"Thank you! Your Kaizen idea has been recorded.",
+    again:"+ Submit another idea"},
+  ta:{code:"ta-IN", name:"தமிழ்",
+    welcome:n=>`வணக்கம் ${n}! நீங்கள் எந்த மொழியில் பேச விரும்புகிறீர்கள்?`,
+    listenTitle:"உங்கள் யோசனையைச் சொல்லுங்கள்", tapHint:"மைக்கை அழுத்திப் பேசுங்கள்",
+    listening:"கேட்கிறோம்… பேசுங்கள்", done:"முடிந்தது — என் யோசனையைப் புரிந்துகொள்",
+    confirmTitle:"நான் சரியாகப் புரிந்துகொண்டேனா?", yes:"✓ ஆம், சமர்ப்பி", no:"↺ இல்லை, மீண்டும் பேசுகிறேன்",
+    lblIdea:"யோசனை", lblDept:"துறை", lblTier:"நிலை", lblCost:"செலவு",
+    doneTitle:"சமர்ப்பிக்கப்பட்டது!", doneSub:"நன்றி! உங்கள் கைசன் யோசனை பதிவு செய்யப்பட்டது.",
+    again:"+ மற்றொரு யோசனை"}
+};
+
+/* ---------- state ---------- */
+const params = new URLSearchParams(location.search);
+const NAME = (params.get("name") || params.get("emp") || "Saathi").trim();
+let lang = "hi", apiKey = "", transcriptText = "", result = null, recog = null, listening = false;
+
+const $ = id => document.getElementById(id);
+const show = id => { document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active")); $(id).classList.add("active"); };
+
+/* ---------- text to speech ---------- */
+function speak(text, langCode){
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = langCode || L[lang].code;
+    u.rate = .95;
+    const v = speechSynthesis.getVoices().find(v=>v.lang===u.lang) || speechSynthesis.getVoices().find(v=>v.lang.startsWith(u.lang.split("-")[0]));
+    if(v) u.voice = v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ---------- API key ---------- */
+$("saveKey").onclick = () => {
+  const k = $("apikey").value.trim();
+  if(!k.startsWith("sk-ant-")){ $("keyErr").style.display="block"; $("keyErr").textContent="That doesn't look like an Anthropic key (sk-ant-...)."; return; }
+  apiKey = k;
+  goLang();
+};
+
+/* ---------- language screen ---------- */
+function goLang(){
+  show("s-lang");
+  $("welcomeTitle").textContent = `Welcome, ${NAME} 👋`;
+  // speak a multi-language prompt
+  setTimeout(()=>speak(`Namaste ${NAME}. Please choose your language. नमस्ते. કૃપા કરીને ભાષા પસંદ કરો.`, "hi-IN"), 350);
+}
+document.querySelectorAll(".langbtn").forEach(b=>{
+  b.onclick = () => { lang = b.dataset.lang; goListen(); };
+});
+
+/* ---------- listen screen ---------- */
+function goListen(){
+  show("s-listen");
+  transcriptText=""; result=null;
+  const t = L[lang];
+  $("listenTitle").textContent = t.listenTitle;
+  $("listenHint").textContent = t.tapHint;
+  $("processBtn").textContent = t.done;
+  $("processBtn").disabled = true;
+  $("transcript").textContent = "…";
+  $("transcript").classList.add("empty");
+  setTimeout(()=>speak(t.welcome(NAME)), 300);
+}
+
+function setupRecog(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ $("listenErr").style.display="block"; $("listenErr").textContent="This browser doesn't support voice input. Please use Chrome on Android."; return null; }
+  const r = new SR();
+  r.lang = L[lang].code; r.continuous = true; r.interimResults = true;
+  r.onresult = e => {
+    let finalT="", interim="";
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const seg = e.results[i][0].transcript;
+      if(e.results[i].isFinal) finalT += seg + " "; else interim += seg;
+    }
+    if(finalT) transcriptText += finalT;
+    const disp = (transcriptText + interim).trim();
+    $("transcript").textContent = disp || "…";
+    $("transcript").classList.toggle("empty", !disp);
+    $("processBtn").disabled = disp.length < 2;
+  };
+  r.onerror = e => { stopListen(); if(e.error==="not-allowed"){ $("listenErr").style.display="block"; $("listenErr").textContent="Microphone permission denied. Allow mic access and try again."; } };
+  r.onend = () => { if(listening){ try{r.start();}catch(e){} } };
+  return r;
+}
+
+$("orb").onclick = () => { listening ? stopListen() : startListen(); };
+function startListen(){
+  $("listenErr").style.display="none";
+  recog = setupRecog(); if(!recog) return;
+  try{ recog.start(); }catch(e){}
+  listening = true;
+  $("orb").className = "orb live";
+  $("listenHint").textContent = L[lang].listening;
+}
+function stopListen(){
+  listening = false;
+  try{ recog && recog.stop(); }catch(e){}
+  $("orb").className = "orb idle";
+  $("listenHint").textContent = L[lang].tapHint;
+}
+
+/* ---------- process with Claude ---------- */
+$("processBtn").onclick = async () => {
+  stopListen();
+  if(transcriptText.trim().length < 2) return;
+  $("orb").className = "orb think";
+  $("listenHint").textContent = "🤔 Understanding…";
+  $("processBtn").disabled = true;
+  try{
+    result = await classify(transcriptText.trim());
+    goConfirm();
+  }catch(err){
+    $("orb").className = "orb idle";
+    $("listenErr").style.display="block";
+    $("listenErr").textContent = "AI error: " + (err.message||err);
+    $("processBtn").disabled = false;
+  }
+};
+
+async function classify(text){
+  const sys = `You are a Kaizen (continuous improvement) intake assistant for the Aditya Birla Grasim viscose staple fibre (VSF) plant. A shop-floor worker has spoken an improvement idea in Hindi, Gujarati, English or Tamil. The transcript may be messy or partial.
+
+Departments (pick the single best fit): ${DEPARTMENTS.join(", ")}.
+
+Tier rules:
+- Tier 1 = NO purchase cost; only in-house labour (relocating, 5S, removing obstruction, changing a procedure/SOP, re-labelling, adjusting a work sequence).
+- Tier 2 = cost up to INR 1,00,000 (posters, signage, small guard/fixture, extra lighting, low-cost sensor, step platform, minor tooling, painting).
+- Tier 3 = cost above INR 1,00,000 (new equipment, machine modification, automation, conveyor, major safety system, capital project).
+
+Reply ONLY with strict JSON, no markdown, in this exact shape:
+{"title":"short idea title in English (max 8 words)","description":"clean 1-2 sentence description in English","department":"one department exactly from the list","tier":1|2|3,"tier_reason":"short why in English","cost_estimate":"e.g. No cost / Up to INR 1 lakh / Above INR 1 lakh","confirm_speech":"a warm 1-2 sentence read-back in the SAME language the worker used (lang code: ${lang}), summarising the idea + department + tier in simple words, ending by asking them to confirm"}`;
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST",
+    headers:{
+      "content-type":"application/json",
+      "x-api-key":apiKey,
+      "anthropic-version":"2023-06-01",
+      "anthropic-dangerous-direct-browser-access":"true"
+    },
+    body:JSON.stringify({
+      model:MODEL, max_tokens:600,
+      system:sys,
+      messages:[{role:"user",content:`Worker: ${NAME}. Spoken language: ${L[lang].name}.\nTranscript: """${text}"""`}]
+    })
+  });
+  if(!res.ok){ const t = await res.text(); throw new Error(res.status+" "+t.slice(0,160)); }
+  const data = await res.json();
+  let raw = (data.content && data.content[0] && data.content[0].text || "").trim();
+  raw = raw.replace(/^```json\s*/i,"").replace(/^```\s*/,"").replace(/```$/,"").trim();
+  const j = JSON.parse(raw);
+  j.raw_transcript = text;
+  return j;
+}
+
+/* ---------- confirm screen ---------- */
+function goConfirm(){
+  show("s-confirm");
+  const t = L[lang];
+  $("confirmTitle").textContent = t.confirmTitle;
+  $("lblTitle").textContent = t.lblIdea; $("lblDept").textContent = t.lblDept;
+  $("lblTier").textContent = t.lblTier; $("lblCost").textContent = t.lblCost;
+  $("confirmYes").textContent = t.yes; $("confirmNo").textContent = t.no;
+  $("readback").textContent = result.confirm_speech || result.description;
+  $("fTitle").textContent = result.title;
+  $("fDept").textContent = result.department;
+  const tierCls = "t"+result.tier;
+  $("fTier").innerHTML = `<span class="pill ${tierCls}">Tier ${result.tier}</span> ${result.tier_reason||""}`;
+  $("fCost").textContent = result.cost_estimate || "";
+  setTimeout(()=>speak(result.confirm_speech || result.description), 350);
+}
+$("confirmNo").onclick = () => goListen();
+$("confirmYes").onclick = () => submit();
+
+/* ---------- submit / done ---------- */
+let lastEntry = null;
+function submit(){
+  const ticket = "KZN-" + new Date().toISOString().slice(2,10).replace(/-/g,"") + "-" + Math.floor(1000+Math.random()*9000);
+  lastEntry = {
+    ticket, name:NAME, language:L[lang].name,
+    title:result.title, description:result.description,
+    department:result.department, tier:result.tier,
+    tier_reason:result.tier_reason, cost_estimate:result.cost_estimate,
+    raw_transcript:result.raw_transcript, submitted_at:new Date().toISOString()
+  };
+  const t = L[lang];
+  show("s-done");
+  $("doneTitle").textContent = t.doneTitle;
+  $("doneSub").textContent = t.doneSub;
+  $("againBtn").textContent = t.again;
+  $("dTicket").textContent = ticket;
+  $("dName").textContent = NAME;
+  $("dTitle").textContent = result.title;
+  $("dDept").textContent = result.department;
+  $("dTier").innerHTML = `<span class="pill t${result.tier}">Tier ${result.tier}</span>`;
+  setTimeout(()=>speak(t.doneSub),300);
+}
+$("againBtn").onclick = () => goListen();
+$("downloadBtn").onclick = () => {
+  if(!lastEntry) return;
+  const blob = new Blob([JSON.stringify(lastEntry,null,2)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = lastEntry.ticket + ".json";
+  a.click();
+};
+
+/* preload voices */
+window.speechSynthesis && speechSynthesis.getVoices();
+window.speechSynthesis && (speechSynthesis.onvoiceschanged = ()=>speechSynthesis.getVoices());
+</script>
+</body>
+</html>
