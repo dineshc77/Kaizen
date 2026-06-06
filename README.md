@@ -23,10 +23,28 @@ follow-up only if needed, then thanks them.
 
 - Worker picks a language (Hindi / Gujarati / English / Tamil).
 - Browser asks for mic permission once, then listens hands-free.
-- The worker speaks naturally; after a short pause the app sends the words to Claude.
-- Claude replies by voice — either a short clarifying question, or a warm thank-you
-  once it has enough to record the idea.
+- The worker speaks; the app records the clip and after a ~1s pause sends it to
+  **Sarvam AI** (server-side) for speech-to-text — consistent on every browser.
+- Claude understands it, classifies tier + department, and replies; the reply text
+  goes back to **Sarvam** for text-to-speech and the browser plays that audio.
 - The final entry (ticket no., idea, department, tier, cost) is shown and downloadable.
+
+## Keys (both required)
+
+Set as environment variables (local shell, or Render secrets):
+- `ANTHROPIC_API_KEY` — Claude (understanding + classification)
+- `SARVAM_API_KEY` — Sarvam (speech-to-text + text-to-speech)
+
+```
+# Windows PowerShell, local run
+$env:ANTHROPIC_API_KEY="sk-ant-..."
+$env:SARVAM_API_KEY="sk_..."
+python app.py
+```
+
+Tuning the listening feel: in `templates/index.html`, `SILENCE_MS` (pause before it
+stops, default 1000ms) and `VAD_THRESHOLD` (mic loudness counted as speech, raise it
+for noisy areas).
 
 ## Security
 
