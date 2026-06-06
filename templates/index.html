@@ -42,18 +42,15 @@
   .bars{position:absolute;z-index:3;display:flex;gap:6px;align-items:center;height:60px;opacity:0;transition:.2s;pointer-events:none}
   .bars span{width:7px;height:14px;background:#fff;border-radius:4px;box-shadow:0 0 10px rgba(255,255,255,.7)}
 
-  /* idle */
   .orb.idle .core{animation:breathe 3.6s ease-in-out infinite}
   @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 
-  /* listening (your turn) */
   .orb.live .core{background:radial-gradient(circle at 35% 28%,#fff,#fb7185 50%,#f43f5e);box-shadow:0 0 90px rgba(244,63,133,.7),inset 0 0 34px rgba(255,255,255,.5)}
   .orb.live .halo{background:radial-gradient(circle,rgba(244,63,133,.35),transparent 65%);opacity:1}
   .orb.live .ring{opacity:1;animation:pulse 1.5s ease-out infinite;border-color:rgba(244,63,133,.6)}
   .orb.live .ring.r2{animation-delay:.5s}.orb.live .ring.r3{animation-delay:1s}
   @keyframes pulse{0%{transform:scale(.7);opacity:.85}100%{transform:scale(1.75);opacity:0}}
 
-  /* speaking (AI talking) */
   .orb.speak .core{background:radial-gradient(circle at 35% 28%,#e6fdff,var(--accent) 48%,var(--accent2));animation:talk .55s ease-in-out infinite}
   .orb.speak .halo{opacity:1;animation:halopulse 1.1s ease-in-out infinite}
   @keyframes talk{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
@@ -68,7 +65,6 @@
   .orb.speak .bars span:nth-child(5){animation-delay:0s}
   @keyframes eq{0%,100%{height:12px}50%{height:46px}}
 
-  /* thinking (processing) */
   .orb.think .core{background:conic-gradient(from 0deg,var(--accent),var(--accent2),var(--accent));animation:spin 1.1s linear infinite}
   .orb.think .halo{opacity:.8}
   .orb.think .glyph{opacity:0}
@@ -168,23 +164,30 @@
     </div>
   </div>
 
-  <footer>Kaizen Voice · Hands-free · Continuous Improvement</footer>
+  <footer>Kaizen Voice · Sarvam voice · Continuous Improvement</footer>
 </div>
 
 <script>
 /* ---------- language pack ---------- */
 const L = {
-  hi:{code:"hi-IN",name:"हिंदी",welcome:n=>`नमस्ते ${n}! मैं कैज़ेन वॉइस हूँ। बताइए, आपके काम में सुधार के लिए क्या सुझाव है? आराम से बोलिए।`,again:"+ एक और सुझाव दें",yourTurn:"🎤 अब आप बोलिए",speaking:"🔊 सुनिए",thinking:"समझ रहे हैं",doneTitle:"धन्यवाद!"},
-  gu:{code:"gu-IN",name:"ગુજરાતી",welcome:n=>`નમસ્તે ${n}! હું કૈઝેન વોઈસ છું. કહો, તમારા કામમાં સુધારા માટે શું સૂચન છે? આરામથી બોલો.`,again:"+ બીજો વિચાર આપો",yourTurn:"🎤 હવે તમે બોલો",speaking:"🔊 સાંભળો",thinking:"સમજી રહ્યા છીએ",doneTitle:"આભાર!"},
-  en:{code:"en-IN",name:"English",welcome:n=>`Hello ${n}! I'm Kaizen Voice. Tell me — what improvement idea do you have for your work? Just speak naturally.`,again:"+ Submit another idea",yourTurn:"🎤 Your turn — speak now",speaking:"🔊 Listen",thinking:"Understanding your idea",doneTitle:"Thank you!"},
-  ta:{code:"ta-IN",name:"தமிழ்",welcome:n=>`வணக்கம் ${n}! நான் கைசன் வாய்ஸ். உங்கள் வேலையில் முன்னேற்றத்துக்கு என்ன யோசனை இருக்கு? நிதானமாகச் சொல்லுங்கள்.`,again:"+ மற்றொரு யோசனை",yourTurn:"🎤 இப்போது பேசுங்கள்",speaking:"🔊 கேளுங்கள்",thinking:"புரிந்துகொள்கிறோம்",doneTitle:"நன்றி!"}
+  hi:{name:"हिंदी",welcome:n=>`नमस्ते ${n}! मैं कैज़ेन वॉइस हूँ। बताइए, आपके काम में सुधार के लिए क्या सुझाव है? आराम से बोलिए।`,again:"+ एक और सुझाव दें",yourTurn:"🎤 अब आप बोलिए",speaking:"🔊 सुनिए",thinking:"समझ रहे हैं",doneTitle:"धन्यवाद!"},
+  gu:{name:"ગુજરાતી",welcome:n=>`નમસ્તે ${n}! હું કૈઝેન વોઈસ છું. કહો, તમારા કામમાં સુધારા માટે શું સૂચન છે? આરામથી બોલો.`,again:"+ બીજો વિચાર આપો",yourTurn:"🎤 હવે તમે બોલો",speaking:"🔊 સાંભળો",thinking:"સમજી રહ્યા છીએ",doneTitle:"આભાર!"},
+  en:{name:"English",welcome:n=>`Hello ${n}! I'm Kaizen Voice. Tell me — what improvement idea do you have for your work? Just speak naturally.`,again:"+ Submit another idea",yourTurn:"🎤 Your turn — speak now",speaking:"🔊 Listen",thinking:"Understanding your idea",doneTitle:"Thank you!"},
+  ta:{name:"தமிழ்",welcome:n=>`வணக்கம் ${n}! நான் கைசன் வாய்ஸ். உங்கள் வேலையில் முன்னேற்றத்துக்கு என்ன யோசனை இருக்கு? நிதானமாகச் சொல்லுங்கள்.`,again:"+ மற்றொரு யோசனை",yourTurn:"🎤 இப்போது பேசுங்கள்",speaking:"🔊 கேளுங்கள்",thinking:"புரிந்துகொள்கிறோம்",doneTitle:"நன்றி!"}
 };
 
 const params = new URLSearchParams(location.search);
 const NAME = (params.get("name")||params.get("emp")||"Saathi").trim();
-let lang="hi", recog=null, listenEnabled=false, silenceTimer=null;
-let turnBuffer="", history=[], lastEntry=null, ending=false;
-const SILENCE_MS = 2200;
+let lang="hi", history=[], lastEntry=null, ending=false;
+
+/* mic / VAD state */
+let micStream=null, audioCtx=null, analyser=null, vadData=null;
+let mediaRecorder=null, chunks=[], vadRAF=null;
+let listenEnabled=false, paused=false, hasSpoken=false, lastVoiceTs=0, recStart=0;
+const SILENCE_MS=1000;      // stop ~1s after the worker stops talking (snappy)
+const MIN_SPEECH_MS=300;
+const MAX_REC_MS=25000;     // Sarvam REST handles <30s clips
+const VAD_THRESHOLD=0.028;  // mic loudness to count as "speech" (tune for plant noise)
 
 const $ = id => document.getElementById(id);
 const show = id => { document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active")); $(id).classList.add("active"); };
@@ -196,84 +199,119 @@ $("startTitle").textContent = `नमस्ते, ${NAME}! 🙏`;
 $("welcomeTitle").textContent = `नमस्ते, ${NAME}! 🙏`;
 const HINDI_GREETING = `नमस्ते ${NAME}! मैं कैज़ेन वॉइस हूँ। कृपया अपनी भाषा चुनें: हिंदी, गुजराती, अंग्रेज़ी, या तमिल।`;
 
-/* first tap unlocks audio */
-$("startBtn").onclick = async ()=>{ show("s-lang"); await say(HINDI_GREETING); };
+/* first tap unlocks audio; greet in Hindi via Sarvam */
+$("startBtn").onclick = async ()=>{ show("s-lang"); await say(HINDI_GREETING, "hi"); };
 
 /* ---------- audio cue ---------- */
-let audioCtx=null;
+let beepCtx=null;
 function cueBeep(){
   try{
-    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
-    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-    o.connect(g); g.connect(audioCtx.destination); o.frequency.value=880; o.type="sine";
-    g.gain.setValueAtTime(0.0001,audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.2,audioCtx.currentTime+0.05);
-    g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+0.35);
-    o.start(); o.stop(audioCtx.currentTime+0.36);
+    beepCtx = beepCtx || new (window.AudioContext||window.webkitAudioContext)();
+    const o=beepCtx.createOscillator(), g=beepCtx.createGain();
+    o.connect(g); g.connect(beepCtx.destination); o.frequency.value=880; o.type="sine";
+    g.gain.setValueAtTime(0.0001,beepCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.2,beepCtx.currentTime+0.05);
+    g.gain.exponentialRampToValueAtTime(0.0001,beepCtx.currentTime+0.35);
+    o.start(); o.stop(beepCtx.currentTime+0.36);
   }catch(e){}
 }
 
-/* ---------- TTS ---------- */
-function say(text){
-  return new Promise(resolve=>{
+/* ---------- TTS via Sarvam (consistent on every browser) ---------- */
+function playB64Wav(b64){
+  return new Promise(res=>{
     try{
-      pauseListening();
-      setOrb("speak"); setStatus(L[lang].speaking,"speak");
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang=L[lang].code; u.rate=.96;
-      const v = speechSynthesis.getVoices().find(x=>x.lang===u.lang) || speechSynthesis.getVoices().find(x=>x.lang.startsWith(u.lang.split("-")[0]));
-      if(v) u.voice=v;
-      u.onend=()=>resolve(); u.onerror=()=>resolve();
-      speechSynthesis.speak(u);
-      setTimeout(resolve, Math.min(14000, 1500+text.length*70));
-    }catch(e){ resolve(); }
+      const a=new Audio("data:audio/wav;base64,"+b64);
+      a.onended=res; a.onerror=res;
+      a.play().catch(()=>res());
+      setTimeout(res, 20000);
+    }catch(e){ res(); }
   });
 }
+async function say(text, forceLang){
+  setOrb("speak"); setStatus(L[lang].speaking,"speak");
+  try{
+    const r=await fetch("/api/tts",{method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify({text, lang: forceLang||lang})});
+    const data=await r.json();
+    if(data.audio) await playB64Wav(data.audio);
+    else if(data.error) showErr("Voice error: "+data.error);
+  }catch(e){ showErr("Voice error: "+(e.message||e)); }
+}
 
-/* ---------- speech recognition (no on-screen transcript) ---------- */
-function buildRecog(){
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR){ showErr("This browser has no voice support. Please use Google Chrome."); return null; }
-  const r=new SR(); r.lang=L[lang].code; r.continuous=true; r.interimResults=true;
-  r.onresult = e=>{
-    let finalT="",heard=false;
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      const seg=e.results[i][0].transcript;
-      if(e.results[i].isFinal) finalT+=seg+" ";
-      if(seg.trim()) heard=true;
-    }
-    if(finalT) turnBuffer+=finalT;
-    if(heard){                       // we are hearing the worker — no text shown, just keep cue
-      if(silenceTimer) clearTimeout(silenceTimer);
-      if(turnBuffer.trim().length>1) silenceTimer=setTimeout(endUserTurn, SILENCE_MS);
-    }
-  };
-  r.onerror = e=>{ if(e.error==="not-allowed"){ showErr("Microphone blocked. Allow mic access and reload."); listenEnabled=false; } };
-  r.onend = ()=>{ if(listenEnabled){ try{r.start();}catch(e){} } };
-  return r;
+/* ---------- mic + voice-activity detection ---------- */
+async function initMic(){
+  micStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+  audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  const src = audioCtx.createMediaStreamSource(micStream);
+  analyser = audioCtx.createAnalyser(); analyser.fftSize=1024;
+  src.connect(analyser);
+  vadData = new Uint8Array(analyser.fftSize);
+}
+function micLevel(){
+  analyser.getByteTimeDomainData(vadData);
+  let sum=0;
+  for(let i=0;i<vadData.length;i++){ const v=(vadData[i]-128)/128; sum+=v*v; }
+  return Math.sqrt(sum/vadData.length);
+}
+function pickMime(){
+  const opts=["audio/webm;codecs=opus","audio/webm","audio/ogg;codecs=opus","audio/mp4"];
+  for(const m of opts){ if(window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m; }
+  return "";
 }
 function startListening(){
-  if(!recog) recog=buildRecog();
-  if(!recog) return;
-  listenEnabled=true;
-  try{ recog.start(); }catch(e){}
-  setOrb("live"); cueBeep(); setStatus(L[lang].yourTurn,"live");
-  setCaption("…");
+  if(!micStream) return;
+  listenEnabled=true; paused=false;
+  chunks=[]; hasSpoken=false; lastVoiceTs=performance.now(); recStart=performance.now();
+  const mime=pickMime();
+  try{ mediaRecorder = mime ? new MediaRecorder(micStream,{mimeType:mime}) : new MediaRecorder(micStream); }
+  catch(e){ mediaRecorder = new MediaRecorder(micStream); }
+  mediaRecorder.ondataavailable = e=>{ if(e.data && e.data.size>0) chunks.push(e.data); };
+  mediaRecorder.onstop = onRecStop;
+  try{ mediaRecorder.start(); }catch(e){}
+  setOrb("live"); cueBeep(); setStatus(L[lang].yourTurn,"live"); setCaption("…");
+  vadRAF = requestAnimationFrame(vadLoop);
 }
-function pauseListening(){
+function vadLoop(){
+  if(!listenEnabled){ return; }
+  const lvl=micLevel(), now=performance.now();
+  if(lvl>VAD_THRESHOLD){ hasSpoken=true; lastVoiceTs=now; }
+  const elapsed=now-recStart, silence=now-lastVoiceTs;
+  if((hasSpoken && silence>SILENCE_MS && elapsed>MIN_SPEECH_MS) || elapsed>MAX_REC_MS){
+    stopAndProcess(); return;
+  }
+  vadRAF = requestAnimationFrame(vadLoop);
+}
+function stopRecorder(){
   listenEnabled=false;
-  if(silenceTimer) clearTimeout(silenceTimer);
-  try{ recog && recog.stop(); }catch(e){}
+  if(vadRAF) cancelAnimationFrame(vadRAF);
+  try{ if(mediaRecorder && mediaRecorder.state!=="inactive") mediaRecorder.stop(); }catch(e){}
+}
+function stopAndProcess(){
+  // flip UI to "processing" immediately, before any network call
+  setOrb("think"); setStatus(L[lang].thinking,"think"); setCaption("…");
+  stopRecorder();
+}
+async function onRecStop(){
+  if(paused) return;
+  const blob=new Blob(chunks,{type:(mediaRecorder&&mediaRecorder.mimeType)||"audio/webm"});
+  if(!hasSpoken || blob.size<1500){ startListening(); return; }  // heard nothing -> listen again
+  try{
+    const fd=new FormData();
+    fd.append("audio", blob, "audio.webm");
+    fd.append("lang", lang);
+    const r=await fetch("/api/stt",{method:"POST",body:fd});
+    const data=await r.json();
+    if(data.error) throw new Error(data.error);
+    const text=(data.transcript||"").trim();
+    if(text.length<2){ startListening(); return; }   // nothing understood -> listen again
+    await handleUserText(text);
+  }catch(err){ showErr("Hearing error: "+(err.message||err)); startListening(); }
 }
 
-/* ---------- conversation turns ---------- */
-async function endUserTurn(){
-  const text=turnBuffer.trim(); turnBuffer="";
-  if(silenceTimer) clearTimeout(silenceTimer);
-  if(text.length<2 || ending) return;
-  pauseListening();
-  setOrb("think"); setStatus(L[lang].thinking,"think"); setCaption("…");
+/* ---------- conversation ---------- */
+async function handleUserText(text){
+  if(ending) return;
+  setOrb("think"); setStatus(L[lang].thinking,"think");
   history.push({role:"user",content:text});
   try{
     const r=await fetch("/api/converse",{method:"POST",headers:{"content-type":"application/json"},
@@ -283,19 +321,13 @@ async function endUserTurn(){
     history.push({role:"assistant",content:JSON.stringify(data)});
     if(data.action==="final") await finish(data);
     else await ask(data.speech);
-  }catch(err){
-    showErr("Error: "+(err.message||err));
-    await say("Maaf kijiye, dobara boliye.");
-    startListening();
-  }
+  }catch(err){ showErr("Error: "+(err.message||err)); startListening(); }
 }
 async function ask(speech){
   setCaption(speech);
   await say(speech);
   startListening();
 }
-
-/* ---------- finish ---------- */
 async function finish(data){
   ending=true;
   setCaption(data.speech);
@@ -319,9 +351,9 @@ document.querySelectorAll(".langbtn").forEach(b=>{
     lang=b.dataset.lang;
     show("s-convo");
     setStatus("…"); setCaption("…"); setOrb("idle");
-    try{ await navigator.mediaDevices.getUserMedia({audio:true}); }
+    try{ if(!micStream) await initMic(); }
     catch(e){ showErr("Please allow microphone access, then reload."); return; }
-    history=[]; ending=false; turnBuffer="";
+    history=[]; ending=false;
     setCaption(L[lang].welcome(NAME));
     await say(L[lang].welcome(NAME));
     startListening();
@@ -329,8 +361,12 @@ document.querySelectorAll(".langbtn").forEach(b=>{
 });
 
 $("stopBtn").onclick = ()=>{
-  if(listenEnabled){ pauseListening(); setOrb("idle"); setStatus("⏸ रुका हुआ / Paused"); $("stopBtn").textContent="▶ जारी रखें / Resume"; }
-  else { startListening(); $("stopBtn").textContent="⏸ रोकें / Pause"; }
+  if(listenEnabled){
+    paused=true; stopRecorder();
+    setOrb("idle"); setStatus("⏸ रुका हुआ / Paused"); $("stopBtn").textContent="▶ जारी रखें / Resume";
+  } else {
+    $("stopBtn").textContent="⏸ रोकें / Pause"; startListening();
+  }
 };
 $("againBtn").onclick = ()=> location.reload();
 $("downloadBtn").onclick = ()=>{
@@ -339,9 +375,6 @@ $("downloadBtn").onclick = ()=>{
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=lastEntry.ticket+".json"; a.click();
 };
 function showErr(m){ $("convoErr").style.display="block"; $("convoErr").textContent=m; }
-
-window.speechSynthesis && speechSynthesis.getVoices();
-window.speechSynthesis && (speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices());
 </script>
 </body>
 </html>
