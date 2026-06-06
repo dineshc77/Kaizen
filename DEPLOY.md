@@ -37,10 +37,10 @@ create a new key. Use the NEW key in step 3 below.
    - Start command: `gunicorn app:app --bind 0.0.0.0:$PORT --timeout 120`
    - Plan: **Free**
 
-## 3. Add your API key as a secret
-In the service's **Environment** tab → **Add Environment Variable**:
-- Key:   `ANTHROPIC_API_KEY`
-- Value: `sk-ant-...` (your NEW key from step 0)
+## 3. Add your API keys as secrets
+In the service's **Environment** tab → **Add Environment Variable** (add BOTH):
+- `ANTHROPIC_API_KEY` = `sk-ant-...`  (your NEW Anthropic key from step 0)
+- `SARVAM_API_KEY`    = `sk_...`      (your Sarvam key — for the voice/speech)
 
 Click **Save**, then **Deploy**.
 
