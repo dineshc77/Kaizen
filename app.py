@@ -16,17 +16,28 @@ import os
 import json
 import re
 
+import requests
 from flask import Flask, request, jsonify, render_template
 import anthropic
 
-# --- API key: read ONLY from the environment (never commit a real key) ---
-# Local dev:  set ANTHROPIC_API_KEY in your shell, or create a .env file.
-# Render:     add ANTHROPIC_API_KEY as a secret env var in the dashboard.
+# --- Keys: read ONLY from the environment (never commit a real key) ---
+# Local dev:  set these in your shell. Render: add them as secret env vars.
 API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+SARVAM_KEY = os.environ.get("SARVAM_API_KEY", "")
 MODEL = "claude-sonnet-4-6"
 
+# Sarvam (Indian-language speech) settings
+SARVAM_STT_URL = "https://api.sarvam.ai/speech-to-text"
+SARVAM_TTS_URL = "https://api.sarvam.ai/text-to-speech"
+SARVAM_STT_MODEL = "saarika:v2.5"
+SARVAM_TTS_MODEL = "bulbul:v2"
+SARVAM_SPEAKER = "anushka"          # valid bulbul:v2 voice
+LANG_BCP47 = {"hi": "hi-IN", "gu": "gu-IN", "en": "en-IN", "ta": "ta-IN"}
+
 if not API_KEY:
-    print("WARNING: ANTHROPIC_API_KEY is not set. The AI calls will fail until you set it.")
+    print("WARNING: ANTHROPIC_API_KEY is not set. AI calls will fail until you set it.")
+if not SARVAM_KEY:
+    print("WARNING: SARVAM_API_KEY is not set. Voice (speech) will fail until you set it.")
 
 client = anthropic.Anthropic(api_key=API_KEY)
 app = Flask(__name__)
@@ -126,6 +137,58 @@ def converse():
             except (ValueError, TypeError):
                 result["tier"] = 1
         return jsonify(result)
+    except Exception as e:  # noqa
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/stt", methods=["POST"])
+def stt():
+    """Browser sends a short audio clip -> Sarvam transcribes -> we return text."""
+    if "audio" not in request.files:
+        return jsonify({"error": "no audio"}), 400
+    lang = request.form.get("lang", "hi")
+    bcp = LANG_BCP47.get(lang, "unknown")
+    audio = request.files["audio"]
+    try:
+        r = requests.post(
+            SARVAM_STT_URL,
+            headers={"api-subscription-key": SARVAM_KEY},
+            files={"file": (audio.filename or "audio.webm", audio.stream, audio.mimetype or "audio/webm")},
+            data={"model": SARVAM_STT_MODEL, "language_code": bcp},
+            timeout=30,
+        )
+        if r.status_code != 200:
+            return jsonify({"error": f"sarvam stt {r.status_code}: {r.text[:200]}"}), 502
+        return jsonify({"transcript": r.json().get("transcript", "")})
+    except Exception as e:  # noqa
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/tts", methods=["POST"])
+def tts():
+    """We send the AI's reply text -> Sarvam returns base64 wav -> browser plays it."""
+    data = request.get_json(force=True)
+    text = (data.get("text") or "").strip()
+    lang = data.get("lang", "hi")
+    bcp = LANG_BCP47.get(lang, "hi-IN")
+    if not text:
+        return jsonify({"error": "no text"}), 400
+    try:
+        r = requests.post(
+            SARVAM_TTS_URL,
+            headers={"api-subscription-key": SARVAM_KEY, "Content-Type": "application/json"},
+            json={
+                "text": text[:1500],
+                "target_language_code": bcp,
+                "speaker": SARVAM_SPEAKER,
+                "model": SARVAM_TTS_MODEL,
+            },
+            timeout=30,
+        )
+        if r.status_code != 200:
+            return jsonify({"error": f"sarvam tts {r.status_code}: {r.text[:200]}"}), 502
+        audios = r.json().get("audios", [])
+        return jsonify({"audio": audios[0] if audios else ""})
     except Exception as e:  # noqa
         return jsonify({"error": str(e)}), 500
 
