@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Kaizen · User · Reviewer · Approver — Grasim Fibre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Sora:wght@500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/dist/tabler-icons.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --ink:#15171C;--ink-2:#2A2E37;--surface:#FFFFFF;--surface-2:#FAF9F5;--bg:#EFEDE6;
+  --line:rgba(21,23,28,.10);--line-2:rgba(21,23,28,.16);--muted:#6E6D66;--muted-2:#9B9A92;
+  --ember:#EF5026;--ember-d:#C23C18;--ember-soft:#FCEAE3;
+  --emerald:#159468;--emerald-soft:#E2F2EB;--amber:#D98A12;--amber-soft:#FBEFD7;
+  --blue:#2A6FE0;--blue-soft:#E5EEFC;--red:#D8423A;--red-soft:#FBE6E4;--violet:#5b4ad1;--violet-soft:#ECEAFE;--teal:#0f8a8a;
+  --d-bg:#0E1116;--d-panel:#161B22;--d-panel-2:#1C232C;--d-line:rgba(255,255,255,.09);--d-text:#E9EAE4;--d-muted:#9098A2;
+  --r:12px;--r-lg:16px;
+  --sh:0 1px 2px rgba(21,23,28,.05),0 6px 22px rgba(21,23,28,.06);
+  --sh-lg:0 2px 6px rgba(21,23,28,.06),0 24px 60px rgba(21,23,28,.13);
+  --sans:"Hanken Grotesk",sans-serif;--disp:"Sora",sans-serif;--mono:"JetBrains Mono",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.mono{font-family:var(--mono);font-feature-settings:"tnum"}
+
+/* persona switcher */
+.pbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:16px;padding:12px 22px;background:rgba(244,242,236,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:-.01em}
+.brand .mk{width:30px;height:30px;border-radius:9px;background:var(--ink);position:relative;display:grid;place-items:center;color:#fff;font-size:15px;overflow:hidden}
+.brand .mk::after{content:"";position:absolute;inset:0;background:conic-gradient(from 210deg at 50% 120%,var(--ember),transparent 40%)}
+.brand .mk span{position:relative;z-index:1}
+.brand small{display:block;font-family:var(--sans);font-weight:500;font-size:10px;color:var(--muted);margin-top:-2px}
+.pbar .sp{flex:1}
+.pswitch{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;box-shadow:var(--sh)}
+.pswitch button{font-size:13px;font-weight:600;padding:8px 16px;border-radius:999px;color:var(--muted);display:flex;align-items:center;gap:7px}
+.pswitch button.on{background:var(--ink);color:#fff}
+.pswitch button .ti{font-size:16px}
+.pbar .client{font-size:12px;color:var(--muted);text-align:right;line-height:1.3}
+.pbar .client b{color:var(--ink);font-weight:600}
+
+/* console (reviewer/approver) */
+.app{display:grid;grid-template-columns:236px 1fr;height:100vh;overflow:hidden}
+.side{color:var(--d-muted);padding:18px 14px;display:flex;flex-direction:column;height:100vh;overflow-y:auto}
+.side .lg{display:flex;align-items:center;gap:10px;color:#fff;font-family:var(--disp);font-weight:700;font-size:15px;padding:4px 8px}
+.side .lg .mark{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:15px}
+.side .lg small{display:block;font-family:var(--sans);font-weight:500;font-size:10px;color:var(--d-muted);margin-top:-1px}
+.side .sec{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#5d646e;font-weight:700;margin:18px 10px 7px}
+.nav a{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:9px;font-size:13px;font-weight:500;color:var(--d-muted);position:relative}
+.nav a .ti{font-size:18px}
+.nav a .cnt{margin-left:auto;font-family:var(--mono);font-size:10.5px;font-weight:600;background:var(--d-panel-2);padding:2px 7px;border-radius:99px}
+.nav a.on{background:var(--d-panel-2);color:#fff}
+.nav a.on::before{content:"";position:absolute;left:-14px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--ember)}
+.nav a:hover{color:#fff}
+.side .who{margin-top:auto;display:flex;align-items:center;gap:10px;padding:11px 8px 2px;border-top:1px solid var(--d-line);font-size:12.5px}
+.side .who b{color:#fff;font-weight:600;display:block}
+.main{display:flex;flex-direction:column;min-width:0;background:var(--bg);height:100vh;overflow:hidden}
+.topbar{display:flex;align-items:center;gap:14px;padding:15px 26px;background:var(--surface);border-bottom:1px solid var(--line);flex:none}
+.topbar h1{font-family:var(--disp);font-size:22px;font-weight:600;letter-spacing:-.025em;color:var(--ink)}
+.topbar .crumb{font-size:11px;color:var(--muted);font-weight:600}
+.view{padding:24px 26px 60px;overflow-y:auto;flex:1}
+
+/* bits */
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 9px;border-radius:999px;line-height:1}
+.pill .ti{font-size:13px}
+.pill.ok{background:var(--emerald-soft);color:var(--emerald)}.pill.work{background:var(--blue-soft);color:var(--blue)}
+.pill.warn{background:var(--amber-soft);color:var(--amber)}.pill.bad{background:var(--red-soft);color:var(--red)}
+.pill.muted{background:rgba(21,23,28,.06);color:var(--muted)}.pill.ember{background:var(--ember-soft);color:var(--ember-d)}
+.pill.violet{background:var(--violet-soft);color:var(--violet)}
+.tag{font-size:10px;font-weight:600;padding:3px 7px;border-radius:6px;background:rgba(21,23,28,.05);color:var(--muted)}
+.tier{font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 7px;border-radius:6px}
+.tier.A{background:var(--emerald-soft);color:var(--emerald)}.tier.B{background:var(--blue-soft);color:var(--blue)}.tier.C{background:var(--violet-soft);color:var(--violet)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:13px;padding:10px 16px;border-radius:10px;background:var(--surface);border:1px solid var(--line-2);transition:.15s}
+.btn:hover{border-color:var(--ink-2)}
+.btn.prim{background:var(--ember);color:#fff;border-color:var(--ember)}.btn.prim:hover{background:var(--ember-d)}
+.btn.ok{background:var(--emerald);color:#fff;border-color:var(--emerald)}
+.btn.sm{padding:7px 12px;font-size:12px}.btn.block{width:100%}
+.avatar{border-radius:50%;flex:none;display:grid;place-items:center;font-weight:600;color:#fff;font-size:11px}
+.bar{height:7px;border-radius:99px;background:rgba(21,23,28,.08);overflow:hidden}.bar>i{display:block;height:100%;border-radius:99px;background:var(--ember)}
+hr.sep{border:none;border-top:1px solid var(--line);margin:14px 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh)}
+.cardp{padding:18px}
+.card h3{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.card .sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+.kpis{display:grid;gap:13px;margin-bottom:18px}
+.kpis.k4{grid-template-columns:repeat(4,1fr)}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:15px;box-shadow:var(--sh)}
+.kpi .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:16px;margin-bottom:10px}
+.kpi .lab{font-size:11px;color:var(--muted);font-weight:600}
+.kpi .val{font-family:var(--disp);font-size:25px;font-weight:600;letter-spacing:-.02em;margin-top:2px}
+.kpi .val small{font-size:13px;color:var(--muted)}
+.kpi .delta{font-size:11px;font-weight:600;color:var(--emerald);margin-top:3px;display:flex;align-items:center;gap:3px}
+.g{display:grid;gap:16px}.g.c2{grid-template-columns:1fr 1fr}.g.wl{grid-template-columns:1.4fr 1fr}.g.wr{grid-template-columns:1fr 1.4fr}
+.chartbox{position:relative;width:100%;height:230px}.chartbox.sm{height:190px}
+.qitem{display:flex;align-items:center;gap:11px;padding:11px;border:1px solid var(--line);border-radius:11px;margin-bottom:9px;cursor:pointer;transition:.12s}
+.qitem:hover{border-color:var(--line-2);background:var(--surface-2)}
+.qitem .meta{flex:1;min-width:0}.qitem .meta b{font-size:13px;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qitem .meta span{font-size:11px;color:var(--muted)}
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{text-align:left;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-2);font-weight:700;padding:10px 12px;border-bottom:1px solid var(--line)}
+.tbl td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr{cursor:pointer}.tbl tbody tr:hover{background:var(--surface-2)}.tbl .tt{font-weight:600}
+.muted{color:var(--muted)}
+.field{margin-bottom:13px}.field label{font-size:12px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:6px}
+.input{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--ink);font-family:inherit}
+.input.area{min-height:64px;resize:none}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chips button{font-size:12px;font-weight:600;padding:7px 12px;border-radius:99px;border:1px solid var(--line-2);color:var(--ink-2);background:var(--surface)}
+.chips button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--ember)}
+.crit{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.crit .lab{font-size:12.5px;font-weight:600;width:150px}
+.crit .val{font-family:var(--mono);font-weight:700;font-size:13px;width:54px;text-align:right}
+
+/* toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:11px;font-size:13px;font-weight:600;box-shadow:var(--sh-lg);opacity:0;transition:.25s;z-index:99;display:flex;align-items:center;gap:9px;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== employee phone ===== */
+.stage{display:flex;justify-content:center;padding:26px 18px 50px}
+.phone{width:392px;background:#0b0c0e;border-radius:46px;padding:13px;box-shadow:var(--sh-lg);position:relative}
+.phone::before{content:"";position:absolute;top:24px;left:50%;transform:translateX(-50%);width:120px;height:30px;background:#0b0c0e;border-radius:0 0 18px 18px;z-index:6}
+.phscreen{background:var(--surface-2);border-radius:34px;overflow:hidden;height:812px;position:relative;display:flex;flex-direction:column}
+.statusbar{display:flex;justify-content:space-between;align-items:center;padding:14px 26px 8px;font-size:12.5px;font-weight:600;flex:none}
+.statusbar .ic{display:flex;gap:5px;align-items:center}
+.phbody{flex:1;overflow:auto;position:relative}
+.phbody::-webkit-scrollbar{width:0}
+.appbar{display:flex;align-items:center;gap:12px;padding:8px 18px 12px}
+.appbar .logo{font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+.appbar .logo .mk{width:24px;height:24px;border-radius:7px;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:12px}
+.seg{display:flex;gap:4px;margin:0 18px 14px;background:rgba(21,23,28,.05);padding:4px;border-radius:11px}
+.seg button{flex:1;font-size:13px;font-weight:600;color:var(--muted);padding:8px;border-radius:8px}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:var(--sh)}
+.tabbar{display:flex;justify-content:space-around;align-items:center;padding:9px 8px 22px;border-top:1px solid var(--line);background:rgba(255,255,255,.92);backdrop-filter:blur(8px);flex:none}
+.tabbar a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;font-weight:600;color:var(--muted-2)}
+.tabbar a .ti{font-size:21px}.tabbar a.on{color:var(--ember)}
+.fab{width:50px;height:50px;border-radius:16px;background:var(--ember);color:#fff;display:grid;place-items:center;font-size:24px;box-shadow:0 8px 20px rgba(239,80,38,.4);margin-top:-26px}
+.feedcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);margin:0 14px 14px;overflow:hidden;box-shadow:var(--sh)}
+.fc-top{display:flex;align-items:center;gap:10px;padding:13px 14px 10px}
+.fc-top .meta{flex:1;line-height:1.25}.fc-top .meta b{font-size:13.5px;font-weight:600}.fc-top .meta span{font-size:11px;color:var(--muted)}
+.fc-body{padding:0 14px 12px}
+.fc-title{font-size:15px;font-weight:600;letter-spacing:-.01em;margin-bottom:7px;font-family:var(--disp)}
+.fc-ba{display:flex;gap:8px;margin:11px 0}
+.fc-ba div{flex:1;border-radius:11px;height:88px;display:flex;align-items:flex-end;padding:8px;font-size:10px;font-weight:600;color:#fff;overflow:hidden}
+.fc-ba .b{background:linear-gradient(150deg,#8a8a82,#5d5d56)}.fc-ba .a{background:linear-gradient(150deg,#1fae7d,#0f7d54)}
+.fc-stat{display:flex;align-items:center;gap:7px;background:var(--emerald-soft);color:var(--emerald);border-radius:10px;padding:9px 12px;font-size:12.5px;font-weight:600;margin-top:4px}
+.fc-act{display:flex;align-items:center;gap:18px;padding:11px 14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);font-weight:500}
+.fc-act span{display:flex;align-items:center;gap:6px}.fc-act .ti{font-size:17px}
+.mcard{display:flex;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);margin:0 14px 12px;box-shadow:var(--sh);cursor:pointer}
+.mcard .ico{width:42px;height:42px;border-radius:11px;flex:none;display:grid;place-items:center;color:#fff;font-size:19px}
+.timeline{display:flex;align-items:center;margin:6px 0}
+.timeline .st{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;position:relative}
+.timeline .st .d{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;background:rgba(21,23,28,.08);color:var(--muted);z-index:1}
+.timeline .st.done .d{background:var(--emerald);color:#fff}
+.timeline .st.now .d{background:var(--ember);color:#fff;box-shadow:0 0 0 5px var(--ember-soft)}
+.timeline .st .lab{font-size:9.5px;font-weight:600;color:var(--muted)}
+.timeline .st.now .lab,.timeline .st.done .lab{color:var(--ink)}
+.timeline .st::before{content:"";position:absolute;top:12px;left:-50%;width:100%;height:2px;background:rgba(21,23,28,.1)}
+.timeline .st:first-child::before{display:none}
+.timeline .st.done::before,.timeline .st.now::before{background:var(--emerald)}
+.stepper{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.stepper .s{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--muted)}
+.stepper .s .n{width:22px;height:22px;border-radius:50%;background:rgba(21,23,28,.08);display:grid;place-items:center;font-size:11px}
+.stepper .s.on .n{background:var(--ember);color:#fff}.stepper .s.on{color:var(--ink)}
+.stepper .ln{flex:1;height:2px;background:rgba(21,23,28,.1);border-radius:9px}
+.pad{padding:0 18px}
+.web{max-width:1200px;margin:0 auto;padding:22px 26px 64px}
+.webnav{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 16px;box-shadow:var(--sh);margin-bottom:20px;position:sticky;top:73px;z-index:20}
+.webnav .hub{font-family:var(--disp);font-weight:700;font-size:15px;margin-right:8px}
+.webnav a{font-size:13.5px;font-weight:600;color:var(--muted);padding:8px 13px;border-radius:9px;cursor:pointer}
+.webnav a.on,.webnav a:hover{background:var(--surface-2);color:var(--ink)}
+.wsrch{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-size:13px;font-weight:500;color:var(--muted-2);width:230px;cursor:text;transition:.15s}
+.wsrch:hover{border-color:var(--line-2)}
+.wsrch .ti{font-size:16px;color:var(--muted)}
+.web-home{display:grid;grid-template-columns:250px 1fr 300px;gap:20px;align-items:start}
+.web-2{display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start}
+.web-grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.web-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.web .feedcard{margin:0 0 16px}
+.railcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;box-shadow:var(--sh)}
+.sticky{position:sticky;top:0}
+.endo{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);padding:5px 11px;border-radius:999px;transition:.15s;cursor:pointer}
+.endo .ti{font-size:15px}
+.endo:hover{border-color:var(--ember);color:var(--ember-d)}
+.endo.on{background:var(--ember-soft);border-color:rgba(239,80,38,.45);color:var(--ember-d)}
+.dupbanner{display:none;align-items:flex-start;gap:9px;background:var(--amber-soft);border:1px solid rgba(217,138,18,.35);color:var(--amber);border-radius:11px;padding:11px 13px;font-size:12.5px;margin:-4px 0 14px;line-height:1.45}
+.dupbanner .ti{font-size:17px;flex:none;margin-top:1px}.dupbanner b{color:var(--ink)}
+.modal-bg{position:fixed;inset:0;background:rgba(21,23,28,.45);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:90;padding:20px}
+.modal{background:var(--surface);border-radius:20px;max-width:472px;width:100%;box-shadow:var(--sh-lg);overflow:hidden;animation:pop .25s}
+@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:none;opacity:1}}
+.modal .top2{padding:24px 24px 0;text-align:center}
+.modal .bic{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;margin:0 auto 14px;font-size:27px}
+.modal h3{font-family:var(--disp);font-size:19px;font-weight:600;letter-spacing:-.01em}
+.modal p.m{font-size:13.5px;color:var(--muted);margin-top:8px;line-height:1.55}
+.modal .body2{padding:18px 24px 24px}
+.spark{display:flex;align-items:center;gap:9px;background:var(--ember-soft);color:var(--ember-d);border-radius:11px;padding:11px 13px;font-size:12.5px;font-weight:600;margin:14px 0}
+.matchcard{display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface-2)}
+.web-feed{display:grid;grid-template-columns:1fr 1fr 232px;gap:20px;align-items:start}
+.feedcol{min-width:0}
+.feedrail{position:sticky;top:0;align-self:start}
+.feedbar{display:flex;align-items:center;gap:16px;padding:0 26px;background:var(--surface);border-bottom:1px solid var(--line);flex:none}
+.seg-tabs{display:flex}
+.seg-tabs button{font-size:13px;font-weight:600;color:var(--muted);padding:15px 2px;margin-right:22px;border-bottom:2px solid transparent;transition:.12s;cursor:pointer;background:none}
+.seg-tabs button:hover{color:var(--ink)}
+.seg-tabs button.on{color:var(--ink);border-bottom-color:var(--ember)}
+.feedbar .fh-count{margin-left:auto}
+.ic-photos{display:flex;gap:8px;margin:0 0 13px}
+.ic-photo{flex:1;height:138px;border-radius:13px;position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:9px}
+.ic-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(transparent 45%,rgba(0,0,0,.3))}
+.ic-pcap{position:relative;z-index:1;display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;color:rgba(255,255,255,.95);background:rgba(0,0,0,.34);padding:3px 9px;border-radius:20px}
+.ic-pcap .ti{font-size:13px}
+.att-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.att-tiles .att-tile{border:1.5px dashed var(--line-2);border-radius:13px;padding:15px 12px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:.14s;background:var(--surface)}
+.att-tiles .att-tile:hover{border-color:var(--ember);background:var(--ember-soft)}
+.att-tiles .att-tile>i{font-size:21px;color:var(--ink-2);margin-bottom:4px}
+.att-tiles .att-tile:hover>i{color:var(--ember-d)}
+.att-tiles .att-tile b{font-size:12.5px;font-weight:600;color:var(--ink)}
+.att-tiles .att-tile span{font-size:10.5px;color:var(--muted);line-height:1.3;margin-top:1px}
+.att-list{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.att-list:empty{margin-top:0}
+.att-chip{display:flex;align-items:center;gap:9px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-size:12.5px}
+.att-chip>i{font-size:17px;color:var(--ember-d);flex:none}
+.att-name{flex:1;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.att-chip small{color:var(--muted);font-size:11px;font-weight:600;font-family:var(--mono)}
+.att-x{border:none;background:none;color:var(--muted);cursor:pointer;display:grid;place-items:center;padding:2px;border-radius:6px}
+.att-x:hover{color:var(--red);background:var(--surface)}
+.mic-btn{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--ember-d);background:var(--ember-soft);border:1px solid transparent;border-radius:20px;padding:5px 11px;cursor:pointer;transition:.14s}
+.mic-btn .ti{font-size:14px}
+.mic-btn.rec{background:var(--red);color:#fff;animation:micpulse 1.3s infinite}
+@keyframes micpulse{0%,100%{box-shadow:0 0 0 0 rgba(216,66,58,.45)}50%{box-shadow:0 0 0 7px rgba(216,66,58,0)}}
+.ctx-fixed{display:flex;align-items:center;gap:7px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:9px 13px;font-size:13px;font-weight:600;color:var(--ink)}
+.req{color:var(--red);font-weight:700;margin-left:1px}
+.ctx-fixed>i{color:var(--muted);font-size:16px}
+.ctx-lock{margin-left:auto;display:flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:2px 8px}
+.ctx-lock .ti{font-size:12px}
+.ctx-dept{position:relative}
+.ctx-deptbtn{display:flex;align-items:center;gap:7px;width:100%;background:var(--surface);border:1px solid var(--line-2);border-radius:10px;padding:9px 13px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;transition:.14s}
+.ctx-deptbtn:hover{border-color:var(--ember)}
+.ctx-deptbtn>i:first-child{color:var(--ember-d);font-size:16px}
+.ctx-deptbtn .chev{margin-left:auto;color:var(--muted);font-size:16px;transition:.18s}
+.ctx-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--surface);border:1px solid var(--line);border-radius:11px;box-shadow:0 12px 32px rgba(15,17,22,.14);padding:5px;z-index:30;max-height:232px;overflow-y:auto}
+.ctx-menu.open{display:block}
+.ctx-menu a{display:block;padding:8px 11px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--ink-2);cursor:pointer}
+.ctx-menu a:hover{background:var(--surface-2);color:var(--ink)}
+.rsw{margin:14px 0 4px;position:relative}
+.rsw-cur{display:flex;align-items:center;gap:10px;width:100%;background:var(--d-panel-2);border:1px solid var(--d-line);border-radius:11px;padding:9px 11px;text-align:left;cursor:pointer}
+.rsw-cur:hover{border-color:rgba(255,255,255,.2)}
+.rsw-ic{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.08);display:grid;place-items:center;color:#fff;font-size:16px;flex:none}
+.rsw-t{flex:1;min-width:0;line-height:1.2}
+.rsw-t small{font-size:9px;letter-spacing:.1em;color:#5d646e;font-weight:700;display:block}
+.rsw-t b{color:#fff;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.rsw-chev{color:var(--d-muted);font-size:16px;flex:none;transition:.18s}
+.rsw-menu{display:none;margin-top:6px;background:var(--d-panel);border:1px solid var(--d-line);border-radius:11px;padding:5px;flex-direction:column;gap:2px}
+.rsw.open .rsw-menu{display:flex}
+.rsw.open .rsw-chev{transform:rotate(180deg)}
+.rsw-menu a{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--d-muted);cursor:pointer}
+.rsw-menu a .ti{font-size:16px}
+.rsw-menu a span{flex:1}
+.rsw-menu a:hover{background:var(--d-panel-2);color:#fff}
+.rsw-menu a.on{color:#fff}
+.rsw-menu a.on .ti-check{color:var(--ember)}
+.colnote{font-size:12px;color:var(--muted);margin:-6px 0 14px;line-height:1.45}
+.web .vh{display:flex;align-items:center;gap:8px}
+.compose{display:flex;align-items:center;gap:12px;margin-bottom:16px;cursor:pointer}
+.fc-desc{font-size:12.5px;color:var(--ink-2);line-height:1.5;margin-bottom:10px}
+.fc-impact{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;border-radius:8px;padding:5px 9px}
+.fc-impact .ti{font-size:14px}
+.fc-impact.real{background:var(--emerald-soft);color:var(--emerald)}
+.fc-impact.est{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.initcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:15px;box-shadow:var(--sh);margin-bottom:14px}
+.initcard .ic-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.ic-title{font-family:var(--disp);font-weight:600;font-size:14.5px;letter-spacing:-.01em;margin-bottom:7px}
+.ic-prog{display:flex;align-items:center;gap:10px;margin:11px 0 9px}
+.ic-prog .bar{flex:1}.ic-prog .bar>i{background:var(--blue)}
+.ic-prog .mono{font-size:11.5px;font-weight:700;color:var(--ink-2)}
+.ic-foot{display:flex;gap:14px;font-size:11px;color:var(--muted);font-weight:600;flex-wrap:wrap}
+.ic-foot span{display:flex;align-items:center;gap:5px}.ic-foot .ti{font-size:14px;color:var(--ink-2)}
+.rc-compact{padding:14px}
+.cb-list{display:flex;flex-direction:column;gap:10px;margin-top:11px}
+.cb-row{display:flex;align-items:center;gap:8px;font-size:12px}
+.cb-rank{font-family:var(--mono);font-weight:700;color:var(--muted-2);width:11px;font-size:11px}
+.cb-name{flex:1;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb-val{font-family:var(--mono);font-weight:700;color:var(--emerald);font-size:11px}
+@media(max-width:1100px){.web-feed{grid-template-columns:1fr}.feedrail{position:static}}
+.web-feed2{display:grid;grid-template-columns:minmax(0,700px) 320px;gap:24px;justify-content:center;align-items:start}
+.feedmain{min-width:0}
+.ideac{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--sh);margin-bottom:18px;overflow:hidden;transition:.18s}
+.ideac:hover{box-shadow:var(--sh-lg);transform:translateY(-2px)}
+.ideac::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--cat,#ccc)}
+.ideac-in{padding:18px 20px 14px 23px}
+.ic-head{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.ic-head .who{flex:1;min-width:0;line-height:1.34}.ic-head .who b{font-size:13.5px;font-weight:600;display:block}.ic-head .who span{font-size:11.5px;color:var(--muted);display:block;margin-top:2px}
+.ic-catrow{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.catchip{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:7px;display:inline-flex;align-items:center;gap:4px}
+.catchip .ti{font-size:12px}
+.ic-t{font-family:var(--disp);font-size:17px;font-weight:600;letter-spacing:-.015em;line-height:1.25;margin-bottom:8px}
+.ic-d{font-size:13px;color:var(--ink-2);line-height:1.55;margin-bottom:13px}
+.ic-bar{display:flex;align-items:center;gap:5px;padding-top:13px;margin-top:14px;border-top:1px solid var(--line)}
+.iact{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted);padding:6px 9px;border-radius:9px;cursor:pointer;transition:.12s;background:none}
+.iact:hover{background:var(--surface-2);color:var(--ink)}.iact .ti{font-size:17px}.iact.liked{color:var(--red)}
+.endrs{margin-left:auto;display:flex;align-items:center;gap:9px}
+.endstack{display:flex}.endstack .avatar{width:23px;height:23px;border:2px solid var(--surface);margin-left:-8px;font-size:8.5px}.endstack .avatar:first-child{margin-left:0}
+.initrow{display:flex;align-items:flex-start;gap:9px;padding:11px 0;border-top:1px solid var(--line);cursor:pointer}
+.initrow:hover{opacity:.78}.initrow:first-of-type{border-top:none}
+.idot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex:none}
+.ir-main{flex:1;min-width:0}.ir-main b{font-size:12px;font-weight:600;display:block;line-height:1.3}.ir-main span{font-size:10.5px;color:var(--muted)}
+.ir-insight{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--ink-2);font-weight:500;margin-top:5px;line-height:1.35}
+.ir-insight .ti{font-size:13px;color:var(--muted-2);flex:none}
+.railcard h3{display:flex;align-items:center;gap:7px}
+@media(max-width:1100px){.web-feed2{grid-template-columns:1fr}}
+.feedhdr{display:flex;align-items:flex-start;gap:13px;margin-bottom:14px}
+.fh-icon{width:44px;height:44px;border-radius:13px;background:var(--ember-soft);color:var(--ember);display:grid;place-items:center;font-size:22px;flex:none}
+.fh-text{flex:1;min-width:0}
+.fh-title{font-family:var(--disp);font-size:22px;font-weight:600;letter-spacing:-.02em}
+.fh-sub{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.45}
+.fh-count{font-size:11px;font-weight:700;color:var(--ember-d);background:var(--ember-soft);padding:5px 11px;border-radius:999px;flex:none;margin-top:5px}
+.fh-chips{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.fchip{font-size:12px;font-weight:600;padding:7px 14px;border-radius:999px;border:1px solid var(--line-2);color:var(--ink-2);background:var(--surface);cursor:pointer;transition:.12s}
+.fchip:hover{border-color:var(--ink-2)}
+.fchip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.web h2.vh{font-family:var(--disp);font-size:18px;font-weight:600;letter-spacing:-.01em;margin-bottom:14px}
+@media(max-width:1100px){.web-home,.web-2{grid-template-columns:1fr}.web-grid3{grid-template-columns:1fr 1fr}}
+@media(max-width:1000px){.app{grid-template-columns:1fr;height:auto;overflow:visible}.side{height:auto;overflow:visible}.main{height:auto;overflow:visible}.view{overflow:visible}.g.c2,.g.wl,.g.wr,.kpis.k4{grid-template-columns:1fr}}
+/* ===== Kaizen Voice (client-side, re-skinned to portal) ===== */
+.voice-ov{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(21,23,28,.46);backdrop-filter:blur(6px);animation:vfade .2s ease}
+.voice-ov.open{display:flex}
+@keyframes vfade{from{opacity:0}to{opacity:1}}
+.voice-card{width:100%;max-width:440px;background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:var(--sh-lg);padding:20px 22px 20px;position:relative;display:flex;flex-direction:column}
+.voice-x{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:9px;border:none;background:var(--surface-2);color:var(--muted);cursor:pointer;display:grid;place-items:center;font-size:16px;transition:.14s}
+.voice-x:hover{background:var(--ember-soft);color:var(--ember-d)}
+.voice-brand{display:flex;align-items:center;gap:10px}
+.voice-brand .vmark{width:34px;height:34px;border-radius:10px;background:var(--ember);color:#fff;display:grid;place-items:center;font-family:var(--disp);font-weight:700;font-size:17px}
+.voice-brand b{font-family:var(--disp);font-size:15px;display:block;line-height:1.1}
+.voice-brand small{color:var(--muted);font-size:11.5px}
+.vscreen{display:flex;flex-direction:column;animation:vfade .25s ease}
+.vtitle{font-family:var(--disp);font-size:19px;font-weight:600;margin:18px 0 3px;text-align:center}
+.vsub{color:var(--muted);font-size:12.5px;text-align:center;margin-bottom:16px}
+.vlangs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.vlang{padding:18px 12px;border-radius:16px;border:1px solid var(--line);background:var(--surface-2);font-family:var(--disp);font-size:18px;font-weight:600;color:var(--ink);cursor:pointer;transition:.15s;display:flex;flex-direction:column;align-items:center;gap:3px}
+.vlang small{font-size:11px;color:var(--muted);font-weight:500;font-family:var(--sans)}
+.vlang:hover{border-color:var(--ember);background:var(--ember-soft);box-shadow:0 0 0 3px var(--ember-soft)}
+.vlang:active{transform:scale(.97)}
+.vmode{margin-top:15px;font-size:11.5px;color:var(--muted-2);text-align:center;display:flex;align-items:center;justify-content:center;gap:6px}
+.vmode .ti{font-size:14px}
+/* conversation */
+.vstage{display:flex;flex-direction:column;align-items:center;text-align:center}
+.vorb{position:relative;width:148px;height:148px;border-radius:50%;display:grid;place-items:center;margin:16px 0 4px}
+.vhalo{position:absolute;inset:-22px;border-radius:50%;background:radial-gradient(circle,var(--ember-soft),transparent 65%);opacity:.7;transition:.4s}
+.vcore{width:94px;height:94px;border-radius:50%;background:radial-gradient(circle at 34% 28%,#ffd9c9,var(--ember) 55%,var(--ember-d));box-shadow:0 10px 30px rgba(239,80,38,.32),inset 0 0 26px rgba(255,255,255,.32);transition:.3s;z-index:2}
+.vring{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(239,80,38,.5);opacity:0}
+.vglyph{position:absolute;z-index:3;font-size:32px;color:#fff;transition:.2s}
+.vbars{position:absolute;z-index:3;display:flex;gap:5px;align-items:center;height:42px;opacity:0;pointer-events:none}
+.vbars span{width:6px;height:11px;background:#fff;border-radius:4px}
+.vorb.idle .vcore{animation:vbreathe 3.4s ease-in-out infinite}
+@keyframes vbreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.vorb.live .vcore{background:radial-gradient(circle at 34% 28%,#fff,#f0606b 52%,var(--red))}
+.vorb.live .vhalo{background:radial-gradient(circle,var(--red-soft),transparent 65%);opacity:1}
+.vorb.live .vring{opacity:1;animation:vpulse 1.5s ease-out infinite}
+.vorb.live .vring.r2{animation-delay:.6s}
+@keyframes vpulse{0%{transform:scale(.7);opacity:.8}100%{transform:scale(1.7);opacity:0}}
+.vorb.speak .vcore{background:radial-gradient(circle at 34% 28%,#ffe7dd,var(--ember) 52%,var(--ember-d));animation:vtalk .55s ease-in-out infinite}
+@keyframes vtalk{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.vorb.speak .vglyph{opacity:0}.vorb.speak .vbars{opacity:1}
+.vorb.speak .vbars span{animation:veq .7s ease-in-out infinite}
+.vorb.speak .vbars span:nth-child(2){animation-delay:.12s}.vorb.speak .vbars span:nth-child(3){animation-delay:.24s}.vorb.speak .vbars span:nth-child(4){animation-delay:.12s}
+@keyframes veq{0%,100%{height:8px}50%{height:32px}}
+.vorb.think .vcore{background:conic-gradient(from 0deg,var(--ember),var(--amber),var(--ember));animation:vspin 1.1s linear infinite}
+.vorb.think .vglyph{opacity:0}
+@keyframes vspin{to{transform:rotate(360deg)}}
+.vstatus{font-family:var(--disp);font-size:15px;font-weight:600;min-height:20px;margin-top:4px;color:var(--muted)}
+.vstatus.live{color:var(--red)}.vstatus.speak,.vstatus.think{color:var(--ember-d)}
+.vcaption{font-size:14.5px;line-height:1.5;color:var(--ink);background:var(--emerald-soft);border:1px solid rgba(21,148,104,.22);border-radius:14px;padding:12px 14px;margin-top:14px;min-height:44px;width:100%;box-sizing:border-box}
+.vyou{font-size:12.5px;color:var(--muted);margin-top:9px;min-height:16px;font-style:italic;width:100%}
+.verr{display:none;background:var(--red-soft);border:1px solid rgba(216,66,58,.3);color:var(--red);border-radius:10px;padding:9px 12px;font-size:12px;margin-top:10px;width:100%;box-sizing:border-box}
+.vbtns{display:flex;gap:10px;margin-top:16px}
+.vbtns .btn{flex:1}
+.vtype{display:none;gap:8px;margin-top:12px;width:100%}
+.vtype.show{display:flex}
+.vtype .input{flex:1}
+/* captured-by-voice review banner on the submit form */
+.vcap{background:var(--emerald-soft);border:1px solid rgba(21,148,104,.28);border-radius:16px;padding:14px 16px;margin-bottom:14px;animation:vfade .3s ease}
+.vcap-h{display:flex;align-items:flex-start;gap:11px}
+.vcap-ic{width:32px;height:32px;border-radius:9px;background:var(--emerald);color:#fff;display:grid;place-items:center;font-size:17px;flex:none}
+.vcap-h b{font-family:var(--disp);font-size:14px}
+.vcap-s{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.45}
+.vcap-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
+.vcap-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;font-size:11.5px;font-weight:700}
+.vcap-pill .ti{font-size:13px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast"></div>
+<div id="modal"></div>
+<script>
+/* ===== DATA (shared) ===== */
+const SUBS={'Priya Iyer':['PI','#5b4ad1'],'Rakesh Nair':['RN','#159468'],'Suresh Menon':['SM','#D98A12'],'Arjun Rao':['AR','#2A6FE0'],'Deepak Kulkarni':['DK','#159468'],'Neha Shah':['NS','#2A6FE0'],'Anita Mehta':['AM','#D98A12'],'Kavita Joshi':['KJ','#c2476a'],'Imran Sheikh':['IS','#0f8a8a'],'Manish Gupta':['MG','#7a5cd1'],'Sunita Patil':['SP','#c2476a'],'R. Khanna':['RK','#2A6FE0']};
+const CATCLR={'Energy':'#D98A12','Maintenance':'#2A6FE0','Process':'#5b4ad1','Quality':'#159468','Safety':'#D8423A','Environment':'#0f8a8a','ML/Digital':'#EF5026'};
+const STAGES=['intake','evaluation','approval','implementation','done','rejected'];
+const STLAB={intake:'Intake',evaluation:'Evaluation',approval:'Approval',implementation:'Implementation',done:'Done',rejected:'Rejected'};
+const MONTHS=['Dec','Jan','Feb','Mar','Apr','May','Jun'];
+const PLANTS=['Nagda','Kharach','Vilayat','Harihar'];
+const RAW=[
+ ['Auto shut-off on idle conveyor line 3','Maintenance','Energy','B','done',3.6,4.2,84,'-','Mar','Priya Iyer'],
+ ['Vision check for label alignment','Quality','ML/Digital','C','done',9.5,11.8,88,'-','Jan','Suresh Menon'],
+ ['Steam-trap audit & replacement','Utilities','Energy','B','done',6.8,7.5,79,'-','Feb','Arjun Rao'],
+ ['Compressed-air leak survey','Utilities','Energy','A','done',2.1,2.6,72,'-','Mar','Imran Sheikh'],
+ ['Counter-current wash-water recycling','After-treatment','Environment','C','done',14,16.2,90,'-','Dec','Kavita Joshi'],
+ ['Cooling-tower fan VFD retrofit','Utilities','Energy','B','done',8.2,9.1,81,'-','Feb','Manish Gupta'],
+ ['Reusable pump seal-kit standardization','Maintenance','Maintenance','A','done',3.0,3.4,75,'-','Mar','Rakesh Nair'],
+ ['Condensate recovery loop expansion','Utilities','Energy','B','done',5.5,6.0,77,'-','Jan','Sunita Patil'],
+ ['Bale-weight giveaway reduction','Packing','Process','A','done',4.4,5.1,73,'-','Apr','Neha Shah'],
+ ['Vibration predictive maintenance — spin machines','Maintenance','ML/Digital','C','implementation',12,null,86,'ok','May','Deepak Kulkarni'],
+ ['Boiler combustion O2-trim auto control','Utilities','ML/Digital','C','implementation',9.8,null,83,'warn','May','Arjun Rao'],
+ ['Predictive COD dosing — ETP','ETP','ML/Digital','C','implementation',7.2,null,80,'ok','Apr','Imran Sheikh'],
+ ['Spinneret cleaning-cycle optimization','Spinning','Process','B','implementation',4.1,null,74,'ok','May','Anita Mehta'],
+ ['Dryer-line heat recovery','After-treatment','Energy','B','implementation',6.6,null,78,'ok','Apr','Manish Gupta'],
+ ['Thermography hotspot detection — switchgear','Maintenance','Safety','A','implementation',2.3,null,71,'ok','May','Sunita Patil'],
+ ['Spare-parts kitting & min-max inventory','Maintenance','Maintenance','B','implementation',3.8,null,76,'warn','Jun','Rakesh Nair'],
+ ['Xanthation churn-time optimization','Viscose','Process','B','approval',5.4,null,72,'warn','May','Priya Iyer'],
+ ['H2SO4 dosing optimization — spin bath','Auxiliary','Environment','B','approval',4.7,null,70,'ok','Jun','Kavita Joshi'],
+ ['Glauber salt crystallization yield','Spinbath','Process','B','approval',6.1,null,75,'breach','May','Deepak Kulkarni'],
+ ['ZLD recovery yield improvement','ETP','Environment','C','approval',10.5,null,82,'ok','Jun','Imran Sheikh'],
+ ['Sulphur recovery efficiency improvement','Auxiliary','Energy','C','approval',8.0,null,79,'warn','Jun','Arjun Rao'],
+ ['RFID bale tracking & dispatch accuracy','Packing','ML/Digital','B','approval',3.2,null,68,'ok','Jun','Neha Shah'],
+ ['Predictive viscose-filter blockage','Viscose','ML/Digital','C','evaluation',7.7,null,71,'warn','Jun','Deepak Kulkarni'],
+ ['DCS process-tag anomaly detection','Process/Digital','ML/Digital','C','evaluation',9.0,null,69,'ok','Jun','Manish Gupta'],
+ ['Daily yield-prediction model','Process/Digital','ML/Digital','C','evaluation',11,null,73,'ok','Jun','Priya Iyer'],
+ ['AI-camera PPE-compliance monitoring','Safety','ML/Digital','B','evaluation',3.5,null,66,'warn','Jun','Sunita Patil'],
+ ['Spin-bath temperature setpoint optimization','Spinning','Process','B','evaluation',4.9,null,70,'ok','Jun','Anita Mehta'],
+ ['Bleaching chemical dosing optimization','After-treatment','Environment','B','evaluation',5.2,null,67,'breach','May','Kavita Joshi'],
+ ['Gearbox oil-analysis predictive program','Maintenance','ML/Digital','B','evaluation',4.0,null,72,'ok','Jun','Rakesh Nair'],
+ ['Plant energy-demand forecasting','Utilities','ML/Digital','C','evaluation',8.8,null,74,'ok','Jun','Arjun Rao'],
+ ['CS2 leak-detection sensor grid','Auxiliary','Safety','C','evaluation',6.3,null,68,'warn','Jun','Imran Sheikh'],
+ ['Gamified near-miss reporting','Safety','Safety','A','intake',1.8,null,null,'ok','Jun','Neha Shah'],
+ ['Lab sample turnaround reduction','Quality','Quality','A','intake',2.0,null,null,'ok','Jun','Manish Gupta'],
+ ['Live SPC dashboards for key parameters','Quality','ML/Digital','B','intake',3.6,null,null,'ok','Jun','Priya Iyer'],
+ ['Recover & rebale spinning-floor waste','Spinning','Process','A','intake',2.7,null,null,'ok','Jun','Anita Mehta'],
+ ['Auto strapping-tension control','Packing','Quality','A','intake',1.5,null,null,'ok','Jun','Sunita Patil'],
+ ['Oversize cooling fan manual swap','Utilities','Energy','B','rejected',5.0,null,41,'-','Feb','Arjun Rao'],
+ ['Redundant tank stirrer addition','Spinbath','Process','A','rejected',1.2,null,38,'-','Mar','Deepak Kulkarni'],
+ ['Duplicate conveyor guard proposal','Maintenance','Safety','A','rejected',0.8,null,35,'-','Apr','Rakesh Nair']];
+const IDEAS=RAW.map((r,i)=>{const[title,dept,cat,tier,stage,est,act,score,sla,month,sub]=r;return {id:'KZ-2026-'+String(481+i).padStart(4,'0'),title,dept,cat,tier,stage,est,act,score,sla,month,sub,plant:PLANTS[i%4],init:SUBS[sub][0],clr:SUBS[sub][1]};});
+
+const fmtL=v=>v>=100?('₹'+(v/100).toFixed(2)+' Cr'):('₹'+(+v).toFixed(1)+' L');
+const cnt=(a,f)=>{const m={};a.forEach(x=>{const k=f(x);m[k]=(m[k]||0)+1});return m;};
+const sum=(a,f)=>a.reduce((s,x)=>s+(f(x)||0),0);
+const rewardTier=s=>s==null?null:s>=80?'Gold':s>=70?'Silver':s>=60?'Award':'None';
+
+Chart.defaults.font.family='Hanken Grotesk, sans-serif';Chart.defaults.font.size=11.5;Chart.defaults.color='#6E6D66';
+Chart.defaults.plugins.legend.labels.boxWidth=10;Chart.defaults.plugins.legend.labels.usePointStyle=true;Chart.defaults.plugins.legend.labels.pointStyle='circle';
+const GRID={color:'rgba(21,23,28,.06)'},noGrid={grid:{display:false}};
+let CHARTS=[];function clearCharts(){CHARTS.forEach(c=>{try{c.destroy()}catch(e){}});CHARTS=[];}
+function mk(id,cfg){const el=document.getElementById(id);if(!el)return;const c=new Chart(el,cfg);CHARTS.push(c);return c;}
+function toast(m){const t=document.getElementById('toast');t.innerHTML='<i class="ti ti-circle-check"></i>'+m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
+
+/* ===== persona shell ===== */
+const ME={user:'Priya Iyer',reviewer:'Deepak Kulkarni',approver:'R. Khanna'};
+const PERSONAS=[['user'],['reviewer'],['approver']];
+const ROLEMETA={user:['Employee','ti-user'],reviewer:['Reviewer · Evaluator','ti-checklist'],approver:['Approver','ti-gavel']};
+let PERSONA='user',roleMenuOpen=false;
+const APPS={};
+function setP(p){PERSONA=p;roleMenuOpen=false;clearCharts();render();}
+function toggleRoles(ev){if(ev)ev.stopPropagation();roleMenuOpen=!roleMenuOpen;clearCharts();render();}
+function roleSwitch(){return `<div class="rsw${roleMenuOpen?' open':''}"><button class="rsw-cur" onclick="toggleRoles(event)"><span class="rsw-ic"><i class="ti ${ROLEMETA[PERSONA][1]}"></i></span><div class="rsw-t"><small>VIEWING AS</small><b>${ROLEMETA[PERSONA][0]}</b></div><i class="ti ti-selector rsw-chev"></i></button><div class="rsw-menu">${PERSONAS.map(p=>`<a class="${p[0]===PERSONA?'on':''}" onclick="setP('${p[0]}')"><i class="ti ${ROLEMETA[p[0]][1]}"></i><span>${ROLEMETA[p[0]][0]}</span>${p[0]===PERSONA?'<i class="ti ti-check"></i>':''}</a>`).join('')}</div></div>`;}
+function render(){APPS[PERSONA]();}
+/* state */
+let userView='home',userSel=null,revView='queue',revSel=null,appView='queue',appSel=null;
+
+/* ===== USER (employee, phone) ===== */
+function stagePill(s){const m={done:['ok','ti-circle-check','Implemented'],implementation:['work','ti-tool','In implementation'],approval:['warn','ti-stamp','In approval'],evaluation:['work','ti-loader','In evaluation'],intake:['muted','ti-inbox','Submitted'],rejected:['bad','ti-x','Closed']};const p=m[s];return `<span class="pill ${p[0]}"><i class="ti ${p[1]}"></i>${p[2]}</span>`;}
+function ptl(stage){const labs=['Submitted','Evaluation','Approval','Implement','Done'],order=['intake','evaluation','approval','implementation','done'],ci=order.indexOf(stage);
+ return `<div class="timeline">${labs.map((l,i)=>{const c=stage==='done'?'done':(i<ci?'done':i===ci?'now':'');const ic=c==='done'?'<i class="ti ti-check"></i>':c==='now'?'<i class="ti ti-dots"></i>':(i+1);return `<div class="st ${c}"><span class="d">${ic}</span><span class="lab">${l}</span></div>`;}).join('')}</div>`;}
+function actRow(e){const av=e.c?`<div class="avatar" style="width:30px;height:30px;background:${e.c};font-size:11px">${e.ic}</div>`:`<div class="avatar" style="width:30px;height:30px;background:var(--surface-2);border:1.5px dashed var(--line-2);color:var(--muted);font-size:14px">${e.ic}</div>`;
+ return `<div style="display:flex;gap:11px;margin-bottom:14px${e.pending?';opacity:.72':''}">${av}<div style="font-size:12.5px;padding-top:1px"><b>${e.t}</b><br><span class="muted">${e.s}</span></div></div>`;}
+function activityFor(d){const order=['intake','evaluation','approval','implementation','done'],si=order.indexOf(d.stage),ev=[];const A=(c,ic,t,s,p)=>ev.push({c,ic,t,s,pending:p});
+ A('#5b4ad1',(SUBS[ME.user]||['PI'])[0],'Idea submitted',`${ME.user} · ${d.plant} · 6d ago`);
+ if(d.stage==='rejected'){A('#159468','EV',`Evaluation completed${d.score?' · score '+d.score+'/100':''}`,`Line engineering group · ${d.plant} · 4d ago`);A('#D8423A','<i class="ti ti-x"></i>','Idea not taken forward','Closed with reviewer feedback — open to resubmit · 2d ago');return ev;}
+ if(si>1)A('#159468','EV',`Evaluation cleared${d.score?' · score '+d.score+'/100':''}`,`Line engineering group · ${d.plant} · 4d ago`);
+ else if(si===1)A(null,'<i class="ti ti-loader"></i>','Evaluation in progress',`With ${ME.reviewer}, the evaluator · score pending`,true);
+ else A(null,'<i class="ti ti-clock"></i>','Awaiting evaluation','Queued for the evaluator group',true);
+ if(si>2)A('#2A6FE0','AP','Approved — moved to implementation',`${ME.approver}, plant CI head · 3d ago`);
+ else if(si===2)A(null,'<i class="ti ti-stamp"></i>','Awaiting approval','Approver note: confirm payback period',true);
+ if(si>3)A('#D98A12','<i class="ti ti-tool"></i>','Implementation completed',`${d.dept} team · rolled out on the line · 1d ago`);
+ else if(si===3)A(null,'<i class="ti ti-tool"></i>','Implementation underway',`${d.dept} team executing the rollout`,true);
+ if(d.stage==='done')A('#159468','<i class="ti ti-trending-up"></i>',`Benefits realized${d.act?' · '+fmtL(d.act)+'/yr':''}`,'Verified by the CI office · marked Implemented');
+ return ev;}
+const ENDO={};
+function endoState(d){if(!ENDO[d.id])ENDO[d.id]={n:6+(d.id.charCodeAt(9)*5%46),on:false};return ENDO[d.id];}
+function endorse(id,ev){if(ev)ev.stopPropagation();const s=ENDO[id]||(ENDO[id]={n:9,on:false});s.on=!s.on;s.n+=s.on?1:-1;const el=document.getElementById('end-'+id);if(el){el.className='endo'+(s.on?' on':'');el.innerHTML='<i class="ti ti-rosette-discount-check'+(s.on?'-filled':'')+'"></i>'+(s.on?'Endorsed':'Endorse')+' · '+s.n;}if(s.on)toast('You endorsed this idea — your support is now visible to the submitter');}
+function fcard(d){const likes=60+(d.id.charCodeAt(8)*7%180);const es=endoState(d);const body=d.act?`<div class="fc-ba"><div class="b">Before</div><div class="a">After</div></div><div class="fc-stat"><i class="ti ti-trending-up"></i>${fmtL(d.act)} / yr saved · verified</div>`:`<p style="font-size:13px;color:var(--muted);line-height:1.5">${d.dept} idea · estimated ${fmtL(d.est)}/yr impact</p>`;
+ return `<div class="feedcard"><div class="fc-top"><div class="avatar" style="width:38px;height:38px;background:${d.clr}">${d.init}</div><div class="meta"><b>${d.sub}</b><span>${d.dept} · ${d.plant}</span></div>${stagePill(d.stage)}</div><div class="fc-body"><div class="fc-title">${d.title}</div>${body}</div><div class="fc-act"><span><i class="ti ti-heart"></i>${likes}</span><span><i class="ti ti-message-circle"></i>${likes%40}</span><button id="end-${d.id}" class="endo${es.on?' on':''}" title="I support this idea" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button><span style="margin-left:auto"><i class="ti ti-share-2"></i></span></div></div>`;}
+function ugo(v){userView=v;APPS.user();}
+function uopen(id){userSel=id;userView='detail';APPS.user();}
+APPS.user=function(){
+ const me=ME.user, mine=IDEAS.filter(d=>d.sub===me), feed=IDEAS.filter(d=>['done','implementation','approval','evaluation'].includes(d.stage)).slice(0,6), stories=IDEAS.filter(d=>d.stage==='done');
+ let body='';
+ if(userView==='home'){
+  body=`<div class="appbar"><div class="logo"><span class="mk">K</span>Kaizen</div><div style="flex:1"></div><span class="pill muted"><i class="ti ti-map-pin"></i>Packaging</span><i class="ti ti-bell" style="font-size:20px"></i></div>
+   <div class="seg"><button class="on">Feed</button><button onclick="ugo('mine')">My ideas</button></div>${feed.map(fcard).join('')}<div style="height:8px"></div>`;
+ } else if(userView==='mine'){
+  body=`<div class="appbar"><div class="logo"><span class="mk">K</span>My ideas</div></div>
+   <div class="pad" style="margin-bottom:12px"><div style="display:flex;gap:8px"><div style="flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px;text-align:center"><div class="mono" style="font-size:20px;font-weight:700">${mine.length}</div><div class="muted" style="font-size:10.5px;font-weight:600">SUBMITTED</div></div><div style="flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px;text-align:center"><div class="mono" style="font-size:20px;font-weight:700;color:var(--emerald)">${mine.filter(d=>d.stage==='done').length}</div><div class="muted" style="font-size:10.5px;font-weight:600">IMPLEMENTED</div></div></div></div>
+   ${mine.map(d=>{const order=['intake','evaluation','approval','implementation','done'];const pct=d.stage==='done'?100:d.stage==='rejected'?100:((order.indexOf(d.stage)+1)/5*100);return `<div class="mcard" onclick="uopen('${d.id}')"><div class="ico" style="background:${CATCLR[d.cat]}"><i class="ti ti-bulb"></i></div><div style="flex:1"><div style="font-size:13.5px;font-weight:600;font-family:var(--disp)">${d.title}</div><div style="display:flex;align-items:center;gap:7px;margin:6px 0">${stagePill(d.stage)}<span class="tag mono">${d.id}</span></div><div class="bar"><i style="width:${pct}%;background:${d.stage==='rejected'?'var(--red)':'var(--ember)'}"></i></div></div></div>`;}).join('')}`;
+ } else if(userView==='detail'){
+  const d=IDEAS.find(x=>x.id===userSel)||mine[0];
+  body=`<div class="appbar"><i class="ti ti-arrow-left" style="font-size:20px" onclick="ugo('mine')"></i><div class="logo" style="font-size:16px">Idea detail</div><div style="flex:1"></div>${stagePill(d.stage)}</div>
+   <div class="pad"><div style="font-family:var(--disp);font-size:17px;font-weight:600">${d.title}</div><div style="display:flex;gap:9px;align-items:center;margin:8px 0 16px"><span class="tag mono">${d.id}</span>${d.sla&&d.sla!=='-'?`<span class="pill ${d.sla==='breach'?'bad':'warn'}"><i class="ti ti-clock"></i>SLA ${d.sla==='breach'?'breached':'1d 4h left'}</span>`:''}</div>
+    ${ptl(d.stage)}
+    <div style="font-size:11px;font-weight:700;letter-spacing:.07em;color:var(--muted-2);margin:18px 0 12px">ACTIVITY</div>
+    <div style="display:flex;gap:11px;margin-bottom:13px"><div class="avatar" style="width:28px;height:28px;background:#159468;font-size:10px">EV</div><div style="font-size:12px"><b>Evaluation ${['intake','evaluation'].includes(d.stage)?'in progress':'cleared'}</b>${d.score?' · score '+d.score+'/100':''}<br><span class="muted">Line engineering group</span></div></div>
+    <div style="display:flex;gap:11px;margin-bottom:13px"><div class="avatar" style="width:28px;height:28px;background:#2A6FE0;font-size:10px">AP</div><div style="font-size:12px"><b>Approver note</b><br><span class="muted">${d.stage==='done'?'Approved — moved to implementation':'Confirm payback period?'}</span></div></div>
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 14px;display:flex;align-items:center;gap:8px;box-shadow:var(--sh)"><input class="input" style="border:none;background:none;padding:8px 0" placeholder="Reply…"><button class="btn prim" style="padding:9px 12px"><i class="ti ti-send"></i></button></div>
+   </div><div style="height:8px"></div>`;
+ } else if(userView==='submit'){
+  body=`<div class="appbar"><i class="ti ti-arrow-left" style="font-size:20px" onclick="ugo('home')"></i><div class="logo" style="font-size:16px">Submit an idea</div><div style="flex:1"></div><span class="pill muted">Draft</span></div>
+   <div class="pad"><div class="stepper"><div class="s on"><span class="n">1</span>Idea</div><div class="ln"></div><div class="s"><span class="n">2</span>Context</div><div class="ln"></div><div class="s"><span class="n">3</span>Review</div></div>
+    <div class="field"><label>Title</label><input class="input" placeholder="e.g. Recover spinning-floor waste fibre"></div>
+    <div class="field"><label>Description</label><textarea class="input area" placeholder="Describe the problem and your idea…"></textarea></div>
+    <div class="field"><label>Context · auto-filled</label><div class="chips"><button class="on">Nagda</button><button class="on">Spinning</button><button>Change</button></div></div>
+    <div class="field"><label>Area of impact</label><div class="chips"><button>Minor</button><button class="on">Moderate</button><button>Major</button></div></div>
+    <div style="display:flex;gap:10px;margin-top:6px"><button class="btn" style="flex:1"><i class="ti ti-device-floppy"></i>Draft</button><button class="btn prim" style="flex:2" onclick="toast('Idea submitted — KZ-2026-0520 assigned');ugo('mine')">Submit<i class="ti ti-send"></i></button></div>
+   </div>`;
+ } else if(userView==='stories'){
+  body=`<div class="appbar"><div class="logo"><i class="ti ti-trophy" style="color:var(--ember)"></i>Success stories</div></div>${stories.map(d=>`<div class="feedcard"><div style="height:96px;background:linear-gradient(135deg,${d.clr},#0f6e54);display:flex;align-items:flex-end;padding:13px"><div style="color:#fff;font-family:var(--disp);font-size:15px;font-weight:600;line-height:1.25">${d.title}</div></div><div class="fc-body" style="padding:13px 14px"><div style="display:flex;align-items:center;justify-content:space-between"><span class="mono" style="font-weight:700;font-size:17px;color:var(--emerald)">${fmtL(d.act)}</span><span class="pill ${rewardTier(d.score)==='Gold'?'warn':'muted'}"><i class="ti ti-award"></i>${rewardTier(d.score)}</span></div><div class="fc-top" style="padding:10px 0 0"><div class="avatar" style="width:30px;height:30px;background:${d.clr}">${d.init}</div><div class="meta"><b>${d.sub}</b><span>${d.dept} · ${d.plant}</span></div></div></div></div>`).join('')}<div style="height:8px"></div>`;
+ } else { // profile
+  const impl=mine.filter(d=>d.stage==='done'),sav=sum(impl,d=>d.act);
+  const board=Object.entries((()=>{const m={};IDEAS.filter(d=>d.act).forEach(d=>m[d.sub]=(m[d.sub]||0)+d.act);return m;})()).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  body=`<div class="appbar"><div class="logo">Profile</div></div>
+   <div class="pad"><div style="display:flex;align-items:center;gap:13px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px;box-shadow:var(--sh)"><div class="avatar" style="width:52px;height:52px;background:#5b4ad1;font-size:18px">PI</div><div><div style="font-weight:700;font-size:16px;font-family:var(--disp)">Priya Iyer</div><div class="muted" style="font-size:12px">Spinning · Nagda</div></div></div>
+    <div style="display:flex;gap:8px;margin:14px 0"><div style="flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px;text-align:center"><div class="mono" style="font-size:19px;font-weight:700">${mine.length}</div><div class="muted" style="font-size:10px;font-weight:600">IDEAS</div></div><div style="flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px;text-align:center"><div class="mono" style="font-size:19px;font-weight:700;color:var(--emerald)">${impl.length}</div><div class="muted" style="font-size:10px;font-weight:600">LIVE</div></div><div style="flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px;text-align:center"><div class="mono" style="font-size:19px;font-weight:700;color:var(--ember)">${fmtL(sav)}</div><div class="muted" style="font-size:10px;font-weight:600">SAVED</div></div></div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:.07em;color:var(--muted-2);margin:6px 0 10px">PLANT LEADERBOARD</div>
+    ${board.map(([n,v],i)=>`<div class="qitem" style="cursor:default"><span class="mono" style="font-weight:700;width:18px;color:var(--muted)">${i+1}</span><div class="avatar" style="width:30px;height:30px;background:${SUBS[n][1]}">${SUBS[n][0]}</div><div class="meta"><b>${n}</b></div><span class="mono" style="color:var(--emerald);font-weight:700">${fmtL(v)}</span></div>`).join('')}
+   </div>`;
+ }
+ const tab=(v,i,l)=>`<a class="${userView===v||(v==='mine'&&userView==='detail')?'on':''}" onclick="ugo('${v}')"><i class="ti ${i}"></i>${l}</a>`;
+ document.getElementById('app').innerHTML=`<div class="stage"><div class="phone"><div class="phscreen">
+   <div class="statusbar"><span class="mono">9:41</span><span class="ic"><i class="ti ti-signal-4g"></i><i class="ti ti-wifi"></i><i class="ti ti-battery-3"></i></span></div>
+   <div class="phbody">${body}</div>
+   <div class="tabbar">${tab('home','ti-home','Home')}${tab('mine','ti-list-check','My ideas')}<a onclick="ugo('submit')"><div class="fab"><i class="ti ti-plus"></i></div></a>${tab('stories','ti-trophy','Stories')}${tab('profile','ti-user','Profile')}</div>
+  </div></div></div>`;
+};
+
+/* ===== console shell ===== */
+function consoleShell(nav,active,who,title,crumb,body,right=''){
+ return `<div class="app"><aside class="side" style="background:var(--d-bg)"><div class="lg"><span class="mark" style="background:var(--ember)">K</span><div>Kaizen<small>${who.role}</small></div></div>${roleSwitch()}
+   <div class="sec">Workspace</div><nav class="nav">${nav.map(n=>`<a class="${n.k===active?'on':''}" onclick="${n.fn}"><i class="ti ${n.i}"></i>${n.t}${n.c!=null?`<span class="cnt">${n.c}</span>`:''}</a>`).join('')}</nav>
+   <div class="who"><div class="avatar" style="width:32px;height:32px;background:${who.clr}">${who.init}</div><div><b>${who.name}</b>${who.sub}</div></div></aside>
+   <main class="main"><div class="topbar"><div><div class="crumb">${crumb}</div><h1>${title}</h1></div><div style="flex:1"></div>${right}</div><div class="view">${body}</div></main></div>`;
+}
+const slaPill={ok:'<span class="pill ok"><i class="ti ti-clock"></i>On track</span>',warn:'<span class="pill warn"><i class="ti ti-clock"></i>Due soon</span>',breach:'<span class="pill bad"><i class="ti ti-alert-triangle"></i>Breached</span>'};
+
+/* ===== REVIEWER ===== */
+function rgo(v){revView=v;clearCharts();APPS.reviewer();}
+function rsel(id){revSel=id;revView='evaluate';clearCharts();APPS.reviewer();}
+function evalTot(){let t=0;for(let i=0;i<4;i++){t+=+document.getElementById('c'+i).value;}document.getElementById('etot').textContent=t+' / 100';}
+APPS.reviewer=function(){
+ const queue=IDEAS.filter(d=>d.stage==='evaluation'), past=IDEAS.filter(d=>['approval','implementation','done','rejected'].includes(d.stage)&&d.score);
+ if(!queue.find(d=>d.id===revSel))revSel=queue[0].id;
+ const who={role:'Evaluator workspace',name:'Priya Iyer',sub:'Reviewer · Spinning',init:'PI',clr:'#5b4ad1'};
+ const nav=[{k:'queue',t:'My queue',i:'ti-checklist',c:queue.length,fn:"rgo('queue')"},{k:'evaluate',t:'Evaluate',i:'ti-edit',fn:"rgo('evaluate')"},{k:'history',t:'History',i:'ti-history',c:past.length,fn:"rgo('history')"}];
+ let body,title,crumb,right='',charts=false;
+ if(revView==='queue'){
+  title='My evaluation queue';crumb='Reviewer · '+queue.length+' assigned';charts=true;
+  const avg=Math.round(sum([...queue,...past],d=>d.score)/[...queue,...past].length);
+  const k=(ic,clr,l,v)=>`<div class="kpi"><div class="ic" style="background:${clr}22;color:${clr}"><i class="ti ${ic}"></i></div><div class="lab">${l}</div><div class="val">${v}</div></div>`;
+  body=`<div class="kpis k4">${k('ti-checklist','#2A6FE0','Assigned to me',queue.length)}${k('ti-clock','#D98A12','Awaiting my vote',queue.filter(d=>d.sla!=='ok').length)}${k('ti-gauge','#159468','Avg score I give',avg+'/100')}${k('ti-rosette','#5b4ad1','On-time rate','94%')}</div>
+   <div class="g c2" style="margin-bottom:16px"><div class="card cardp"><h3><i class="ti ti-chart-bar"></i>Scores I award</h3><div class="sub">Distribution</div><div class="chartbox sm" style="margin-top:10px"><canvas id="rcScore"></canvas></div></div>
+   <div class="card cardp"><h3><i class="ti ti-chart-donut"></i>My recommendations</h3><div class="sub">Outcome split</div><div class="chartbox sm" style="margin-top:10px"><canvas id="rcDec"></canvas></div></div></div>
+   <div class="card" style="overflow:hidden"><table class="tbl"><thead><tr><th>Idea</th><th>Dept</th><th>Tier</th><th>Current avg</th><th>SLA</th><th></th></tr></thead><tbody>
+    ${queue.map(d=>`<tr onclick="rsel('${d.id}')"><td class="tt">${d.title}</td><td class="muted">${d.dept}</td><td><span class="tier ${d.tier}">${d.tier}</span></td><td class="mono">${d.score}/100</td><td>${slaPill[d.sla]||'—'}</td><td style="text-align:right"><span class="pill ember">Evaluate <i class="ti ti-arrow-right"></i></span></td></tr>`).join('')}
+   </tbody></table></div>`;
+ } else if(revView==='evaluate'){
+  const s=IDEAS.find(d=>d.id===revSel);title='Evaluate idea';crumb='Reviewer · scoring';
+  const cr=[['Savings impact',Math.round(s.score*.34),30],['Replicability',Math.round(s.score*.24),25],['Effort & originality',Math.round(s.score*.28),30],['Safety / quality',Math.round(s.score*.14),15]];
+  body=`<a onclick="rgo('queue')" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:14px;cursor:pointer"><i class="ti ti-arrow-left"></i>Back to my queue</a><div class="g wr"><div class="card cardp"><div style="display:flex;align-items:center;gap:10px"><span class="tag mono">${s.id}</span><span class="tier ${s.tier}">${s.tier}</span><span class="pill muted">${s.cat}</span><span style="margin-left:auto">${slaPill[s.sla]}</span></div>
+    <h3 style="margin-top:12px;font-size:16px">${s.title}</h3>
+    <p style="font-size:13px;color:var(--ink-2);line-height:1.55;margin:10px 0">Submitted by ${s.sub} (${s.dept}, ${s.plant}). Estimated impact ${fmtL(s.est)}/yr. Full description, attachments and process data available below.</p>
+    <div style="display:flex;gap:7px"><span class="tag"><i class="ti ti-photo"></i> 2 photos</span><span class="tag"><i class="ti ti-file"></i> Process data</span></div>
+    <hr class="sep"/><div style="font-size:11px;font-weight:700;color:var(--muted-2);letter-spacing:.05em;margin-bottom:10px">CLARIFICATION THREAD</div>
+    <div style="display:flex;gap:10px;margin-bottom:10px"><div class="avatar" style="width:28px;height:28px;background:${s.clr};font-size:10px">${s.init}</div><div style="background:var(--surface-2);border-radius:10px;padding:9px 12px;font-size:12.5px">Payback was estimated using last quarter's energy rates.</div></div>
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:5px 5px 5px 13px;display:flex;align-items:center;gap:8px"><input class="input" style="border:none;background:none;padding:8px 0" placeholder="Ask a clarification…"><button class="btn prim sm" onclick="toast('Clarification sent to submitter')"><i class="ti ti-send"></i></button></div>
+   </div>
+   <div class="card cardp"><h3><i class="ti ti-adjustments-star"></i>Score this idea</h3><div class="sub">Drag to set each criterion</div>
+    <div style="margin-top:16px">${cr.map((c,i)=>`<div class="crit"><span class="lab">${c[0]}</span><input id="c${i}" type="range" min="0" max="${c[2]}" value="${c[1]}" oninput="evalTot()"><span class="val" id="cv${i}">${c[1]}/${c[2]}</span></div>`).join('')}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--ink);color:#fff;border-radius:12px;padding:13px 16px;margin-top:6px"><span style="font-size:12.5px;font-weight:600">Total score</span><span class="mono" id="etot" style="font-size:20px;font-weight:700">${s.score} / 100</span></div>
+    <div class="field" style="margin-top:14px"><label>Evaluator note</label><textarea class="input area" placeholder="Rationale for your score…"></textarea></div>
+    <div style="display:flex;gap:8px"><button class="btn ok block" onclick="toast('Vote submitted — recommended to advance')"><i class="ti ti-thumb-up"></i>Recommend</button><button class="btn block" onclick="toast('Sent back for clarification')"><i class="ti ti-message-2"></i>Clarify</button></div>
+    <button class="btn block" style="margin-top:8px;color:var(--red);border-color:var(--red-soft)" onclick="toast('Marked not viable — reason logged')"><i class="ti ti-thumb-down"></i>Reject as not viable</button>
+   </div></div>`;
+ } else {
+  title='Evaluation history';crumb='Reviewer · '+past.length+' reviewed';
+  body=`<div class="card" style="overflow:hidden"><table class="tbl"><thead><tr><th>Idea</th><th>Dept</th><th>My score</th><th>Outcome</th></tr></thead><tbody>
+   ${past.map(d=>`<tr style="cursor:default"><td class="tt">${d.title}</td><td class="muted">${d.dept}</td><td class="mono">${Math.min(95,d.score+2)}/100</td><td>${d.stage==='rejected'?'<span class="pill bad">Rejected</span>':d.stage==='done'?'<span class="pill ok">Implemented</span>':'<span class="pill work">'+STLAB[d.stage]+'</span>'}</td></tr>`).join('')}
+  </tbody></table></div>`;
+ }
+ document.getElementById('app').innerHTML=consoleShell(nav,revView,who,title,crumb,body,right);
+ if(charts){
+  const all=[...queue,...past].map(d=>d.score);const buck=[0,0,0,0];all.forEach(s=>{buck[s<70?0:s<80?1:s<90?2:3]++;});
+  mk('rcScore',{type:'bar',data:{labels:['60-69','70-79','80-89','90+'],datasets:[{data:buck,backgroundColor:['#D98A12','#2A6FE0','#159468','#5b4ad1'],borderRadius:6}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:GRID,ticks:{precision:0}},x:noGrid}}});
+  mk('rcDec',{type:'doughnut',data:{labels:['Recommended','Clarify','Rejected'],datasets:[{data:[past.filter(d=>d.stage!=='rejected').length,3,past.filter(d=>d.stage==='rejected').length],backgroundColor:['#159468','#D98A12','#D8423A'],borderWidth:2,borderColor:'#fff'}]},options:{maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom'}}}});
+ }
+};
+
+/* ===== APPROVER ===== */
+function ago(v){appView=v;clearCharts();APPS.approver();}
+function asel(id){appSel=id;appView='approve';clearCharts();APPS.approver();}
+APPS.approver=function(){
+ const queue=IDEAS.filter(d=>d.stage==='approval'), approved=IDEAS.filter(d=>['implementation','done'].includes(d.stage)), rejected=IDEAS.filter(d=>d.stage==='rejected');
+ if(!queue.find(d=>d.id===appSel))appSel=queue[0].id;
+ const who={role:'Approver workspace',name:'Priya Iyer',sub:'Approver · Spinning',init:'PI',clr:'#5b4ad1'};
+ const nav=[{k:'queue',t:'My approvals',i:'ti-checkbox',c:queue.length,fn:"ago('queue')"},{k:'approve',t:'Approve',i:'ti-gavel',fn:"ago('approve')"},{k:'history',t:'History',i:'ti-history',c:approved.length+rejected.length,fn:"ago('history')"}];
+ let body,title,crumb,charts=false;
+ if(appView==='queue'){
+  title='Pending approvals';crumb='Approver · '+queue.length+' to decide';charts=true;
+  const k=(ic,clr,l,v)=>`<div class="kpi"><div class="ic" style="background:${clr}22;color:${clr}"><i class="ti ${ic}"></i></div><div class="lab">${l}</div><div class="val">${v}</div></div>`;
+  body=`<div class="kpis k4">${k('ti-hourglass','#D98A12','Pending approvals',queue.length)}${k('ti-circle-check','#159468','Approved (qtr)',approved.length)}${k('ti-coin-rupee','#EF5026','Value approved',fmtL(sum(approved,d=>d.est)))}${k('ti-clock','#2A6FE0','Avg decision','2.4 d')}</div>
+   <div class="g c2" style="margin-bottom:16px"><div class="card cardp"><h3><i class="ti ti-chart-donut"></i>My decisions</h3><div class="sub">All time</div><div class="chartbox sm" style="margin-top:10px"><canvas id="acDec"></canvas></div></div>
+   <div class="card cardp"><h3><i class="ti ti-cash"></i>Value approved</h3><div class="sub">₹ lakh by month</div><div class="chartbox sm" style="margin-top:10px"><canvas id="acSav"></canvas></div></div></div>
+   <div class="card" style="overflow:hidden"><table class="tbl"><thead><tr><th>Idea</th><th>Dept</th><th>Eval score</th><th>Est. value</th><th>SLA</th><th></th></tr></thead><tbody>
+    ${queue.map(d=>`<tr onclick="asel('${d.id}')"><td class="tt">${d.title}</td><td class="muted">${d.dept}</td><td class="mono">${d.score}/100</td><td class="mono">${fmtL(d.est)}</td><td>${slaPill[d.sla]||'—'}</td><td style="text-align:right"><span class="pill ember">Review <i class="ti ti-arrow-right"></i></span></td></tr>`).join('')}
+   </tbody></table></div>`;
+ } else if(appView==='approve'){
+  const s=IDEAS.find(d=>d.id===appSel);title='Approval decision';crumb='Approver · review';
+  const evs=[['Deepak Kulkarni','#159468',Math.min(95,s.score+4)],['Neha Shah','#2A6FE0',Math.max(60,s.score-4)]];
+  body=`<a onclick="ago('queue')" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:14px;cursor:pointer"><i class="ti ti-arrow-left"></i>Back to my approvals</a><div class="g wr"><div class="card cardp"><div style="display:flex;align-items:center;gap:10px"><span class="tag mono">${s.id}</span><span class="tier ${s.tier}">${s.tier}</span><span class="pill muted">${s.dept}</span><span style="margin-left:auto">${slaPill[s.sla]}</span></div>
+    <h3 style="margin-top:12px;font-size:16px">${s.title}</h3>
+    <div style="font-size:11px;font-weight:700;color:var(--muted-2);letter-spacing:.05em;margin:14px 0 10px">EVALUATION SUMMARY</div>
+    <div style="background:var(--emerald-soft);border-radius:11px;padding:11px;display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:600;color:var(--emerald);margin-bottom:10px"><i class="ti ti-calculator"></i>Average evaluation score · ${s.score} / 100</div>
+    ${evs.map(e=>`<div style="display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:8px"><div class="avatar" style="width:30px;height:30px;background:${e[1]}">${SUBS[e[0]][0]}</div><div style="flex:1;font-size:12.5px"><b>${e[0]}</b><br><span class="muted">Scored ${e[2]}/100</span></div><span class="pill ok"><i class="ti ti-check"></i>Voted</span></div>`).join('')}
+    <hr class="sep"/><div style="font-size:11px;font-weight:700;color:var(--muted-2);letter-spacing:.05em;margin-bottom:10px">REQUIRED DOCUMENTS</div>
+    <div style="display:flex;flex-direction:column;gap:7px;font-size:12.5px"><div style="display:flex;gap:9px"><i class="ti ti-circle-check" style="color:var(--emerald)"></i>Cost estimate</div><div style="display:flex;gap:9px"><i class="ti ti-circle-check" style="color:var(--emerald)"></i>Payback calculation</div><div style="display:flex;gap:9px"><i class="ti ti-circle-dashed" style="color:var(--amber)"></i>Vendor quote · pending</div></div>
+   </div>
+   <div class="card cardp"><h3><i class="ti ti-target-arrow"></i>Business case</h3>
+    <div class="g c2" style="margin-top:12px"><div style="background:var(--surface-2);border-radius:12px;padding:14px"><div class="muted" style="font-size:11px;font-weight:600">EST. SAVINGS</div><div class="mono" style="font-size:23px;font-weight:700;margin-top:3px">${fmtL(s.est)}</div><div class="muted" style="font-size:11px">per year</div></div><div style="background:var(--surface-2);border-radius:12px;padding:14px"><div class="muted" style="font-size:11px;font-weight:600">CATEGORY · TIER</div><div style="font-weight:700;margin-top:5px">${s.cat}</div><div class="muted" style="font-size:11px">Tier ${s.tier}</div></div></div>
+    ${s.sla==='breach'?'<div style="margin-top:12px;background:var(--red-soft);border-radius:11px;padding:11px;font-size:12px;color:var(--red);font-weight:600;display:flex;gap:9px"><i class="ti ti-alert-triangle"></i>Approval SLA breached — please action</div>':''}
+    <div class="field" style="margin-top:14px"><label>Approval note</label><textarea class="input area" placeholder="Conditions or comments…"></textarea></div>
+    <button class="btn ok block" onclick="toast('Approved — advances to implementation')"><i class="ti ti-check"></i>Approve & advance</button>
+    <div style="display:flex;gap:8px;margin-top:8px"><button class="btn block" onclick="toast('Sent back for clarification')"><i class="ti ti-message-2"></i>Clarify</button><button class="btn block" style="color:var(--red);border-color:var(--red-soft)" onclick="toast('Rejected — reason logged, submitter notified')"><i class="ti ti-x"></i>Reject</button></div>
+   </div></div>`;
+ } else {
+  title='Approval history';crumb='Approver · decisions';
+  const list=[...approved,...rejected];
+  body=`<div class="card" style="overflow:hidden"><table class="tbl"><thead><tr><th>Idea</th><th>Dept</th><th>Value</th><th>Decision</th></tr></thead><tbody>
+   ${list.map(d=>`<tr style="cursor:default"><td class="tt">${d.title}</td><td class="muted">${d.dept}</td><td class="mono">${fmtL(d.est)}</td><td>${d.stage==='rejected'?'<span class="pill bad"><i class="ti ti-x"></i>Rejected</span>':'<span class="pill ok"><i class="ti ti-check"></i>Approved</span>'}</td></tr>`).join('')}
+  </tbody></table></div>`;
+ }
+ document.getElementById('app').innerHTML=consoleShell(nav,appView,who,title,crumb,body);
+ if(charts){
+  mk('acDec',{type:'doughnut',data:{labels:['Approved','Pending','Rejected'],datasets:[{data:[approved.length,queue.length,rejected.length],backgroundColor:['#159468','#D98A12','#D8423A'],borderWidth:2,borderColor:'#fff'}]},options:{maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom'}}}});
+  const sav=MONTHS.map(m=>+sum(approved.filter(d=>d.month===m),d=>d.est).toFixed(1));
+  mk('acSav',{type:'bar',data:{labels:MONTHS,datasets:[{data:sav,backgroundColor:'#2A6FE0',borderRadius:5}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:GRID},x:noGrid}}});
+ }
+};
+/* ===== USER desktop override ===== */
+function ideaCard(d){const order=['intake','evaluation','approval','implementation','done'];const pct=d.stage==='done'||d.stage==='rejected'?100:((order.indexOf(d.stage)+1)/5*100);
+ return `<div class="card cardp" style="cursor:pointer" onclick="uopen('${d.id}')"><div style="display:flex;align-items:center;gap:11px;margin-bottom:11px"><div class="avatar" style="width:38px;height:38px;border-radius:11px;background:${CATCLR[d.cat]}"><i class="ti ti-bulb"></i></div><div style="flex:1;min-width:0"><div style="font-weight:600;font-family:var(--disp);font-size:14.5px">${d.title}</div><span class="tag mono">${d.id}</span></div>${stagePill(d.stage)}</div><div class="bar"><i style="width:${pct}%;background:${d.stage==='rejected'?'var(--red)':'var(--ember)'}"></i></div><div class="muted" style="font-size:11.5px;margin-top:9px">${d.dept} · ${d.plant} · est ${fmtL(d.est)}/yr${d.act?' · realized '+fmtL(d.act):''}</div></div>`;}
+function storyCard(d){const es=endoState(d);return `<div class="card" style="overflow:hidden"><div style="height:120px;background:linear-gradient(135deg,${d.clr},#0f6e54);display:flex;align-items:flex-end;padding:14px"><div style="color:#fff;font-family:var(--disp);font-weight:600;font-size:15px;line-height:1.2">${d.title}</div></div><div class="cardp"><div style="display:flex;align-items:center;justify-content:space-between"><span class="mono" style="font-weight:700;font-size:18px;color:var(--emerald)">${fmtL(d.act)}</span><span class="pill ${rewardTier(d.score)==='Gold'?'warn':'muted'}"><i class="ti ti-award"></i>${rewardTier(d.score)}</span></div><div style="display:flex;align-items:center;gap:9px;margin-top:11px"><div class="avatar" style="width:30px;height:30px;background:${d.clr}">${d.init}</div><div style="font-size:12.5px"><b>${d.sub}</b><br><span class="muted">${d.dept} · ${d.plant}</span></div></div><button id="end-${d.id}" class="endo${es.on?' on':''}" style="width:100%;justify-content:center;margin-top:12px" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button></div></div>`;}
+APPS.user=function(){
+ const me=ME.user, mine=IDEAS.filter(d=>d.sub===me), feed=IDEAS.filter(d=>['done','implementation','approval','evaluation'].includes(d.stage)).slice(0,6), stories=IDEAS.filter(d=>d.stage==='done');
+ const impl=mine.filter(d=>d.stage==='done'), saved=sum(impl,d=>d.act);
+ const board=Object.entries((()=>{const m={};IDEAS.filter(d=>d.act).forEach(d=>m[d.sub]=(m[d.sub]||0)+d.act);return m;})()).sort((a,b)=>b[1]-a[1]).slice(0,5);
+ const navI=[['home','Feed','ti-news'],['mine','My ideas','ti-bulb'],['stories','Stories','ti-trophy'],['profile','Profile','ti-user-circle']];
+ const active=userView==='detail'?'mine':userView;
+ const sidebar=`<aside class="side" style="background:var(--d-bg)"><div class="lg"><span class="mark" style="background:var(--ember)">K</span><div>Kaizen<small>Idea Hub</small></div></div>${roleSwitch()}<div class="sec">Workspace</div><nav class="nav">${navI.map(n=>`<a class="${n[0]===active?'on':''}" onclick="ugo('${n[0]}')"><i class="ti ${n[2]}"></i>${n[1]}</a>`).join('')}</nav><button class="btn prim" style="margin:16px 6px 4px" onclick="ugo('submit')"><i class="ti ti-plus"></i>Submit idea</button><div class="who"><div class="avatar" style="width:32px;height:32px;background:#5b4ad1">PI</div><div><b>Priya Iyer</b>Spinning · Nagda</div></div></aside>`;
+ const TT={home:['Idea Hub · Feed','Ideas in your department'],mine:['Idea Hub · My ideas','My ideas'],stories:['Idea Hub · Stories','Success stories'],profile:['Idea Hub · Profile','My profile'],detail:['Idea Hub · Tracking','Idea detail'],submit:['Idea Hub · New idea','Submit an idea']};
+ const tt=TT[userView]||['Idea Hub','Idea Hub'];
+ const topbar=`<div class="topbar"><h1>${tt[1]}</h1><div style="flex:1"></div><div class="wsrch"><i class="ti ti-search"></i>Search ideas…</div><i class="ti ti-bell" style="font-size:19px;color:var(--muted)"></i><div class="avatar" style="width:32px;height:32px;background:#5b4ad1">PI</div></div>`;
+ const profMini=`<div class="railcard"><div style="display:flex;align-items:center;gap:11px"><div class="avatar" style="width:44px;height:44px;background:#5b4ad1;font-size:15px">PI</div><div><div style="font-weight:700;font-family:var(--disp)">Priya Iyer</div><div class="muted" style="font-size:12px">Spinning · Nagda</div></div></div>
+   <div style="display:flex;gap:8px;margin-top:14px"><div style="flex:1;text-align:center;background:var(--surface-2);border-radius:10px;padding:9px"><div class="mono" style="font-weight:700;font-size:17px">${mine.length}</div><div class="muted" style="font-size:9.5px;font-weight:600">IDEAS</div></div><div style="flex:1;text-align:center;background:var(--surface-2);border-radius:10px;padding:9px"><div class="mono" style="font-weight:700;font-size:17px;color:var(--emerald)">${impl.length}</div><div class="muted" style="font-size:9.5px;font-weight:600">LIVE</div></div><div style="flex:1;text-align:center;background:var(--surface-2);border-radius:10px;padding:9px"><div class="mono" style="font-weight:700;font-size:17px;color:var(--ember)">${fmtL(saved)}</div><div class="muted" style="font-size:9.5px;font-weight:600">SAVED</div></div></div>
+   <button class="btn prim block" style="margin-top:14px" onclick="ugo('submit')"><i class="ti ti-plus"></i>Submit an idea</button></div>`;
+ const boardCard=`<div class="railcard"><h3><i class="ti ti-star"></i>Top contributors</h3><div style="margin-top:12px;display:flex;flex-direction:column;gap:11px">${board.map(([n,v],i)=>`<div style="display:flex;align-items:center;gap:10px"><span class="mono muted" style="font-weight:700;width:14px">${i+1}</span><div class="avatar" style="width:28px;height:28px;background:${SUBS[n][1]}">${SUBS[n][0]}</div><div style="flex:1;font-size:12.5px;font-weight:600">${n}</div><span class="mono" style="color:var(--emerald);font-weight:700;font-size:12px">${fmtL(v)}</span></div>`).join('')}</div></div>`;
+ let content='',subbar='';
+ if(userView==='home'){
+  const all=DEPTFEED;
+  const filt={all:()=>true,review:d=>['evaluation','approval'].includes(d.stage),implemented:d=>d.stage==='done',trending:d=>endoState(d).n>=38};
+  const dfeed=all.filter(filt[feedFilter]||filt.all);
+  const tab=(k,l)=>`<button class="${feedFilter===k?'on':''}" onclick="setFeed('${k}')">${l}</button>`;
+  subbar=`<div class="feedbar"><div class="seg-tabs">${tab('all','All ideas')}${tab('review','In review')}${tab('implemented','Implemented')}${tab('trending','Trending')}</div><span class="fh-count">${all.length} live</span></div>`;
+  content=`<div class="web-feed2">
+    <div class="feedmain">${dfeed.length?dfeed.map(ideaCardX).join(''):`<div class="card cardp" style="text-align:center;color:var(--muted);font-size:13px;padding:34px 18px">No ideas match this view yet.</div>`}</div>
+   <div class="feedrail">
+    <div class="railcard rc-compact"><h3 style="font-size:13px"><i class="ti ti-progress-check" style="color:var(--blue)"></i>Active department initiatives</h3><p style="font-size:11px;color:var(--muted);margin:4px 0 2px;line-height:1.45">Projects already underway in your department.</p>${INITIATIVES.map(initRow).join('')}</div>
+    <div class="railcard rc-compact" style="margin-top:16px"><h3 style="font-size:13px"><i class="ti ti-star"></i>Top contributors</h3><div class="cb-list">${SPINBOARD.map(([n,v],i)=>`<div class="cb-row"><span class="cb-rank">${i+1}</span><div class="avatar" style="width:24px;height:24px;font-size:9px;background:${SUBS[n][1]}">${SUBS[n][0]}</div><span class="cb-name">${n}</span><span class="cb-val">${fmtL(v)}</span></div>`).join('')}</div></div>
+   </div>
+  </div>`;
+ } else if(userView==='mine'){
+  content=`<div class="chips" style="margin-bottom:16px"><button class="on">All (${mine.length})</button><button>In progress</button><button>Implemented</button></div><div class="web-grid2">${mine.map(ideaCard).join('')}</div>`;
+ } else if(userView==='detail'){
+  const d=IDEAS.find(x=>x.id===userSel)||mine[0];
+  content=`<a onclick="ugo('mine')" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:14px"><i class="ti ti-arrow-left"></i>Back to my ideas</a>
+   <div class="web-2"><div class="card cardp">
+    <div style="display:flex;align-items:center;gap:10px"><span class="tag mono">${d.id}</span>${stagePill(d.stage)}${d.sla&&d.sla!=='-'&&!['done','rejected'].includes(d.stage)?`<span class="pill ${d.sla==='breach'?'bad':'warn'}"><i class="ti ti-clock"></i>SLA ${d.sla==='breach'?'breached':'1d 4h left'}</span>`:''}</div>
+    <h2 class="vh" style="margin:12px 0 18px">${d.title}</h2>
+    ${ptl(d.stage)}
+    <hr class="sep"/><div style="font-size:11px;font-weight:700;letter-spacing:.07em;color:var(--muted-2);margin-bottom:14px">ACTIVITY</div>
+    ${activityFor(d).map(actRow).join('')}
+    ${['evaluation','approval','implementation'].includes(d.stage)?`<div style="background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:5px 5px 5px 14px;display:flex;align-items:center;gap:8px"><input class="input" style="border:none;background:none;padding:9px 0" placeholder="Reply to reviewer…"><button class="btn prim sm" onclick="toast('Reply sent')"><i class="ti ti-send"></i></button></div>`:`<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px"><i class="ti ti-lock"></i>${d.stage==='done'?'Implemented and closed — the review thread is no longer active.':d.stage==='rejected'?'This idea is closed. You can submit a revised version any time.':'No reviewer is assigned yet — you can reply once evaluation begins.'}</div>`}
+   </div>
+   <div class="railcard sticky"><h3><i class="ti ti-info-circle"></i>Details</h3>
+    <div style="margin-top:12px;display:flex;flex-direction:column;gap:11px;font-size:12.5px">
+     <div style="display:flex;justify-content:space-between"><span class="muted">Department</span><b>Spinning</b></div>
+     ${d.dept!=='Spinning'?`<div style="display:flex;justify-content:space-between"><span class="muted">Focus area</span><b>${d.dept}</b></div>`:''}
+     <div style="display:flex;justify-content:space-between"><span class="muted">Plant</span><b>${d.plant}</b></div>
+     <div style="display:flex;justify-content:space-between"><span class="muted">Category</span><b>${d.cat}</b></div>
+     <div style="display:flex;justify-content:space-between"><span class="muted">Workflow tier</span><span class="tier ${d.tier}">${d.tier}</span></div>
+     <div style="display:flex;justify-content:space-between"><span class="muted">Est. savings</span><b>${fmtL(d.est)}/yr</b></div>
+     ${d.act?`<div style="display:flex;justify-content:space-between"><span class="muted">Realized</span><b style="color:var(--emerald)">${fmtL(d.act)}/yr</b></div>`:''}
+     <div style="display:flex;justify-content:space-between"><span class="muted">Endorsements</span><b>${endoState(d).n} colleagues</b></div>
+    </div></div></div>`;
+ } else if(userView==='submit'){
+  content=`<div style="max-width:760px;margin:0 auto">
+   <div class="card cardp"><div class="stepper"><div class="s on"><span class="n">1</span>Core idea</div><div class="ln"></div><div class="s"><span class="n">2</span>Context</div><div class="ln"></div><div class="s"><span class="n">3</span>Review</div></div>
+    <div class="field"><label>Title <span class="req">*</span></label><input id="subTitle" class="input" value="Auto shut-off conveyor when running idle" oninput="dupCheck(this.value)"></div>
+    <div id="dupBanner" class="dupbanner"></div>
+    <div class="field"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><label style="margin:0">Description <span class="req">*</span></label><button type="button" id="micBtn" class="mic-btn" onclick="toggleDictation()"><i class="ti ti-microphone"></i>Speak your idea</button></div><textarea id="subDesc" class="input area" style="min-height:90px" placeholder="Describe the problem and your idea… or tap ‘Speak your idea’ to dictate."></textarea></div>
+    <div class="field"><label>Attachments</label><div class="hint" style="font-size:11px;color:var(--muted);margin:-2px 0 9px">Capture from the line, pick media from your device, or attach supporting documents.</div>
+     <div class="att-tiles">
+      <label class="att-tile"><input type="file" accept="image/*,video/*" capture="environment" hidden onchange="attach(this)"><i class="ti ti-camera"></i><b>Camera</b><span>Take a photo or record video</span></label>
+      <label class="att-tile"><input type="file" accept="image/*,video/*,audio/*" multiple hidden onchange="attach(this)"><i class="ti ti-library-photo"></i><b>Media</b><span>Photos, video or audio</span></label>
+      <label class="att-tile"><input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv" multiple hidden onchange="attach(this)"><i class="ti ti-file-description"></i><b>Document</b><span>PDF, Word, Excel, etc.</span></label>
+     </div>
+     <div id="attachList" class="att-list"></div></div>
+    <div class="web-grid2"><div class="field"><label>Location</label><div class="ctx-fixed" title="Your plant is set automatically"><i class="ti ti-map-pin"></i>Nagda</div></div><div class="field"><label>Department</label><div class="ctx-dept"><button type="button" class="ctx-deptbtn" onclick="toggleDeptMenu(event)"><i class="ti ti-building-factory-2"></i><span id="deptVal">Spinning</span><i class="ti ti-chevron-down chev"></i></button><div id="deptMenu" class="ctx-menu">${['Spinning','Viscose','Spinbath','After-treatment','Auxiliary','Utilities','ETP','Quality','Maintenance','Process/Digital','Safety','Packing'].map(x=>`<a onclick="pickDept('${x}')">${x}</a>`).join('')}</div></div></div></div>
+    <div class="field"><label>Area of impact</label><div class="chips"><button>Minor</button><button class="on">Moderate</button><button>Major</button></div></div>
+    <div style="display:flex;gap:10px;margin-top:6px"><button class="btn"><i class="ti ti-device-floppy"></i>Save draft</button><button class="btn prim" style="flex:1" onclick="trySubmit()">Submit idea<i class="ti ti-send"></i></button></div>
+   </div></div>`;
+ } else if(userView==='stories'){
+  content=`<div class="web-grid3">${stories.map(storyCard).join('')}</div>`;
+ } else {
+  content=`<div class="web-2"><div><div class="card cardp" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:13px"><div class="avatar" style="width:54px;height:54px;background:#5b4ad1;font-size:19px">PI</div><div><div style="font-weight:700;font-size:18px;font-family:var(--disp)">Priya Iyer</div><div class="muted" style="font-size:13px">Spinning · Nagda · joined 2024</div></div><div style="margin-left:auto;display:flex;gap:8px"><span class="pill ember"><i class="ti ti-award"></i>1 Gold</span></div></div>
+    <div style="display:flex;gap:10px;margin-top:16px"><div style="flex:1;text-align:center;background:var(--surface-2);border-radius:12px;padding:13px"><div class="mono" style="font-weight:700;font-size:21px">${mine.length}</div><div class="muted" style="font-size:10.5px;font-weight:600">SUBMITTED</div></div><div style="flex:1;text-align:center;background:var(--surface-2);border-radius:12px;padding:13px"><div class="mono" style="font-weight:700;font-size:21px;color:var(--emerald)">${impl.length}</div><div class="muted" style="font-size:10.5px;font-weight:600">IMPLEMENTED</div></div><div style="flex:1;text-align:center;background:var(--surface-2);border-radius:12px;padding:13px"><div class="mono" style="font-weight:700;font-size:21px;color:var(--ember)">${fmtL(saved)}</div><div class="muted" style="font-size:10.5px;font-weight:600">SAVED / YR</div></div></div></div>
+    <h2 class="vh">My ideas</h2><div class="web-grid2">${mine.map(ideaCard).join('')}</div></div>
+   <div class="sticky">
+    <div class="railcard"><h3><i class="ti ti-stack-2"></i>My idea pipeline</h3>
+     <div style="margin-top:13px;display:flex;flex-direction:column;gap:11px">
+      ${[['intake','Submitted','#9B9A92'],['evaluation','In evaluation','#2A6FE0'],['approval','In approval','#D98A12'],['implementation','In implementation','#5b4ad1'],['done','Implemented','#159468']].map(([s,l,c])=>{const n=mine.filter(d=>d.stage===s).length;return `<div style="display:flex;align-items:center;gap:10px"><span style="width:9px;height:9px;border-radius:50%;background:${c};flex:none;opacity:${n?1:.3}"></span><span style="flex:1;font-size:12.5px;font-weight:600;color:${n?'var(--ink)':'var(--muted)'}">${l}</span><span class="mono" style="font-weight:700;font-size:13px;color:${n?'var(--ink)':'var(--muted-2)'}">${n}</span></div>`;}).join('')}
+     </div></div>
+    <div class="railcard" style="margin-top:16px"><h3><i class="ti ti-medal"></i>Recognition</h3>
+     <div style="margin-top:13px;display:flex;flex-direction:column;gap:13px">
+      <div style="display:flex;align-items:center;gap:11px"><span style="width:32px;height:32px;border-radius:9px;background:var(--ember-soft);color:var(--ember-d);display:grid;place-items:center;font-size:16px;flex:none"><i class="ti ti-award"></i></span><div style="font-size:12.5px;line-height:1.3"><b>Gold Award</b><br><span class="muted" style="font-size:11px">For ${fmtL(saved)}/yr realized impact</span></div></div>
+      <div style="display:flex;align-items:center;gap:11px"><span style="width:32px;height:32px;border-radius:9px;background:rgba(21,148,104,.13);color:var(--emerald);display:grid;place-items:center;font-size:16px;flex:none"><i class="ti ti-rosette-discount-check"></i></span><div style="font-size:12.5px;line-height:1.3"><b>${mine.reduce((a,d)=>a+endoState(d).n,0)} endorsements</b><br><span class="muted" style="font-size:11px">Received from colleagues</span></div></div>
+      <div style="display:flex;align-items:center;gap:11px"><span style="width:32px;height:32px;border-radius:9px;background:rgba(42,111,224,.13);color:var(--blue);display:grid;place-items:center;font-size:16px;flex:none"><i class="ti ti-flame"></i></span><div style="font-size:12.5px;line-height:1.3"><b>Active contributor</b><br><span class="muted" style="font-size:11px">Ideas raised across 4 areas</span></div></div>
+     </div></div>
+   </div></div>`;
+ }
+ document.getElementById('app').innerHTML=`<div class="app">${sidebar}<main class="main">${topbar}${subbar}<div class="view">${content}</div></main></div>`;
+ if(userView==='submit'){const t=document.getElementById('subTitle');if(t)dupCheck(t.value);}
+};
+/* ===== duplicate detection + encouraging modal ===== */
+const STOP=new Set(['of','the','a','an','to','for','in','on','and','with','idea','system','line','via','using','by','from','at']);
+function tok(s){return s.toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(w=>w.length>2&&!STOP.has(w));}
+function findDup(q){const qt=new Set(tok(q));if(qt.size<2)return null;let best=null,bs=0;IDEAS.forEach(d=>{let m=0;tok(d.title).forEach(w=>{if(qt.has(w))m++;});if(m>bs){bs=m;best=d;}});return bs>=2?{idea:best,score:bs}:null;}
+function dupCheck(v){const b=document.getElementById('dupBanner');if(!b)return;const dup=findDup(v);if(dup){const d=dup.idea;b.style.display='flex';b.innerHTML=`<i class="ti ti-bulb"></i><div>This looks similar to <b>${d.title}</b> — already ${STLAB[d.stage].toLowerCase()}. <a onclick="endorseAndView('${d.id}')" style="color:var(--ember-d);font-weight:700;cursor:pointer;text-decoration:underline">View &amp; endorse</a></div>`;}else{b.style.display='none';}}
+function trySubmit(){const v=(document.getElementById('subTitle')||{}).value||'';const dup=findDup(v);if(dup)openDupModal(dup);else{toast('Idea submitted — KZ-2026-0520 assigned');ugo('mine');}}
+let recog=null,recOn=false;
+function toggleDictation(){ VOICE.open(); }
+function toggleDeptMenu(e){if(e)e.stopPropagation();const m=document.getElementById('deptMenu');if(m)m.classList.toggle('open');}
+function pickDept(x){const v=document.getElementById('deptVal');if(v)v.textContent=x;const m=document.getElementById('deptMenu');if(m)m.classList.remove('open');toast('Department set to '+x);}
+function closeModal(){document.getElementById('modal').innerHTML='';}
+function submitAnyway(){closeModal();toast('Submitted as a new variation — flagged for the CI Manager to compare');ugo('mine');}
+function endorseAndView(id){const s=ENDO[id]||(ENDO[id]={n:9,on:false});if(!s.on){s.on=true;s.n++;}closeModal();userSel=id;userView='detail';APPS.user();toast('Endorsed — you’ll get updates as it progresses');}
+function openDupModal(dup){
+ const d=dup.idea,done=d.stage==='done',rej=d.stage==='rejected';
+ let bg,clr,ic,head,msg,acts;
+ const match=`<div class="matchcard"><div class="avatar" style="width:34px;height:34px;background:${d.clr}">${d.init}</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">${d.title}</div><div class="muted" style="font-size:11.5px">${d.dept} · ${d.plant} · ${STLAB[d.stage]}${d.act?' · '+fmtL(d.act)+' saved':''}</div></div>${stagePill(d.stage)}</div>`;
+ if(done){clr='var(--emerald)';bg='var(--emerald-soft)';ic='ti-confetti';head='Brilliant — it’s already live!';msg='Someone implemented this improvement and it’s already saving money. Your eye for high-impact ideas is exactly what Kaizen is about.';acts=`<button class="btn ok block" onclick="endorseAndView('${d.id}')"><i class="ti ti-rosette-discount-check"></i>Applaud &amp; see the story</button><button class="btn block" style="margin-top:8px" onclick="submitAnyway()">Mine adds something new — submit anyway</button>`;}
+ else if(rej){clr='var(--amber)';bg='var(--amber-soft)';ic='ti-bulb';head='Good thinking — explored before';msg='A similar idea was reviewed earlier and set aside. Take a look at the feedback — a fresh angle from you could get it across the line.';acts=`<button class="btn block" onclick="endorseAndView('${d.id}')"><i class="ti ti-eye"></i>See what was learned</button><button class="btn prim block" style="margin-top:8px" onclick="submitAnyway()">Submit my refined version</button>`;}
+ else {clr='var(--ember)';bg='var(--ember-soft)';ic='ti-users-group';head='Great minds — someone’s on it!';msg='A matching idea is already in '+STLAB[d.stage]+'. Rather than start the review over, you can throw your weight behind it and follow its progress.';acts=`<button class="btn prim block" onclick="endorseAndView('${d.id}')"><i class="ti ti-rosette-discount-check"></i>Endorse &amp; follow this idea</button><button class="btn block" style="margin-top:8px" onclick="submitAnyway()">Mine’s a different angle — submit anyway</button>`;}
+ document.getElementById('modal').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal">
+   <div class="top2"><div class="bic" style="background:${bg};color:${clr}"><i class="ti ${ic}"></i></div><h3>${head}</h3><p class="m">${msg}</p></div>
+   <div class="body2">${match}<div class="spark"><i class="ti ti-sparkles"></i>You’ve earned a Kaizen Spark for spotting a valuable improvement — keep them coming!</div>${acts}<button class="btn block" style="margin-top:8px;border:none;color:var(--muted)" onclick="closeModal()">Close</button></div>
+  </div></div>`;
+}
+/* ===== department initiatives + dept idea cards ===== */
+const INITIATIVES=[
+ {title:'Spinneret bank replacement program',team:'Spinning',status:'In progress',sp:'work',si:'ti-replace',desc:'Phased replacement of worn spinneret banks to cut filament breaks and steady output.',progress:55,target:'−25% filament breaks',timeline:'Phase 2 from Aug'},
+ {title:'Spin-bath circulation upgrade',team:'Spinning · Process',status:'In progress',sp:'work',si:'ti-droplet',desc:'Rebalanced spin-bath circulation for uniform coagulation across the spinning line.',progress:60,target:'+6% line yield',timeline:'Commissioning Sep'},
+ {title:'Godet drive VFD retrofit',team:'Spinning · Maintenance',status:'Piloting',sp:'violet',si:'ti-bolt',desc:'Variable-frequency drives on godet motors to match speed to grade and save energy.',progress:35,target:'₹14 L/yr energy',timeline:'Pilot on line 4'},
+ {title:'Doffing automation trial',team:'Spinning',status:'Planning',sp:'muted',si:'ti-robot',desc:'Trialling semi-automatic doffing to remove repetitive manual lifting on the floor.',progress:15,target:'−30% manual doffing',timeline:'Kickoff next month'},
+ {title:'Spin-finish recovery & reuse',team:'Spinning · Process',status:'Final phase',sp:'ok',si:'ti-recycle',desc:'Recover and recirculate spin-finish to cut chemical make-up and waste.',progress:78,target:'₹9 L/yr chemicals',timeline:'Closeout this quarter'}];
+function initCard(p){return `<div class="initcard"><div class="ic-top"><span class="pill ${p.sp}"><i class="ti ${p.si}"></i>${p.status}</span><span class="tag">${p.team}</span></div><div class="ic-title">${p.title}</div><p class="fc-desc">${p.desc}</p><div class="ic-prog"><div class="bar"><i style="width:${p.progress}%"></i></div><span class="mono">${p.progress}%</span></div><div class="ic-foot"><span><i class="ti ti-target"></i>${p.target}</span><span><i class="ti ti-calendar"></i>${p.timeline}</span></div></div>`;}
+const DESC={
+ 'Vision check for label alignment':'Camera-based inspection that flags mis-aligned labels before packing, cutting rework and customer complaints.',
+ 'Steam-trap audit & replacement':'Survey and replace failed steam traps across the utility headers to stop live-steam losses.',
+ 'Compressed-air leak survey':'Ultrasonic leak detection across the compressed-air network with a tag-and-fix drive.',
+ 'Counter-current wash-water recycling':'Re-use after-treatment wash water in a counter-current loop to cut fresh-water draw.',
+ 'Cooling-tower fan VFD retrofit':'Variable-frequency drives on cooling-tower fans to match airflow to load and save power.',
+ 'Predictive viscose-filter blockage':'Use filter-pressure trends to predict viscose filter chokes and plan changeovers before breaks.',
+ 'Gearbox oil-analysis predictive program':'Routine oil sampling on critical gearboxes to catch wear early and avoid breakdowns.',
+ 'Sulphur recovery efficiency improvement':'Optimise the sulphur-recovery loop to raise reuse and reduce make-up chemical cost.',
+ 'RFID bale tracking & dispatch accuracy':'Tag bales with RFID for accurate tracking from press to dispatch and faster recalls.',
+ 'Spinneret cleaning-cycle optimization':'Tune the spinneret cleaning interval using inline filtration data to cut line downtime.',
+ 'Spin-bath temperature setpoint optimization':'Fine-tune spin-bath temperature setpoints to reduce filament breaks on the line.',
+ 'Vibration predictive maintenance — spin machines':'Vibration sensors on spin machines to predict bearing failures before they stop the line.'};
+function descFor(d){return d.desc||DESC[d.title]||`A ${d.cat.toLowerCase()} improvement in ${d.dept} with an estimated ${fmtL(d.est)}/yr impact.`;}
+/* ===== Spinning-department feed (department-specific) ===== */
+const DEPTFEED=[
+ {id:'KZ-S-01',sub:'Anita Mehta',stage:'done',cat:'Process',est:3.8,act:4.6,score:79,end:33,
+  title:'Spinneret cleaning-cycle optimization',
+  desc:'Spinnerets were cleaned on a fixed calendar — sometimes too early, sometimes only after breaks had started. Cleaning is now triggered from live filtration-pressure trends, cutting unplanned line stoppages and filament rejects.',
+  photos:['linear-gradient(135deg,#3f6fa3,#21405f)']},
+ {id:'KZ-S-02',sub:'Sunita Patil',stage:'done',cat:'Process',est:4.4,act:5.1,score:75,end:26,
+  title:'Recover & rebale spinning-floor waste fibre',
+  desc:'Usable short fibre swept off the spinning floor was being discarded each shift. A simple collect-and-rebale routine now routes it back into packing — turning daily scrap into saleable output.'},
+ {id:'KZ-S-03',sub:'Rakesh Nair',stage:'evaluation',cat:'Process',est:4.9,end:21,
+  title:'Spin-bath temperature setpoint optimization',
+  desc:'Filament breaks spike during grade changeovers when the bath drifts off-target. Auto-tuning the spin-bath temperature to the running grade should steady the line and lift first-pass quality.',
+  photos:['linear-gradient(135deg,#10805a,#0a5238)']},
+ {id:'KZ-S-04',sub:'Manish Gupta',stage:'evaluation',cat:'ML/Digital',est:6.2,end:43,
+  title:'Spinneret hole-blockage vision detection',
+  desc:'Blocked spinneret holes surface only as downstream defects, after a full doff is affected. A camera-and-vision check at the spinneret face would flag blockages in real time and protect quality upstream.'},
+ {id:'KZ-S-05',sub:'Deepak Kulkarni',stage:'approval',cat:'Maintenance',est:3.4,end:39,
+  title:'Godet roller alignment auto-check',
+  desc:'Mis-aligned godet rollers create uneven tension and frequent yarn breaks. A quick laser alignment check at every changeover keeps rollers true, reducing breaks and re-threading time.',
+  photos:['linear-gradient(135deg,#b9650c,#7c3f06)']},
+ {id:'KZ-S-06',sub:'Neha Shah',stage:'approval',cat:'Quality',est:5.0,end:23,
+  title:'Spin-finish dosing precision control',
+  desc:'Manual spin-finish dosing varies operator to operator, drifting finish-on-yarn out of spec. Closed-loop dosing control would hold it within band and cut downstream customer complaints.'}];
+DEPTFEED.forEach(d=>{d.dept='Spinning';d.plant='Nagda';d.init=SUBS[d.sub][0];d.clr=SUBS[d.sub][1];ENDO[d.id]={n:d.end,on:false};});
+const SPINBOARD=[['Anita Mehta',8.2],['Deepak Kulkarni',6.5],['Rakesh Nair',5.1],['Neha Shah',4.4],['Manish Gupta',3.8]];
+function deptCard(d){const likes=60+(d.id.charCodeAt(8)*7%180);const es=endoState(d);const impact=d.act?`<span class="fc-impact real"><i class="ti ti-trending-up"></i>${fmtL(d.act)}/yr saved</span>`:`<span class="fc-impact est"><i class="ti ti-target"></i>est ${fmtL(d.est)}/yr</span>`;
+ return `<div class="feedcard"><div class="fc-top"><div class="avatar" style="width:38px;height:38px;background:${d.clr}">${d.init}</div><div class="meta"><b>${d.sub}</b><span>${d.dept} · ${d.plant}</span></div>${stagePill(d.stage)}</div><div class="fc-body"><div class="fc-title">${d.title}</div><p class="fc-desc">${descFor(d)}</p>${impact}</div><div class="fc-act"><span><i class="ti ti-heart"></i>${likes}</span><span><i class="ti ti-message-circle"></i>${likes%40}</span><button id="end-${d.id}" class="endo${es.on?' on':''}" title="I support this idea" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button><span style="margin-left:auto"><i class="ti ti-share-2"></i></span></div></div>`;}
+/* ===== focused feed: interactive idea card + rail initiatives ===== */
+function idnum(s){let n=0;for(let i=0;i<s.length;i++)n+=s.charCodeAt(i)*(i+1);return n;}
+const LIKES={};
+function likeState(d){if(!LIKES[d.id])LIKES[d.id]={n:60+(idnum(d.id)*7%180),on:false};return LIKES[d.id];}
+function likeToggle(id,ev){if(ev)ev.stopPropagation();const s=LIKES[id]||(LIKES[id]={n:80,on:false});s.on=!s.on;s.n+=s.on?1:-1;const el=document.getElementById('like-'+id);if(el){el.className='iact'+(s.on?' liked':'');el.innerHTML='<i class="ti ti-heart'+(s.on?'-filled':'')+'"></i>'+s.n;}}
+function cmt(id,ev){if(ev)ev.stopPropagation();toast('Comment thread opened — join the discussion');}
+function ideaCardX(d){const es=endoState(d),ls=likeState(d),cat=CATCLR[d.cat],cmts=idnum(d.id)%34+4;
+ const endorsers=Object.keys(SUBS).filter(n=>n!==d.sub).slice(0,3);
+ const impact=d.act?`<span class="fc-impact real"><i class="ti ti-trending-up"></i>${fmtL(d.act)}/yr saved</span>`:`<span class="fc-impact est"><i class="ti ti-target"></i>est ${fmtL(d.est)}/yr impact</span>`;
+ const trend=es.n>=38?`<span class="catchip" style="background:var(--ember-soft);color:var(--ember-d)"><i class="ti ti-flame"></i>Trending</span>`:'';
+ return `<div class="ideac" style="--cat:${cat}"><div class="ideac-in">
+   <div class="ic-head"><div class="avatar" style="width:40px;height:40px;background:${d.clr}">${d.init}</div><div class="who"><b>${d.sub}</b><span>${d.dept} · ${d.plant} · 2d ago</span></div>${stagePill(d.stage)}</div>
+   <div class="ic-catrow"><span class="catchip" style="background:${cat}1f;color:${cat}">${d.cat}</span>${trend}</div>
+   <h3 class="ic-t">${d.title}</h3><p class="ic-d">${descFor(d)}</p>${d.photos?`<div class="ic-photos">${d.photos.map(g=>`<div class="ic-photo" style="background:${g}"><span class="ic-pcap"><i class="ti ti-photo"></i>Shop-floor photo</span></div>`).join('')}</div>`:''}${impact}
+   <div class="ic-bar"><button class="iact${ls.on?' liked':''}" id="like-${d.id}" onclick="likeToggle('${d.id}',event)"><i class="ti ti-heart${ls.on?'-filled':''}"></i>${ls.n}</button>
+     <button class="iact" onclick="cmt('${d.id}',event)"><i class="ti ti-message-circle"></i>${cmts}</button>
+     <div class="endrs"><div class="endstack">${endorsers.map(n=>`<div class="avatar" style="background:${SUBS[n][1]}">${SUBS[n][0]}</div>`).join('')}</div><button id="end-${d.id}" class="endo${es.on?' on':''}" title="I support this idea" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button></div></div>
+ </div></div>`;}
+function initRow(p){const sc={'In progress':'#2A6FE0','Piloting':'#5b4ad1','Final phase':'#159468','Planning':'#9B9A92'}[p.status]||'#9B9A92';
+ return `<div class="initrow" onclick="toast('${p.title} — ${p.status}, led by ${p.team}')"><span class="idot" style="background:${sc}"></span><div class="ir-main"><b>${p.title}</b><span>${p.team} · ${p.status}</span><div class="ir-insight"><i class="ti ti-target-arrow"></i>${p.target}</div><div class="ir-insight"><i class="ti ti-calendar-event"></i>${p.timeline}</div></div></div>`;}
+let feedFilter='all';
+function attach(inp){const box=document.getElementById('attachList');if(!box){inp.value='';return;}
+ [...inp.files].forEach(f=>{const t=f.type||'';const ic=t.startsWith('image')?'ti-photo':t.startsWith('video')?'ti-video':t.startsWith('audio')?'ti-music':/pdf|word|sheet|excel|powerpoint|presentation|document|text|csv/.test(t)||/\.(pdf|docx?|xlsx?|pptx?|txt|csv)$/i.test(f.name)?'ti-file-text':'ti-file';
+  const sz=f.size?(f.size>=1048576?(f.size/1048576).toFixed(1)+' MB':Math.max(1,Math.round(f.size/1024))+' KB'):'';
+  const el=document.createElement('div');el.className='att-chip';
+  el.innerHTML=`<i class="ti ${ic}"></i><span class="att-name">${f.name}</span>${sz?`<small>${sz}</small>`:''}<button class="att-x" title="Remove" onclick="this.parentNode.remove()"><i class="ti ti-x"></i></button>`;
+  box.appendChild(el);});
+ inp.value='';}
+function setFeed(f){feedFilter=f;APPS.user();}
+/*APPS*/
+render();
+
+/* ===================== KAIZEN VOICE (client-side, no backend) =====================
+   Conversational idea capture, re-skinned to the portal. Uses the browser Web Speech
+   API for listening + speaking, and the voice-script's Tier/Department rules ported
+   here. Converses (one follow-up only if needed), then pre-fills the Submit form and
+   lands on the Review step. Falls back to typing if the browser lacks speech support. */
+const VOICE=(function(){
+ const API=''; // same origin as the Flask app when served; '' = relative
+ const params=new URLSearchParams(location.search);
+ const EMP_NAME=(params.get('name')||params.get('emp')||'Priya').trim();
+ const FORM_DEPTS=['Spinning','Viscose','Spinbath','After-treatment','Auxiliary','Utilities','ETP','Quality','Maintenance','Process/Digital','Safety','Packing'];
+ /* Claude (server) returns the voice-script department list -> map to the portal's 12 */
+ const DEPT_MAP={'Pulp':'Viscose','Viscose':'Viscose','Spinning':'Spinning','Spin Bath / Acid':'Spinbath','Auxiliary & CS2':'Auxiliary','Aftertreatment':'After-treatment','Quality Control':'Quality','Mechanical Maintenance':'Maintenance','Electrical Maintenance':'Maintenance','Instrumentation':'Process/Digital','Power & Utilities':'Utilities','Effluent / ETP':'ETP','Stores & Logistics':'Packing','Packing & Dispatch':'Packing','Safety':'Safety','Security':'Safety','HR / Admin':'Process/Digital'};
+ const mapDept=d=>FORM_DEPTS.includes(d)?d:(DEPT_MAP[d]||'Process/Digital');
+ const LANGS={
+  hi:{name:'हिंदी',bcp:'hi-IN',welcome:n=>`नमस्ते ${n}! बताइए, आपके काम में सुधार के लिए क्या सुझाव है? आराम से बोलिए।`,askDept:'यह किस विभाग या क्षेत्र से जुड़ा है? जैसे स्पिनिंग, मेंटेनेंस, या सेफ्टी।',thanks:n=>`धन्यवाद ${n}! आपका सुझाव दर्ज हो गया है — यह प्लांट को बेहतर और सुरक्षित बनाएगा।`,yourTurn:'🎤 अब आप बोलिए',speaking:'सुनिए',thinking:'समझ रहे हैं',captured:'आवाज़ से दर्ज — कृपया जाँचें और भेजें',micErr:'माइक नहीं मिला — कृपया अनुमति दें'},
+  gu:{name:'ગુજરાતી',bcp:'gu-IN',welcome:n=>`નમસ્તે ${n}! કહો, તમારા કામમાં સુધારા માટે શું સૂચન છે? આરામથી બોલો.`,askDept:'આ કયા વિભાગ સાથે સંબંધિત છે? જેમ કે સ્પિનિંગ, મેન્ટેનન્સ, અથવા સેફ્ટી.',thanks:n=>`આભાર ${n}! તમારો વિચાર નોંધાઈ ગયો છે — તે પ્લાન્ટને વધુ સારું અને સુરક્ષિત બનાવશે.`,yourTurn:'🎤 હવે તમે બોલો',speaking:'સાંભળો',thinking:'સમજી રહ્યા છીએ',captured:'વોઈસથી નોંધાયું — તપાસો અને મોકલો',micErr:'માઇક મળ્યો નથી — પરવાનગી આપો'},
+  en:{name:'English',bcp:'en-IN',welcome:n=>`Hello ${n}! Tell me — what improvement idea do you have for your work? Just speak naturally.`,askDept:'Which area or department is this about — for example Spinning, Maintenance, or Safety?',thanks:n=>`Thank you, ${n}! Your idea has been captured — it will help make the plant better and safer.`,yourTurn:'🎤 Your turn — speak now',speaking:'Listen',thinking:'Understanding your idea',captured:'Captured by voice — review & send',micErr:'Mic not available — please allow access'},
+  ta:{name:'தமிழ்',bcp:'ta-IN',welcome:n=>`வணக்கம் ${n}! உங்கள் வேலையில் முன்னேற்றத்துக்கு என்ன யோசனை? நிதானமாகச் சொல்லுங்கள்.`,askDept:'இது எந்தத் துறை சார்ந்தது — உதாரணமாக ஸ்பின்னிங், மெயின்டெனன்ஸ், அல்லது சேஃப்டி?',thanks:n=>`நன்றி ${n}! உங்கள் யோசனை பதிவாகிவிட்டது — இது ஆலையை சிறப்பாகவும் பாதுகாப்பாகவும் ஆக்கும்.`,yourTurn:'🎤 இப்போது பேசுங்கள்',speaking:'கேளுங்கள்',thinking:'புரிந்துகொள்கிறோம்',captured:'குரல் மூலம் பதிவு — சரிபார்த்து அனுப்பவும்',micErr:'மைக் கிடைக்கவில்லை — அனுமதி தரவும்'}
+ };
+ const $=id=>document.getElementById(id);
+ let lang='en',ending=false,paused=false,ov=null,online=false,emptyTries=0,history=[];
+ /* offline-fallback accumulators */
+ let ideaText='',clarifyText='',askedDept=false;
+ /* mic / recorder (online STT) */
+ let micStream=null,audioCtx=null,analyser=null,vadData=null,curRec=null,vadRAF=null,curRecog=null;
+ const SILENCE_MS=1000,MIN_SPEECH_MS=300,MAX_REC_MS=25000,VAD_THRESHOLD=0.028;
+
+ /* ---------- overlay ---------- */
+ function build(){
+  if($('voiceOverlay'))return;
+  ov=document.createElement('div'); ov.id='voiceOverlay'; ov.className='voice-ov';
+  ov.innerHTML=`<div class="voice-card">
+    <button class="voice-x" onclick="VOICE.close()"><i class="ti ti-x"></i></button>
+    <div class="voice-brand"><span class="vmark">K</span><div><b>Kaizen Voice</b><small>Speak your idea — in your language</small></div></div>
+    <div class="vscreen" id="vLang">
+      <div class="vtitle">Choose your language</div>
+      <div class="vsub">अपनी भाषा चुनें · તમારી ભાષા · மொழியைத் தேர்வு செய்க</div>
+      <div class="vlangs">
+        <button class="vlang" onclick="VOICE.pick('hi')">हिंदी<small>Hindi</small></button>
+        <button class="vlang" onclick="VOICE.pick('gu')">ગુજરાતી<small>Gujarati</small></button>
+        <button class="vlang" onclick="VOICE.pick('en')">English<small>English</small></button>
+        <button class="vlang" onclick="VOICE.pick('ta')">தமிழ்<small>Tamil</small></button>
+      </div>
+      <div class="vmode" id="vMode"></div>
+    </div>
+    <div class="vscreen" id="vConvo" style="display:none">
+      <div class="vstage">
+        <div class="vorb idle" id="vOrb"><div class="vhalo"></div><div class="vring"></div><div class="vring r2"></div><div class="vcore"></div><i class="ti ti-microphone vglyph"></i><div class="vbars"><span></span><span></span><span></span><span></span><span></span></div></div>
+        <div class="vstatus" id="vStatus">…</div>
+        <div class="vcaption" id="vCaption">…</div>
+        <div class="vyou" id="vYou"></div>
+        <div class="verr" id="vErr"></div>
+      </div>
+      <div class="vtype" id="vType"><input class="input" id="vTypeIn" placeholder="…or type your idea here" onkeydown="if(event.key==='Enter')VOICE.sendTyped()"><button class="btn prim" onclick="VOICE.sendTyped()"><i class="ti ti-send"></i></button></div>
+      <div class="vbtns">
+        <button class="btn" id="vTalk" onclick="VOICE.again()"><i class="ti ti-microphone"></i>Speak again</button>
+        <button class="btn" onclick="VOICE.close()"><i class="ti ti-x"></i>Cancel</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+ }
+ const hasSpeech=()=>!!(window.SpeechRecognition||window.webkitSpeechRecognition);
+ const showScreen=id=>['vLang','vConvo'].forEach(s=>{const e=$(s);if(e)e.style.display=(s===id?'flex':'none');});
+ const setOrb=c=>{const o=$('vOrb');if(o)o.className='vorb '+c;};
+ const setStatus=(t,m)=>{const s=$('vStatus');if(s){s.className='vstatus'+(m?' '+m:'');s.textContent=t;}};
+ const setCaption=t=>{const c=$('vCaption');if(c)c.textContent=t;};
+ const setYou=t=>{const y=$('vYou');if(y)y.textContent=t?('“'+t+'”'):'';};
+ const showErr=t=>{const e=$('vErr');if(e){e.style.display='block';e.textContent=t;}};
+ const hideErr=()=>{const e=$('vErr');if(e)e.style.display='none';};
+ const showType=()=>{const t=$('vType');if(t)t.classList.add('show');};
+
+ /* ---------- backend probe ---------- */
+ async function probe(){
+  if(location.protocol==='file:')return false;
+  try{const r=await fetch(API+'/api/health',{cache:'no-store'});if(!r.ok)return false;const j=await r.json();return !!j.ok;}catch(e){return false;}
+ }
+
+ /* ---------- TTS ---------- */
+ function playB64Wav(b64){return new Promise(res=>{try{const a=new Audio('data:audio/wav;base64,'+b64);a.onended=res;a.onerror=res;a.play().catch(()=>res());setTimeout(res,20000);}catch(e){res();}});}
+ function pickVoice(bcp){try{const vs=speechSynthesis.getVoices()||[];return vs.find(v=>v.lang===bcp)||vs.find(v=>v.lang&&v.lang.slice(0,2)===bcp.slice(0,2))||null;}catch(e){return null;}}
+ function speakBrowser(text){return new Promise(res=>{try{if(!('speechSynthesis'in window)){setTimeout(res,400);return;}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=LANGS[lang].bcp;const v=pickVoice(LANGS[lang].bcp);if(v)u.voice=v;u.rate=.98;u.onend=res;u.onerror=res;speechSynthesis.speak(u);setTimeout(res,Math.min(11000,1600+text.length*65));}catch(e){res();}});}
+ async function say(text){
+  setOrb('speak'); setStatus(LANGS[lang].speaking,'speak');
+  if(online){
+   try{
+    const r=await fetch(API+'/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text,lang})});
+    const d=await r.json(); if(d.audio){ await playB64Wav(d.audio); return; }
+   }catch(e){/* fall through to browser TTS */}
+  }
+  await speakBrowser(text);
+ }
+
+ /* ---------- online STT (Sarvam): record with VAD, post to /api/stt ---------- */
+ async function initMic(){micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});audioCtx=new (window.AudioContext||window.webkitAudioContext)();const src=audioCtx.createMediaStreamSource(micStream);analyser=audioCtx.createAnalyser();analyser.fftSize=1024;src.connect(analyser);vadData=new Uint8Array(analyser.fftSize);}
+ function micLevel(){analyser.getByteTimeDomainData(vadData);let s=0;for(let i=0;i<vadData.length;i++){const v=(vadData[i]-128)/128;s+=v*v;}return Math.sqrt(s/vadData.length);}
+ function pickMime(){const o=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'];for(const m of o){if(window.MediaRecorder&&MediaRecorder.isTypeSupported(m))return m;}return '';}
+ function recordTurn(){
+  return new Promise(async resolve=>{
+   if(!micStream){try{await initMic();}catch(e){resolve('__micerr__');return;}}
+   let chunks=[],hasSpoken=false,lastVoice=performance.now(),start=performance.now(),stopped=false;
+   const mime=pickMime(); let rec;
+   try{rec=mime?new MediaRecorder(micStream,{mimeType:mime}):new MediaRecorder(micStream);}catch(e){try{rec=new MediaRecorder(micStream);}catch(e2){resolve('__micerr__');return;}}
+   curRec=rec;
+   rec.ondataavailable=e=>{if(e.data&&e.data.size>0)chunks.push(e.data);};
+   rec.onstop=async ()=>{
+    if(paused||ending){resolve('');return;}
+    const blob=new Blob(chunks,{type:(rec.mimeType||'audio/webm')});
+    if(!hasSpoken||blob.size<1500){resolve('');return;}
+    setOrb('think'); setStatus(LANGS[lang].thinking,'think');
+    try{const fd=new FormData();fd.append('audio',blob,'audio.webm');fd.append('lang',lang);
+     const r=await fetch(API+'/api/stt',{method:'POST',body:fd});const d=await r.json();
+     if(d.error)throw new Error(d.error);
+     resolve((d.transcript||'').trim());
+    }catch(e){showErr('Hearing error: '+(e.message||e));resolve('');}
+   };
+   try{rec.start();}catch(e){resolve('__micerr__');return;}
+   setOrb('live'); setStatus(LANGS[lang].yourTurn,'live'); setYou('');
+   const loop=()=>{
+    if(stopped||paused||ending){return;}
+    const lvl=micLevel(),now=performance.now();
+    if(lvl>VAD_THRESHOLD){hasSpoken=true;lastVoice=now;}
+    const elapsed=now-start,silence=now-lastVoice;
+    if((hasSpoken&&silence>SILENCE_MS&&elapsed>MIN_SPEECH_MS)||elapsed>MAX_REC_MS){stopped=true;try{rec.stop();}catch(e){}return;}
+    vadRAF=requestAnimationFrame(loop);
+   };
+   vadRAF=requestAnimationFrame(loop);
+  });
+ }
+ /* ---------- offline STT (Web Speech) ---------- */
+ function listenOnce(){
+  return new Promise((resolve,reject)=>{
+   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+   if(!SR){reject(new Error('nospeech'));return;}
+   const r=new SR();r.lang=LANGS[lang].bcp;r.interimResults=true;r.maxAlternatives=1;r.continuous=false;
+   let finalTxt='';
+   r.onresult=e=>{let t='';for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;finalTxt=t;setYou(t);};
+   r.onerror=ev=>reject(new Error(ev.error||'mic'));
+   r.onend=()=>resolve(finalTxt.trim());
+   curRecog=r;try{r.start();}catch(e){reject(new Error('mic'));}
+  });
+ }
+
+ /* ---------- conversation loop ---------- */
+ async function turn(){
+  if(ending||paused)return;
+  showType(); hideErr();
+  let text='';
+  if(online){
+   text=await recordTurn();
+   if(text==='__micerr__'){ online=false; showErr(LANGS[lang].micErr); return turn(); } // mic failed -> fall to web speech
+  }else{
+   if(!hasSpeech()){ setOrb('idle'); setStatus('Type your idea below'); return; }
+   setOrb('live'); setStatus(LANGS[lang].yourTurn,'live'); setYou('');
+   try{ text=await listenOnce(); }
+   catch(err){ const e=(err&&err.message)||''; if(e==='not-allowed'||e==='service-not-allowed'){ setOrb('idle'); setStatus('Type your idea below'); showErr(LANGS[lang].micErr); return; } text=''; }
+  }
+  if(!text||text.length<2){ emptyTries++; if(emptyTries>=2){ setOrb('idle'); setStatus('Tap “Speak again” or type'); return; } return turn(); }
+  emptyTries=0; await handleUser(text);
+ }
+ async function handleUser(text){
+  setYou(text); setOrb('think'); setStatus(LANGS[lang].thinking,'think');
+  let data=null;
+  if(online){
+   history.push({role:'user',content:text});
+   try{
+    const r=await fetch(API+'/api/converse',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({lang,name:EMP_NAME,messages:history})});
+    const d=await r.json(); if(d.error)throw new Error(d.error);
+    data=d; history.push({role:'assistant',content:JSON.stringify(d)});
+   }catch(e){ showErr('AI error: '+(e.message||e)); online=false; } // drop to local for the rest
+  }
+  if(!data){ // offline / fallback path
+   if(askedDept) clarifyText=(clarifyText?clarifyText+' ':'')+text; else ideaText=(ideaText?ideaText+' ':'')+text;
+   await new Promise(r=>setTimeout(r,300));
+   data=classifyLocal(ideaText,(ideaText+' '+clarifyText).trim());
+  }
+  if(data.action==='ask'){ askedDept=true; setCaption(data.speech); await say(data.speech); turn(); }
+  else { await finish(data); }
+ }
+ async function finish(data){
+  ending=true; setCaption(data.speech); await say(data.speech);
+  applyToForm(data); close();
+  if(window.toast) toast(LANGS[lang].captured);
+ }
+
+ /* ---------- offline heuristic classifier (fallback only; mirrors the script's tier/dept idea) ---------- */
+ const DEPT_KW=[['Safety',['safety','danger','hazard','accident','injury','ppe','helmet','guard rail','fall','सुरक्षा','सेफ्टी']],['Maintenance',['maintenance','breakdown','repair','bearing','motor','pump','gearbox','vibration','spare','मरम्मत','machine stop']],['Spinning',['spinning','spinneret','filament','tow','godet','jet','स्पिनिंग','yarn break']],['Viscose',['viscose','xanthation','steeping','press','alkali','ripening','विस्कोस']],['Spinbath',['spin bath','spinbath','acid','sulphuric','sulfuric','zinc']],['After-treatment',['after-treatment','aftertreatment','washing','bleach','desulph','cutter','baling','drying']],['Utilities',['utility','utilities','steam','boiler','compressor','compressed air','power','electricity','energy','water','cooling tower','भाप']],['ETP',['etp','effluent','treatment plant','waste water','emission','pollution','discharge']],['Quality',['quality','qc','lab','laboratory','test','defect','sample','iso','denier']],['Packing',['packing','pack','dispatch','bale press','baling press','store','stores','logistics','warehouse','label','loading']],['Auxiliary',['cs2','carbon disulphide','auxiliary','recovery','sulphur','carbon disulfide']],['Process/Digital',['sensor','automation','software','digital','data','plc','scada','monitor','dashboard','meter','iot','camera']]];
+ const FILLER=/^(uh|um|so|like|the|a|an|to|i|we|please|kya|ki|je|that|just|actually|basically|well)$/i;
+ const LEADINS=[/^it'?s taking (so much |too much |a lot of )?time (for us |for me )?to /i,/^(we|i) (just |really )?(need|want|would like|have|have got) to /i,/^(can|could|should) (we|you|i) /i,/^there (is|are|'s) (a |an )?(problem|issue|need)( with)? /i,/^the (problem|issue|idea|suggestion) is (that |to )?/i,/^my (idea|suggestion|point) is (that |to )?/i,/^i (think|feel|guess|suggest|propose|believe)( that)? /i,/^(so|basically|actually|well|see|ok|okay|right|um+|uh+|like) /i];
+ const TRAIL=/(,?\s*(so|and|but)?\s*(i (feel|think|guess|mean)|you know|or something|i mean|na|haan)\b[.\s]*)+$/i;
+ const PROB=['time','queue','wait','delay','long','slow','problem','difficult','hard','risk','unsafe','danger','hazard','leak','breakdown','waste','wasted','stuck','manual','daily','every day','too much','too many','shortage','missing','broken','overflow','jam','extra','reduce','save','improve'];
+ const PRON_LEAD=/^(we|i|they|it|you|he|she|that|this|there)('?(s|re|ll|ve|d))?\s+(are|is|was|were|have|has|had|will|can|could|should|would|do|does|did|feel|think|need|want|keep|keeps)?\s*/i;
+ function cleanText(t){let s=(t||'').replace(/\s+/g,' ').trim();s=s.replace(/\bi\b/g,'I').replace(/\bi'/g,"I'");s=s.replace(/\s+([,.;:!?])/g,'$1');return s;}
+ function sentence(t){t=(t||'').trim();if(!t)return t;t=t.charAt(0).toUpperCase()+t.slice(1);if(!/[.!?]$/.test(t))t+='.';return t;}
+ function stripLeadins(t){let s=t.trim(),go=true;while(go){go=false;for(const re of LEADINS){if(re.test(s)){s=s.replace(re,'');go=true;}}}return s.trim();}
+ function stripTrailing(t){return t.replace(TRAIL,'').replace(/[\s,;:.]+$/,'').trim();}
+ function detectDept(t){const x=t.toLowerCase();for(const [d,ks] of DEPT_KW){if(ks.some(k=>x.includes(k)))return d;}return null;}
+ function detectTier(t){const x=t.toLowerCase();if(/(new machine|new equipment|automation|automate|conveyor|robot|install a|capital|interlock system|plc|scada|crore|करोड़|lakhs|machine modification|big project)/.test(x))return {tier:3,reason:'Needs new equipment / capital spend',cost:'Above ₹1 lakh'};if(/(guard|sensor|light|lighting|mat|poster|sign|signage|board|fixture|platform|step|tool|tooling|paint|marking|cover|trolley|rack|small|buy a|purchase a|fan|cushion|railing)/.test(x))return {tier:2,reason:'Low-cost item or fixture (≤ ₹1 lakh)',cost:'Up to ₹1 lakh'};return {tier:1,reason:'No purchase cost — in-house change',cost:'No cost · in-house'};}
+ function makeTitle(idea){
+  const clean=stripLeadins(cleanText(idea));
+  const clauses=clean.split(/\s*(?:,|;|\.|\bas\b|\bbecause\b|\bsince\b|\bso that\b|\bso\b|\bbut\b|\band\b|\bwhich\b|\bwhen\b)\s*/i).map(c=>c.trim()).filter(c=>c.split(' ').length>=2);
+  let best=clauses[0]||clean,bestScore=-1;
+  clauses.forEach(c=>{const lc=c.toLowerCase();let sc=PROB.reduce((a,k)=>a+(lc.includes(k)?2:0),0);sc+=Math.min(c.split(' ').length,8)*0.3;if(sc>bestScore){bestScore=sc;best=c;}});
+  let t=best.replace(PRON_LEAD,'').trim();
+  const TAILW=/^(to|the|a|an|and|or|of|for|on|in|with|that|is|are|will|we|i|so|but|as|at|by|from|our)$/i;
+  let w=t.split(' ');while(w.length&&FILLER.test(w[0]))w.shift();if(w.length>9)w=w.slice(0,9);
+  while(w.length>3&&TAILW.test(w[w.length-1]))w.pop();
+  t=stripTrailing(w.join(' '));
+  if(!t||t.split(' ').length<2)t=stripTrailing(stripLeadins(cleanText(idea)).split(' ').slice(0,8).join(' '));
+  return t.charAt(0).toUpperCase()+t.slice(1);
+ }
+ function classifyLocal(idea,all){
+  const dept=detectDept(all);
+  if(!dept&&!askedDept)return {action:'ask',speech:LANGS[lang].askDept};
+  const tier=detectTier(all);
+  return {action:'final',speech:LANGS[lang].thanks(EMP_NAME),title:makeTitle(idea),description:sentence(stripTrailing(cleanText(idea))),department:dept||'Process/Digital',tier:tier.tier,tier_reason:tier.reason,cost_estimate:tier.cost};
+ }
+
+ /* ---------- pre-fill the Submit form + land on Review ---------- */
+ function setVal(id,v){const e=$(id);if(e)e.value=v;}
+ function applyToForm(data){
+  const dept=mapDept(data.department);
+  setVal('subTitle',data.title);
+  const ta=$('subDesc'); if(ta)ta.value=data.description;
+  const dv=$('deptVal'); if(dv)dv.textContent=dept;
+  const tier=parseInt(data.tier,10)||1;
+  [...document.querySelectorAll('.chips')].forEach(c=>{const b=[...c.querySelectorAll('button')];if(b.some(x=>/Minor/.test(x.textContent))){b.forEach(x=>x.classList.remove('on'));(b[tier-1]||b[1]).classList.add('on');}});
+  document.querySelectorAll('.stepper .s').forEach(s=>s.classList.add('on'));
+  const tcl=tier===1?['var(--emerald-soft)','var(--emerald)']:tier===2?['var(--amber-soft)','var(--amber)']:['var(--red-soft)','var(--red)'];
+  const title=$('subTitle'); const card=title&&title.closest('.card');
+  if(card){
+   const old=$('voiceCapture'); if(old)old.remove();
+   const b=document.createElement('div'); b.id='voiceCapture'; b.className='vcap';
+   b.innerHTML=`<div class="vcap-h"><span class="vcap-ic"><i class="ti ti-microphone-2"></i></span><div><b>Captured by voice</b><div class="vcap-s">Review the details below and tap <b>Submit idea</b> — edit anything you like.</div></div></div>
+     <div class="vcap-chips"><span class="vcap-pill" style="background:var(--ember-soft);color:var(--ember-d)"><i class="ti ti-building-factory-2"></i>${dept}</span><span class="vcap-pill" style="background:${tcl[0]};color:${tcl[1]}"><i class="ti ti-stack-2"></i>Tier ${tier}</span><span class="vcap-pill" style="background:var(--surface-2);color:var(--muted)"><i class="ti ti-coin"></i>${data.cost_estimate||''}</span></div>`;
+   card.parentNode.insertBefore(b,card);
+   b.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  if(window.dupCheck) try{dupCheck(data.title);}catch(e){}
+ }
+
+ /* ---------- public ---------- */
+ async function open(){
+  build(); ending=false; paused=false; emptyTries=0; history=[]; ideaText=''; clarifyText=''; askedDept=false;
+  ov.classList.add('open'); showScreen('vLang');
+  online=await probe();
+  const m=$('vMode');
+  if(m) m.innerHTML = online
+    ? '<i class="ti ti-microphone"></i> Voice powered by Sarvam + Claude — pick a language and speak'
+    : (hasSpeech() ? '<i class="ti ti-microphone"></i> Offline preview (no server) — browser voice; pick a language'
+                   : '<i class="ti ti-keyboard"></i> No server &amp; no browser voice — you can type your idea');
+  try{speechSynthesis.getVoices();}catch(e){}
+ }
+ async function pick(code){
+  lang=code; ending=false; paused=false; emptyTries=0; history=[]; ideaText=''; clarifyText=''; askedDept=false;
+  showScreen('vConvo'); const t=$('vType'); if(t)t.classList.remove('show'); hideErr(); setYou('');
+  if(online){ try{ if(!micStream) await initMic(); }catch(e){ online=false; showErr(LANGS[lang].micErr); } }
+  setCaption(LANGS[lang].welcome(EMP_NAME));
+  await say(LANGS[lang].welcome(EMP_NAME));
+  turn();
+ }
+ function again(){ if(ending)return; paused=false; emptyTries=0; turn(); }
+ function sendTyped(){ const i=$('vTypeIn'); if(!i)return; const v=i.value.trim(); if(v.length<2)return; i.value=''; handleUser(v); }
+ function close(){
+  paused=true; ending=true;
+  try{if(curRecog)curRecog.abort();}catch(e){}
+  try{if(curRec&&curRec.state!=='inactive')curRec.stop();}catch(e){}
+  if(vadRAF)cancelAnimationFrame(vadRAF);
+  try{speechSynthesis.cancel();}catch(e){}
+  if(ov)ov.classList.remove('open');
+ }
+ return {open,pick,again,sendTyped,close};
+})();
+</script>
+</body>
+</html>

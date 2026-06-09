@@ -17,7 +17,7 @@ import json
 import re
 
 import requests
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory
 import anthropic
 
 # --- Keys: read ONLY from the environment (never commit a real key) ---
@@ -107,6 +107,19 @@ def extract_json(text):
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+# --- Employee idea-submission portal (voice integrated, served same-origin so /api works) ---
+@app.route("/employee")
+@app.route("/portal")
+def employee_portal():
+    return send_from_directory(app.root_path, "Kaizen_User_Reviewer_Approver.html")
+
+
+@app.route("/api/health")
+def health():
+    """Lets the portal detect a live backend and choose Sarvam+Claude over the in-browser fallback."""
+    return jsonify({"ok": True, "anthropic": bool(API_KEY), "sarvam": bool(SARVAM_KEY)})
 
 
 @app.route("/api/converse", methods=["POST"])
