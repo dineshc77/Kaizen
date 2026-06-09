@@ -870,10 +870,10 @@ const VOICE=(function(){
  const DEPT_MAP={'Pulp':'Viscose','Viscose':'Viscose','Spinning':'Spinning','Spin Bath / Acid':'Spinbath','Auxiliary & CS2':'Auxiliary','Aftertreatment':'After-treatment','Quality Control':'Quality','Mechanical Maintenance':'Maintenance','Electrical Maintenance':'Maintenance','Instrumentation':'Process/Digital','Power & Utilities':'Utilities','Effluent / ETP':'ETP','Stores & Logistics':'Packing','Packing & Dispatch':'Packing','Safety':'Safety','Security':'Safety','HR / Admin':'Process/Digital'};
  const mapDept=d=>FORM_DEPTS.includes(d)?d:(DEPT_MAP[d]||'Process/Digital');
  const LANGS={
-  hi:{name:'हिंदी',bcp:'hi-IN',welcome:n=>`नमस्ते ${n}! बताइए, आपके काम में सुधार के लिए क्या सुझाव है? आराम से बोलिए।`,askDept:'यह किस विभाग या क्षेत्र से जुड़ा है? जैसे स्पिनिंग, मेंटेनेंस, या सेफ्टी।',thanks:n=>`धन्यवाद ${n}! आपका सुझाव दर्ज हो गया है — यह प्लांट को बेहतर और सुरक्षित बनाएगा।`,yourTurn:'🎤 अब आप बोलिए',speaking:'सुनिए',thinking:'समझ रहे हैं',captured:'आवाज़ से दर्ज — कृपया जाँचें और भेजें',micErr:'माइक नहीं मिला — कृपया अनुमति दें'},
-  gu:{name:'ગુજરાતી',bcp:'gu-IN',welcome:n=>`નમસ્તે ${n}! કહો, તમારા કામમાં સુધારા માટે શું સૂચન છે? આરામથી બોલો.`,askDept:'આ કયા વિભાગ સાથે સંબંધિત છે? જેમ કે સ્પિનિંગ, મેન્ટેનન્સ, અથવા સેફ્ટી.',thanks:n=>`આભાર ${n}! તમારો વિચાર નોંધાઈ ગયો છે — તે પ્લાન્ટને વધુ સારું અને સુરક્ષિત બનાવશે.`,yourTurn:'🎤 હવે તમે બોલો',speaking:'સાંભળો',thinking:'સમજી રહ્યા છીએ',captured:'વોઈસથી નોંધાયું — તપાસો અને મોકલો',micErr:'માઇક મળ્યો નથી — પરવાનગી આપો'},
-  en:{name:'English',bcp:'en-IN',welcome:n=>`Hello ${n}! Tell me — what improvement idea do you have for your work? Just speak naturally.`,askDept:'Which area or department is this about — for example Spinning, Maintenance, or Safety?',thanks:n=>`Thank you, ${n}! Your idea has been captured — it will help make the plant better and safer.`,yourTurn:'🎤 Your turn — speak now',speaking:'Listen',thinking:'Understanding your idea',captured:'Captured by voice — review & send',micErr:'Mic not available — please allow access'},
-  ta:{name:'தமிழ்',bcp:'ta-IN',welcome:n=>`வணக்கம் ${n}! உங்கள் வேலையில் முன்னேற்றத்துக்கு என்ன யோசனை? நிதானமாகச் சொல்லுங்கள்.`,askDept:'இது எந்தத் துறை சார்ந்தது — உதாரணமாக ஸ்பின்னிங், மெயின்டெனன்ஸ், அல்லது சேஃப்டி?',thanks:n=>`நன்றி ${n}! உங்கள் யோசனை பதிவாகிவிட்டது — இது ஆலையை சிறப்பாகவும் பாதுகாப்பாகவும் ஆக்கும்.`,yourTurn:'🎤 இப்போது பேசுங்கள்',speaking:'கேளுங்கள்',thinking:'புரிந்துகொள்கிறோம்',captured:'குரல் மூலம் பதிவு — சரிபார்த்து அனுப்பவும்',micErr:'மைக் கிடைக்கவில்லை — அனுமதி தரவும்'}
+  hi:{name:'हिंदी',bcp:'hi-IN',welcome:n=>`नमस्ते ${n}! अपना सुझाव बताइए — आराम से बोलिए।`,askDept:'यह किस विभाग या क्षेत्र से जुड़ा है? जैसे स्पिनिंग, मेंटेनेंस, या सेफ्टी।',thanks:n=>`धन्यवाद ${n}! आपका सुझाव दर्ज हो गया है — यह प्लांट को बेहतर और सुरक्षित बनाएगा।`,yourTurn:'🎤 अब आप बोलिए',speaking:'सुनिए',thinking:'समझ रहे हैं',captured:'आवाज़ से दर्ज — कृपया जाँचें और भेजें',micErr:'माइक नहीं मिला — कृपया अनुमति दें'},
+  gu:{name:'ગુજરાતી',bcp:'gu-IN',welcome:n=>`નમસ્તે ${n}! તમારો સૂચન કહો — આરામથી બોલો.`,askDept:'આ કયા વિભાગ સાથે સંબંધિત છે? જેમ કે સ્પિનિંગ, મેન્ટેનન્સ, અથવા સેફ્ટી.',thanks:n=>`આભાર ${n}! તમારો વિચાર નોંધાઈ ગયો છે — તે પ્લાન્ટને વધુ સારું અને સુરક્ષિત બનાવશે.`,yourTurn:'🎤 હવે તમે બોલો',speaking:'સાંભળો',thinking:'સમજી રહ્યા છીએ',captured:'વોઈસથી નોંધાયું — તપાસો અને મોકલો',micErr:'માઇક મળ્યો નથી — પરવાનગી આપો'},
+  en:{name:'English',bcp:'en-IN',welcome:n=>`Hi ${n}! Tell me your idea to improve your work — just speak.`,askDept:'Which area or department is this about — for example Spinning, Maintenance, or Safety?',thanks:n=>`Thank you, ${n}! Your idea has been captured — it will help make the plant better and safer.`,yourTurn:'🎤 Your turn — speak now',speaking:'Listen',thinking:'Understanding your idea',captured:'Captured by voice — review & send',micErr:'Mic not available — please allow access'},
+  ta:{name:'தமிழ்',bcp:'ta-IN',welcome:n=>`வணக்கம் ${n}! உங்கள் யோசனையைச் சொல்லுங்கள் — நிதானமாகப் பேசுங்கள்.`,askDept:'இது எந்தத் துறை சார்ந்தது — உதாரணமாக ஸ்பின்னிங், மெயின்டெனன்ஸ், அல்லது சேஃப்டி?',thanks:n=>`நன்றி ${n}! உங்கள் யோசனை பதிவாகிவிட்டது — இது ஆலையை சிறப்பாகவும் பாதுகாப்பாகவும் ஆக்கும்.`,yourTurn:'🎤 இப்போது பேசுங்கள்',speaking:'கேளுங்கள்',thinking:'புரிந்துகொள்கிறோம்',captured:'குரல் மூலம் பதிவு — சரிபார்த்து அனுப்பவும்',micErr:'மைக் கிடைக்கவில்லை — அனுமதி தரவும்'}
  };
  const $=id=>document.getElementById(id);
  let lang='en',ending=false,paused=false,ov=null,online=false,emptyTries=0,history=[];
@@ -939,13 +939,14 @@ const VOICE=(function(){
  function pickVoice(bcp){try{const vs=speechSynthesis.getVoices()||[];return vs.find(v=>v.lang===bcp)||vs.find(v=>v.lang&&v.lang.slice(0,2)===bcp.slice(0,2))||null;}catch(e){return null;}}
  function speakBrowser(text){return new Promise(res=>{try{if(!('speechSynthesis'in window)){setTimeout(res,400);return;}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=LANGS[lang].bcp;const v=pickVoice(LANGS[lang].bcp);if(v)u.voice=v;u.rate=.98;u.onend=res;u.onerror=res;speechSynthesis.speak(u);setTimeout(res,Math.min(11000,1600+text.length*65));}catch(e){res();}});}
  async function say(text){
-  setOrb('speak'); setStatus(LANGS[lang].speaking,'speak');
   if(online){
+   setOrb('think'); setStatus(LANGS[lang].speaking,'speak'); // fetching audio
    try{
     const r=await fetch(API+'/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text,lang})});
-    const d=await r.json(); if(d.audio){ await playB64Wav(d.audio); return; }
+    const d=await r.json(); if(d.audio){ setOrb('speak'); await playB64Wav(d.audio); return; }
    }catch(e){/* fall through to browser TTS */}
   }
+  setOrb('speak'); setStatus(LANGS[lang].speaking,'speak');
   await speakBrowser(text);
  }
 
@@ -1032,6 +1033,7 @@ const VOICE=(function(){
    await new Promise(r=>setTimeout(r,300));
    data=classifyLocal(ideaText,(ideaText+' '+clarifyText).trim());
   }
+  setYou('');
   if(data.action==='ask'){ askedDept=true; setCaption(data.speech); await say(data.speech); turn(); }
   else { await finish(data); }
  }
@@ -1112,9 +1114,11 @@ const VOICE=(function(){
  async function pick(code){
   lang=code; ending=false; paused=false; emptyTries=0; history=[]; ideaText=''; clarifyText=''; askedDept=false;
   showScreen('vConvo'); const t=$('vType'); if(t)t.classList.remove('show'); hideErr(); setYou('');
-  if(online){ try{ if(!micStream) await initMic(); }catch(e){ online=false; showErr(LANGS[lang].micErr); } }
+  let micP=Promise.resolve();
+  if(online&&!micStream){ micP=initMic().catch(()=>{ online=false; showErr(LANGS[lang].micErr); }); }
   setCaption(LANGS[lang].welcome(EMP_NAME));
-  await say(LANGS[lang].welcome(EMP_NAME));
+  await say(LANGS[lang].welcome(EMP_NAME)); // greet while the mic initialises in parallel
+  await micP;
   turn();
  }
  function again(){ if(ending)return; paused=false; emptyTries=0; turn(); }
