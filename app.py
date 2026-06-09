@@ -29,9 +29,9 @@ MODEL = "claude-haiku-4-5-20251001"   # fast model for the short classify/reply 
 # Sarvam (Indian-language speech) settings
 SARVAM_STT_URL = "https://api.sarvam.ai/speech-to-text"
 SARVAM_TTS_URL = "https://api.sarvam.ai/text-to-speech"
-SARVAM_STT_MODEL = "saarika:v2.5"
-SARVAM_TTS_MODEL = "bulbul:v2"
-SARVAM_SPEAKER = "anushka"          # valid bulbul:v2 voice
+SARVAM_STT_MODEL = "saaras:v3"      # current recommended ASR (was saarika:v2.5, legacy)
+SARVAM_TTS_MODEL = "bulbul:v3"     # current TTS; required for the Shubh voice (was bulbul:v2)
+SARVAM_SPEAKER = "Shubh"            # bulbul:v3 voice (default male voice)
 LANG_BCP47 = {"hi": "hi-IN", "gu": "gu-IN", "en": "en-IN", "ta": "ta-IN"}
 
 if not API_KEY:
@@ -167,7 +167,7 @@ def stt():
             SARVAM_STT_URL,
             headers={"api-subscription-key": SARVAM_KEY},
             files={"file": (audio.filename or "audio.webm", audio.stream, audio.mimetype or "audio/webm")},
-            data={"model": SARVAM_STT_MODEL, "language_code": bcp},
+            data={"model": SARVAM_STT_MODEL, "language_code": bcp, "mode": "transcribe"},
             timeout=30,
         )
         if r.status_code != 200:
@@ -191,7 +191,7 @@ def tts():
             SARVAM_TTS_URL,
             headers={"api-subscription-key": SARVAM_KEY, "Content-Type": "application/json"},
             json={
-                "text": text[:1500],
+                "text": text[:2500],
                 "target_language_code": bcp,
                 "speaker": SARVAM_SPEAKER,
                 "model": SARVAM_TTS_MODEL,
