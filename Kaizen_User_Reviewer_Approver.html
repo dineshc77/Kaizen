@@ -940,13 +940,13 @@ const VOICE=(function(){
  function speakBrowser(text){return new Promise(res=>{try{if(!('speechSynthesis'in window)){setTimeout(res,400);return;}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=LANGS[lang].bcp;const v=pickVoice(LANGS[lang].bcp);if(v)u.voice=v;u.rate=.98;u.onend=res;u.onerror=res;speechSynthesis.speak(u);setTimeout(res,Math.min(11000,1600+text.length*65));}catch(e){res();}});}
  async function say(text){
   if(online){
-   setOrb('think'); setStatus(LANGS[lang].speaking,'speak'); // fetching audio
+   setOrb('think'); setStatus(LANGS[lang].speaking,'speak'); setCaption('…'); // hold text while audio is fetched
    try{
     const r=await fetch(API+'/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text,lang})});
-    const d=await r.json(); if(d.audio){ setOrb('speak'); await playB64Wav(d.audio); return; }
+    const d=await r.json(); if(d.audio){ setOrb('speak'); setCaption(text); await playB64Wav(d.audio); return; } // reveal text in sync with the voice
    }catch(e){/* fall through to browser TTS */}
   }
-  setOrb('speak'); setStatus(LANGS[lang].speaking,'speak');
+  setOrb('speak'); setStatus(LANGS[lang].speaking,'speak'); setCaption(text);
   await speakBrowser(text);
  }
 
@@ -1034,11 +1034,11 @@ const VOICE=(function(){
    data=classifyLocal(ideaText,(ideaText+' '+clarifyText).trim());
   }
   setYou('');
-  if(data.action==='ask'){ askedDept=true; setCaption(data.speech); await say(data.speech); turn(); }
+  if(data.action==='ask'){ askedDept=true; await say(data.speech); turn(); }
   else { await finish(data); }
  }
  async function finish(data){
-  ending=true; setCaption(data.speech); await say(data.speech);
+  ending=true; await say(data.speech);
   applyToForm(data); close();
   if(window.toast) toast(LANGS[lang].captured);
  }
@@ -1116,8 +1116,7 @@ const VOICE=(function(){
   showScreen('vConvo'); const t=$('vType'); if(t)t.classList.remove('show'); hideErr(); setYou('');
   let micP=Promise.resolve();
   if(online&&!micStream){ micP=initMic().catch(()=>{ online=false; showErr(LANGS[lang].micErr); }); }
-  setCaption(LANGS[lang].welcome(EMP_NAME));
-  await say(LANGS[lang].welcome(EMP_NAME)); // greet while the mic initialises in parallel
+  await say(LANGS[lang].welcome(EMP_NAME)); // greet (text reveals in sync with the voice); mic initialises in parallel
   await micP;
   turn();
  }
