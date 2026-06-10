@@ -389,6 +389,10 @@ input[type=range]{width:100%;accent-color:var(--ember)}
 .vcap-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
 .vcap-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;font-size:11.5px;font-weight:700}
 .vcap-pill .ti{font-size:13px}
+.vdots{display:inline-flex;gap:6px;align-items:center;height:18px}
+.vdots span{width:7px;height:7px;border-radius:50%;background:var(--emerald);opacity:.45;animation:vdotb 1.25s ease-in-out infinite}
+.vdots span:nth-child(2){animation-delay:.16s}.vdots span:nth-child(3){animation-delay:.32s}
+@keyframes vdotb{0%,75%,100%{transform:translateY(0);opacity:.35}38%{transform:translateY(-5px);opacity:1}}
 </style>
 </head>
 <body>
@@ -923,6 +927,7 @@ const VOICE=(function(){
  const setOrb=c=>{const o=$('vOrb');if(o)o.className='vorb '+c;};
  const setStatus=(t,m)=>{const s=$('vStatus');if(s){s.className='vstatus'+(m?' '+m:'');s.textContent=t;}};
  const setCaption=t=>{const c=$('vCaption');if(c)c.textContent=t;};
+ const setThinking=()=>{const c=$('vCaption');if(c)c.innerHTML='<span class="vdots"><span></span><span></span><span></span></span>';};
  const setYou=t=>{const y=$('vYou');if(y)y.textContent=t?('“'+t+'”'):'';};
  const showErr=t=>{const e=$('vErr');if(e){e.style.display='block';e.textContent=t;}};
  const hideErr=()=>{const e=$('vErr');if(e)e.style.display='none';};
@@ -940,7 +945,7 @@ const VOICE=(function(){
  function speakBrowser(text){return new Promise(res=>{try{if(!('speechSynthesis'in window)){setTimeout(res,400);return;}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=LANGS[lang].bcp;const v=pickVoice(LANGS[lang].bcp);if(v)u.voice=v;u.rate=.98;u.onend=res;u.onerror=res;speechSynthesis.speak(u);setTimeout(res,Math.min(11000,1600+text.length*65));}catch(e){res();}});}
  async function say(text){
   if(online){
-   setOrb('think'); setStatus(LANGS[lang].speaking,'speak'); setCaption('…'); // hold text while audio is fetched
+   setOrb('think'); setStatus(LANGS[lang].speaking,'speak'); setThinking(); // animated dots while audio is fetched
    try{
     const r=await fetch(API+'/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text,lang})});
     const d=await r.json(); if(d.audio){ setOrb('speak'); setCaption(text); await playB64Wav(d.audio); return; } // reveal text in sync with the voice
