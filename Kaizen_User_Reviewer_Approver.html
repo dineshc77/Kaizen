@@ -393,6 +393,18 @@ input[type=range]{width:100%;accent-color:var(--ember)}
 .vdots span{width:7px;height:7px;border-radius:50%;background:var(--emerald);opacity:.45;animation:vdotb 1.25s ease-in-out infinite}
 .vdots span:nth-child(2){animation-delay:.16s}.vdots span:nth-child(3){animation-delay:.32s}
 @keyframes vdotb{0%,75%,100%{transform:translateY(0);opacity:.35}38%{transform:translateY(-5px);opacity:1}}
+.dupbanner.rich{display:block;background:var(--ember-soft);border:1px solid rgba(239,80,38,.28);border-radius:14px;padding:13px 14px;margin:-2px 0 14px;animation:vfade .25s ease}
+.dup-head{display:flex;gap:10px;align-items:flex-start}
+.dup-ic{width:30px;height:30px;border-radius:8px;background:var(--ember);color:#fff;display:grid;place-items:center;font-size:16px;flex:none}
+.dup-head b{font-family:var(--disp);font-size:14px}
+.dup-sub{font-size:11.5px;color:var(--muted);margin-top:1px;line-height:1.4}
+.dup-idea{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin:11px 0 10px}
+.dup-t{font-family:var(--disp);font-weight:600;font-size:13.5px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dup-m{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dup-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dup-joined{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--emerald);background:var(--emerald-soft);border:1px solid rgba(21,148,104,.25);border-radius:9px;padding:8px 12px}
+.dup-note{font-size:11px;color:var(--muted-2);margin-top:9px}
+.collab-note{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--emerald);background:var(--emerald-soft);border:1px solid rgba(21,148,104,.22);border-radius:9px;padding:9px 11px;margin-top:8px;line-height:1.35}
 </style>
 </head>
 <body>
@@ -494,6 +506,15 @@ function activityFor(d){const order=['intake','evaluation','approval','implement
  return ev;}
 const ENDO={};
 function endoState(d){if(!ENDO[d.id])ENDO[d.id]={n:6+(d.id.charCodeAt(9)*5%46),on:false};return ENDO[d.id];}
+const COLLAB={};
+const SEED=[
+ {title:"Auto shut-off for conveyors left running idle",dept:"Maintenance",cat:"Energy",tier:"B",stage:"implementation",est:3.4,act:null,score:82,sla:"ok",month:"Jun",sub:"Arjun Rao",kw:"conveyor conveyors idle running shut off power energy belt motor stop waste electricity auto switch",desc:"Conveyors often keep running with no material on them between batches, wasting power. An idle-sensing auto shut-off stops the belt when nothing is detected and restarts on demand.",collab:["Manish Gupta"]},
+ {title:"Anti-fatigue cushioned mats at spinning workstations",dept:"Spinning",cat:"Safety",tier:"A",stage:"done",est:1.6,act:1.9,score:78,sla:"-",month:"Apr",sub:"Anita Mehta",kw:"mat mats fatigue cushion cushioned standing legs leg pain ergonomic floor stand comfort feet back ache tired",desc:"Operators stand on hard floors through the shift, causing leg and back fatigue. Cushioned anti-fatigue mats at key standing stations reduce strain and improve alertness.",collab:["Sunita Patil","Neha Shah"]},
+ {title:"LED high-bay lighting upgrade across the shop floor",dept:"Utilities",cat:"Energy",tier:"B",stage:"evaluation",est:7.5,act:null,score:71,sla:"ok",month:"Jun",sub:"Manish Gupta",kw:"light lighting led lamp lamps dark bright illumination highbay shopfloor visibility lux fixtures bulbs dim",desc:"Old high-bay lamps are dim and power-hungry. Replacing them with LED high-bays improves visibility on the floor and cuts lighting energy substantially.",collab:["Arjun Rao"]},
+ {title:"Safety guard on the godet to stop yarn-pull injuries",dept:"Spinning",cat:"Safety",tier:"A",stage:"implementation",est:1.2,act:null,score:80,sla:"ok",month:"Jun",sub:"Sunita Patil",kw:"guard godet yarn pull injury injuries hand hands finger fingers safety cover roller spinning catch nip trap",desc:"The exposed godet can catch and pull yarn and fingers during threading. A simple guard over the nip point prevents hand injuries without slowing the operator.",collab:["Anita Mehta"]},
+ {title:"Organize morning vehicle entry at the plant gate with barricades",dept:"Safety",cat:"Safety",tier:"A",stage:"evaluation",est:0.8,act:null,score:69,sla:"ok",month:"Jun",sub:"Neha Shah",kw:"vehicle vehicles gate gates entry enter entering morning traffic rush rushing barricade barricades congestion parking bike bikes car cars jam crowd organize lane lanes shift",desc:"At shift-start, vehicles crowd the plant gate and entry gets chaotic and slow. Channeling vehicles into lanes with barricades organizes the flow so everyone enters faster and more safely.",collab:["Imran Sheikh"]}
+];
+SEED.forEach((r,i)=>{const id="KZ-2026-"+String(521+i).padStart(4,"0");const sc=SUBS[r.sub]||["??","#888"];IDEAS.push(Object.assign({id:id,plant:"Nagda",init:sc[0],clr:sc[1]},r));ENDO[id]={n:24+i*9,on:false};COLLAB[id]=(r.collab||[]).slice();});
 function endorse(id,ev){if(ev)ev.stopPropagation();const s=ENDO[id]||(ENDO[id]={n:9,on:false});s.on=!s.on;s.n+=s.on?1:-1;const el=document.getElementById('end-'+id);if(el){el.className='endo'+(s.on?' on':'');el.innerHTML='<i class="ti ti-rosette-discount-check'+(s.on?'-filled':'')+'"></i>'+(s.on?'Endorsed':'Endorse')+' · '+s.n;}if(s.on)toast('You endorsed this idea — your support is now visible to the submitter');}
 function fcard(d){const likes=60+(d.id.charCodeAt(8)*7%180);const es=endoState(d);const body=d.act?`<div class="fc-ba"><div class="b">Before</div><div class="a">After</div></div><div class="fc-stat"><i class="ti ti-trending-up"></i>${fmtL(d.act)} / yr saved · verified</div>`:`<p style="font-size:13px;color:var(--muted);line-height:1.5">${d.dept} idea · estimated ${fmtL(d.est)}/yr impact</p>`;
  return `<div class="feedcard"><div class="fc-top"><div class="avatar" style="width:38px;height:38px;background:${d.clr}">${d.init}</div><div class="meta"><b>${d.sub}</b><span>${d.dept} · ${d.plant}</span></div>${stagePill(d.stage)}</div><div class="fc-body"><div class="fc-title">${d.title}</div>${body}</div><div class="fc-act"><span><i class="ti ti-heart"></i>${likes}</span><span><i class="ti ti-message-circle"></i>${likes%40}</span><button id="end-${d.id}" class="endo${es.on?' on':''}" title="I support this idea" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button><span style="margin-left:auto"><i class="ti ti-share-2"></i></span></div></div>`;}
@@ -713,7 +734,7 @@ APPS.user=function(){
      <div style="display:flex;justify-content:space-between"><span class="muted">Workflow tier</span><span class="tier ${d.tier}">${d.tier}</span></div>
      <div style="display:flex;justify-content:space-between"><span class="muted">Est. savings</span><b>${fmtL(d.est)}/yr</b></div>
      ${d.act?`<div style="display:flex;justify-content:space-between"><span class="muted">Realized</span><b style="color:var(--emerald)">${fmtL(d.act)}/yr</b></div>`:''}
-     <div style="display:flex;justify-content:space-between"><span class="muted">Endorsements</span><b>${endoState(d).n} colleagues</b></div>
+     <div style="display:flex;justify-content:space-between"><span class="muted">Endorsements</span><b>${endoState(d).n} colleagues</b></div>${collabBlock(d)}
     </div></div></div>`;
  } else if(userView==='submit'){
   content=`<div style="max-width:760px;margin:0 auto">
@@ -757,8 +778,22 @@ APPS.user=function(){
 /* ===== duplicate detection + encouraging modal ===== */
 const STOP=new Set(['of','the','a','an','to','for','in','on','and','with','idea','system','line','via','using','by','from','at']);
 function tok(s){return s.toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(w=>w.length>2&&!STOP.has(w));}
-function findDup(q){const qt=new Set(tok(q));if(qt.size<2)return null;let best=null,bs=0;IDEAS.forEach(d=>{let m=0;tok(d.title).forEach(w=>{if(qt.has(w))m++;});if(m>bs){bs=m;best=d;}});return bs>=2?{idea:best,score:bs}:null;}
-function dupCheck(v){const b=document.getElementById('dupBanner');if(!b)return;const dup=findDup(v);if(dup){const d=dup.idea;b.style.display='flex';b.innerHTML=`<i class="ti ti-bulb"></i><div>This looks similar to <b>${d.title}</b> — already ${STLAB[d.stage].toLowerCase()}. <a onclick="endorseAndView('${d.id}')" style="color:var(--ember-d);font-weight:700;cursor:pointer;text-decoration:underline">View &amp; endorse</a></div>`;}else{b.style.display='none';}}
+function findDup(q){const qt=new Set(tok(q));if(qt.size<2)return null;let best=null,bs=0;IDEAS.forEach(d=>{const dt=new Set(tok(d.title+' '+(d.kw||'')));let m=0;qt.forEach(w=>{if(dt.has(w))m++;});if(m>bs){bs=m;best=d;}});return bs>=2?{idea:best,score:bs}:null;}
+function statusWord(st){return st==='done'?'Implemented':st==='implementation'?'In implementation':st==='approval'?'In approval':st==='evaluation'?'In evaluation':'In the pipeline';}
+function richDupHTML(d){const es=endoState(d);const joined=isCollab(d.id);
+ return `<div class="dup-head"><span class="dup-ic"><i class="ti ti-bulb"></i></span><div><b>Someone&#39;s already on this</b><div class="dup-sub">Endorse it to add your weight and get every update — no need to start over.</div></div></div>`
+  +`<div class="dup-idea"><div class="avatar" style="width:36px;height:36px;background:${d.clr}">${d.init}</div><div style="flex:1;min-width:0"><div class="dup-t">${d.title}</div><div class="dup-m">${d.sub} · ${d.dept} · ${d.plant} · ${es.n} endorsements</div></div>${stagePill(d.stage)}</div>`
+  +`<div class="dup-acts">`+(joined?`<span class="dup-joined"><i class="ti ti-rosette-discount-check-filled"></i>You&#39;re a collaborator — you&#39;ll get all updates</span>`:`<button class="btn prim sm" onclick="joinAndView('${d.id}')"><i class="ti ti-rosette-discount-check"></i>Endorse &amp; join</button><button class="btn sm" onclick="viewIdea('${d.id}')"><i class="ti ti-arrow-up-right"></i>View idea</button>`)+`</div>`
+  +`<div class="dup-note">Not the same? You can still submit yours below.</div>`;}
+function dupCheck(v){const b=document.getElementById('dupBanner');if(!b)return;const dup=findDup(v);if(dup){b.className='dupbanner rich';b.style.display='block';b.innerHTML=richDupHTML(dup.idea);}else{b.className='dupbanner';b.style.display='none';}}
+function collabList(id){return COLLAB[id]||(COLLAB[id]=[]);}
+function isCollab(id){return collabList(id).indexOf(ME.user)>=0;}
+function joinIdea(id){const s=ENDO[id]||(ENDO[id]={n:9,on:false});if(!s.on){s.on=true;s.n++;}if(!isCollab(id))collabList(id).push(ME.user);const d=IDEAS.find(x=>x.id===id);toast('You are now a collaborator — you will get all updates on this idea, just like '+(d?d.sub:'the owner'));}
+function joinAndView(id){joinIdea(id);closeModal();userSel=id;userView='detail';APPS.user();}
+function viewIdea(id){closeModal();userSel=id;userView='detail';APPS.user();}
+function avInit(name){const sc=SUBS[name];if(sc)return sc;const i=name.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();return [i,'#8a8a8a'];}
+function collabRow(name,role){const sc=avInit(name);const you=name===ME.user;return `<div style="display:flex;align-items:center;gap:9px"><div class="avatar" style="width:26px;height:26px;background:${sc[1]};font-size:10px">${sc[0]}</div><div style="flex:1;font-size:12.5px"><b>${you?'You':name}</b></div>`+(role?`<span class="pill muted" style="font-size:10px">${role}</span>`:(you?`<span class="pill ok" style="font-size:10px"><i class="ti ti-bell"></i>Following</span>`:''))+`</div>`;}
+function collabBlock(d){const list=collabList(d.id);const you=isCollab(d.id);let rows=collabRow(d.sub,'Owner');list.forEach(n=>{if(n!==d.sub)rows+=collabRow(n,'');});return `<hr class="sep" style="margin:4px 0"/><div style="font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--muted-2);margin-bottom:2px">COLLABORATORS</div>`+rows+(you?`<div class="collab-note"><i class="ti ti-bell"></i>You&#39;re following this idea — you&#39;ll get every update, just like ${d.sub}.</div>`:`<button class="btn sm" style="margin-top:4px" onclick="joinIdea('${d.id}');uopen('${d.id}')"><i class="ti ti-user-plus"></i>Follow &amp; collaborate</button>`);}
 function trySubmit(){const v=(document.getElementById('subTitle')||{}).value||'';const dup=findDup(v);if(dup)openDupModal(dup);else{toast('Idea submitted — KZ-2026-0520 assigned');ugo('mine');}}
 let recog=null,recOn=false;
 function toggleDictation(){ VOICE.open(); }
@@ -773,7 +808,7 @@ function openDupModal(dup){
  const match=`<div class="matchcard"><div class="avatar" style="width:34px;height:34px;background:${d.clr}">${d.init}</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">${d.title}</div><div class="muted" style="font-size:11.5px">${d.dept} · ${d.plant} · ${STLAB[d.stage]}${d.act?' · '+fmtL(d.act)+' saved':''}</div></div>${stagePill(d.stage)}</div>`;
  if(done){clr='var(--emerald)';bg='var(--emerald-soft)';ic='ti-confetti';head='Brilliant — it’s already live!';msg='Someone implemented this improvement and it’s already saving money. Your eye for high-impact ideas is exactly what Kaizen is about.';acts=`<button class="btn ok block" onclick="endorseAndView('${d.id}')"><i class="ti ti-rosette-discount-check"></i>Applaud &amp; see the story</button><button class="btn block" style="margin-top:8px" onclick="submitAnyway()">Mine adds something new — submit anyway</button>`;}
  else if(rej){clr='var(--amber)';bg='var(--amber-soft)';ic='ti-bulb';head='Good thinking — explored before';msg='A similar idea was reviewed earlier and set aside. Take a look at the feedback — a fresh angle from you could get it across the line.';acts=`<button class="btn block" onclick="endorseAndView('${d.id}')"><i class="ti ti-eye"></i>See what was learned</button><button class="btn prim block" style="margin-top:8px" onclick="submitAnyway()">Submit my refined version</button>`;}
- else {clr='var(--ember)';bg='var(--ember-soft)';ic='ti-users-group';head='Great minds — someone’s on it!';msg='A matching idea is already in '+STLAB[d.stage]+'. Rather than start the review over, you can throw your weight behind it and follow its progress.';acts=`<button class="btn prim block" onclick="endorseAndView('${d.id}')"><i class="ti ti-rosette-discount-check"></i>Endorse &amp; follow this idea</button><button class="btn block" style="margin-top:8px" onclick="submitAnyway()">Mine’s a different angle — submit anyway</button>`;}
+ else {clr='var(--ember)';bg='var(--ember-soft)';ic='ti-users-group';head='Great minds — someone’s on it!';msg='A matching idea is already in '+STLAB[d.stage]+'. Rather than start the review over, you can endorse it and join as a collaborator — you&#39;ll get every update, just like the owner.';acts=`<button class="btn prim block" onclick="joinAndView('${d.id}')"><i class="ti ti-rosette-discount-check"></i>Endorse &amp; join as collaborator</button><button class="btn block" style="margin-top:8px" onclick="submitAnyway()">Mine’s a different angle — submit anyway</button>`;}
  document.getElementById('modal').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal">
    <div class="top2"><div class="bic" style="background:${bg};color:${clr}"><i class="ti ${ic}"></i></div><h3>${head}</h3><p class="m">${msg}</p></div>
    <div class="body2">${match}<div class="spark"><i class="ti ti-sparkles"></i>You’ve earned a Kaizen Spark for spotting a valuable improvement — keep them coming!</div>${acts}<button class="btn block" style="margin-top:8px;border:none;color:var(--muted)" onclick="closeModal()">Close</button></div>
@@ -874,10 +909,10 @@ const VOICE=(function(){
  const DEPT_MAP={'Pulp':'Viscose','Viscose':'Viscose','Spinning':'Spinning','Spin Bath / Acid':'Spinbath','Auxiliary & CS2':'Auxiliary','Aftertreatment':'After-treatment','Quality Control':'Quality','Mechanical Maintenance':'Maintenance','Electrical Maintenance':'Maintenance','Instrumentation':'Process/Digital','Power & Utilities':'Utilities','Effluent / ETP':'ETP','Stores & Logistics':'Packing','Packing & Dispatch':'Packing','Safety':'Safety','Security':'Safety','HR / Admin':'Process/Digital'};
  const mapDept=d=>FORM_DEPTS.includes(d)?d:(DEPT_MAP[d]||'Process/Digital');
  const LANGS={
-  hi:{name:'हिंदी',bcp:'hi-IN',welcome:n=>`नमस्ते ${n}! अपना सुझाव बताइए — आराम से बोलिए।`,askDept:'यह किस विभाग या क्षेत्र से जुड़ा है? जैसे स्पिनिंग, मेंटेनेंस, या सेफ्टी।',thanks:n=>`धन्यवाद ${n}! आपका सुझाव दर्ज हो गया है — यह प्लांट को बेहतर और सुरक्षित बनाएगा।`,yourTurn:'🎤 सुन रहे हैं — बोलिए',speaking:'बोल रहे हैं…',thinking:'सोच रहे हैं…',prep:'बस एक पल…',captured:'आवाज़ से दर्ज — कृपया जाँचें और भेजें',micErr:'माइक नहीं मिला — कृपया अनुमति दें'},
-  gu:{name:'ગુજરાતી',bcp:'gu-IN',welcome:n=>`નમસ્તે ${n}! તમારો સૂચન કહો — આરામથી બોલો.`,askDept:'આ કયા વિભાગ સાથે સંબંધિત છે? જેમ કે સ્પિનિંગ, મેન્ટેનન્સ, અથવા સેફ્ટી.',thanks:n=>`આભાર ${n}! તમારો વિચાર નોંધાઈ ગયો છે — તે પ્લાન્ટને વધુ સારું અને સુરક્ષિત બનાવશે.`,yourTurn:'🎤 સાંભળી રહ્યા છીએ — બોલો',speaking:'બોલી રહ્યા છીએ…',thinking:'વિચારી રહ્યા છીએ…',prep:'બસ એક પળ…',captured:'વોઈસથી નોંધાયું — તપાસો અને મોકલો',micErr:'માઇક મળ્યો નથી — પરવાનગી આપો'},
-  en:{name:'English',bcp:'en-IN',welcome:n=>`Hi ${n}! Tell me your idea to improve your work — just speak.`,askDept:'Which area or department is this about — for example Spinning, Maintenance, or Safety?',thanks:n=>`Thank you, ${n}! Your idea has been captured — it will help make the plant better and safer.`,yourTurn:'🎤 Listening — go ahead',speaking:'Speaking…',thinking:'Thinking…',prep:'Just a moment…',captured:'Captured by voice — review & send',micErr:'Mic not available — please allow access'},
-  ta:{name:'தமிழ்',bcp:'ta-IN',welcome:n=>`வணக்கம் ${n}! உங்கள் யோசனையைச் சொல்லுங்கள் — நிதானமாகப் பேசுங்கள்.`,askDept:'இது எந்தத் துறை சார்ந்தது — உதாரணமாக ஸ்பின்னிங், மெயின்டெனன்ஸ், அல்லது சேஃப்டி?',thanks:n=>`நன்றி ${n}! உங்கள் யோசனை பதிவாகிவிட்டது — இது ஆலையை சிறப்பாகவும் பாதுகாப்பாகவும் ஆக்கும்.`,yourTurn:'🎤 கேட்கிறேன் — சொல்லுங்கள்',speaking:'பேசுகிறேன்…',thinking:'யோசிக்கிறேன்…',prep:'ஒரு நிமிஷம்…',captured:'குரல் மூலம் பதிவு — சரிபார்த்து அனுப்பவும்',micErr:'மைக் கிடைக்கவில்லை — அனுமதி தரவும்'}
+  hi:{name:'हिंदी',bcp:'hi-IN',welcome:n=>`नमस्ते ${n}! अपना सुझाव बताइए — आराम से बोलिए।`,askDept:'यह किस विभाग या क्षेत्र से जुड़ा है? जैसे स्पिनिंग, मेंटेनेंस, या सेफ्टी।',thanks:n=>`धन्यवाद ${n}! आपका सुझाव दर्ज हो गया है — यह प्लांट को बेहतर और सुरक्षित बनाएगा।`,yourTurn:'🎤 सुन रहे हैं — बोलिए',speaking:'बोल रहे हैं…',thinking:'सोच रहे हैं…',prep:'बस एक पल…',captured:'आवाज़ से दर्ज — कृपया जाँचें और भेजें',micErr:'माइक नहीं मिला — कृपया अनुमति दें',simStatus:{implemented:'पहले ही लागू हो चुका है',implementing:'अभी लागू किया जा रहा है',pipeline:'पहले से प्रक्रिया में है'},simNote:(t,s)=>`एक बात — आपका सुझाव एक ऐसे विचार से काफ़ी मिलता-जुलता है जो ${s}: "${t}"। मैंने उसे खोल दिया है, आप उसे एंडोर्स करके उसकी प्रगति देख सकते हैं।`},
+  gu:{name:'ગુજરાતી',bcp:'gu-IN',welcome:n=>`નમસ્તે ${n}! તમારો સૂચન કહો — આરામથી બોલો.`,askDept:'આ કયા વિભાગ સાથે સંબંધિત છે? જેમ કે સ્પિનિંગ, મેન્ટેનન્સ, અથવા સેફ્ટી.',thanks:n=>`આભાર ${n}! તમારો વિચાર નોંધાઈ ગયો છે — તે પ્લાન્ટને વધુ સારું અને સુરક્ષિત બનાવશે.`,yourTurn:'🎤 સાંભળી રહ્યા છીએ — બોલો',speaking:'બોલી રહ્યા છીએ…',thinking:'વિચારી રહ્યા છીએ…',prep:'બસ એક પળ…',captured:'વોઈસથી નોંધાયું — તપાસો અને મોકલો',micErr:'માઇક મળ્યો નથી — પરવાનગી આપો',simStatus:{implemented:'પહેલેથી અમલમાં છે',implementing:'હાલમાં અમલમાં મુકાઈ રહ્યું છે',pipeline:'પહેલેથી પ્રક્રિયામાં છે'},simNote:(t,s)=>`એક વાત — તમારો વિચાર એક એવા વિચાર જેવો જ છે જે ${s}: "${t}". મેં તે ખોલ્યો છે, તમે તેને એન્ડોર્સ કરીને તેની પ્રગતિ જોઈ શકો છો.`},
+  en:{name:'English',bcp:'en-IN',welcome:n=>`Hi ${n}! Tell me your idea to improve your work — just speak.`,askDept:'Which area or department is this about — for example Spinning, Maintenance, or Safety?',thanks:n=>`Thank you, ${n}! Your idea has been captured — it will help make the plant better and safer.`,yourTurn:'🎤 Listening — go ahead',speaking:'Speaking…',thinking:'Thinking…',prep:'Just a moment…',captured:'Captured by voice — review & send',micErr:'Mic not available — please allow access',simStatus:{implemented:'already implemented',implementing:'already being implemented',pipeline:'already in the pipeline'},simNote:(t,s)=>`By the way — this looks a lot like an idea that's ${s}: "${t}". I've pulled it up so you can endorse it and follow along instead of starting over.`},
+  ta:{name:'தமிழ்',bcp:'ta-IN',welcome:n=>`வணக்கம் ${n}! உங்கள் யோசனையைச் சொல்லுங்கள் — நிதானமாகப் பேசுங்கள்.`,askDept:'இது எந்தத் துறை சார்ந்தது — உதாரணமாக ஸ்பின்னிங், மெயின்டெனன்ஸ், அல்லது சேஃப்டி?',thanks:n=>`நன்றி ${n}! உங்கள் யோசனை பதிவாகிவிட்டது — இது ஆலையை சிறப்பாகவும் பாதுகாப்பாகவும் ஆக்கும்.`,yourTurn:'🎤 கேட்கிறேன் — சொல்லுங்கள்',speaking:'பேசுகிறேன்…',thinking:'யோசிக்கிறேன்…',prep:'ஒரு நிமிஷம்…',captured:'குரல் மூலம் பதிவு — சரிபார்த்து அனுப்பவும்',micErr:'மைக் கிடைக்கவில்லை — அனுமதி தரவும்',simStatus:{implemented:'ஏற்கனவே செயல்படுத்தப்பட்டுள்ளது',implementing:'தற்போது செயல்படுத்தப்படுகிறது',pipeline:'ஏற்கனவே பரிசீலனையில் உள்ளது'},simNote:(t,s)=>`ஒரு விஷயம் — உங்கள் யோசனை ${s} ஒரு யோசனையை மிகவும் ஒத்திருக்கிறது: "${t}". அதை திறந்துள்ளேன், நீங்கள் அதை எண்டோர்ஸ் செய்து பின்தொடரலாம்.`}
  };
  const $=id=>document.getElementById(id);
  let lang='en',ending=false,paused=false,ov=null,online=false,emptyTries=0,history=[];
@@ -1043,7 +1078,10 @@ const VOICE=(function(){
   else { await finish(data); }
  }
  async function finish(data){
-  ending=true; await say(data.speech);
+  ending=true;
+  let speech=data.speech;
+  try{ if(typeof findDup==='function'){ const dup=findDup(data.title+' '+(data.description||'')); if(dup&&LANGS[lang].simNote){ const st=dup.idea.stage; const bk=(st==='done')?'implemented':(st==='implementation')?'implementing':'pipeline'; speech=LANGS[lang].simNote(dup.idea.title, LANGS[lang].simStatus[bk]); } } }catch(e){}
+  await say(speech);
   applyToForm(data); close();
   if(window.toast) toast(LANGS[lang].captured);
  }
@@ -1101,7 +1139,7 @@ const VOICE=(function(){
    card.parentNode.insertBefore(b,card);
    b.scrollIntoView({behavior:'smooth',block:'center'});
   }
-  if(window.dupCheck) try{dupCheck(data.title);}catch(e){}
+  if(window.dupCheck) try{dupCheck(data.title+' '+(data.description||''));}catch(e){}
  }
 
  /* ---------- public ---------- */
