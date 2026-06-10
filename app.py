@@ -31,7 +31,7 @@ SARVAM_STT_URL = "https://api.sarvam.ai/speech-to-text"
 SARVAM_TTS_URL = "https://api.sarvam.ai/text-to-speech"
 SARVAM_STT_MODEL = "saaras:v3"      # current recommended ASR (was saarika:v2.5, legacy)
 SARVAM_TTS_MODEL = "bulbul:v3"     # current TTS; required for the Shubh voice (was bulbul:v2)
-SARVAM_SPEAKER = "Shubh"            # bulbul:v3 voice (default male voice)
+SARVAM_SPEAKER = "aditya"           # confirmed-available male bulbul:v3 voice (shubh not enabled on this key; names are lowercase)
 LANG_BCP47 = {"hi": "hi-IN", "gu": "gu-IN", "en": "en-IN", "ta": "ta-IN"}
 
 if not API_KEY:
@@ -104,16 +104,18 @@ def extract_json(text):
     return json.loads(text)
 
 
+# Root now opens the voice-integrated employee portal (the main experience).
 @app.route("/")
-def index():
-    return render_template("index.html")
-
-
-# --- Employee idea-submission portal (voice integrated, served same-origin so /api works) ---
 @app.route("/employee")
 @app.route("/portal")
 def employee_portal():
     return send_from_directory(app.root_path, "Kaizen_User_Reviewer_Approver.html")
+
+
+# Original standalone voice MVP kept available here.
+@app.route("/mvp")
+def index():
+    return render_template("index.html")
 
 
 @app.route("/api/health")
@@ -171,6 +173,7 @@ def stt():
             timeout=30,
         )
         if r.status_code != 200:
+            print(f"SARVAM STT ERROR {r.status_code}: {r.text[:500]}", flush=True)
             return jsonify({"error": f"sarvam stt {r.status_code}: {r.text[:200]}"}), 502
         return jsonify({"transcript": r.json().get("transcript", "")})
     except Exception as e:  # noqa
@@ -199,6 +202,7 @@ def tts():
             timeout=30,
         )
         if r.status_code != 200:
+            print(f"SARVAM TTS ERROR {r.status_code}: {r.text[:500]}", flush=True)
             return jsonify({"error": f"sarvam tts {r.status_code}: {r.text[:200]}"}), 502
         audios = r.json().get("audios", [])
         return jsonify({"audio": audios[0] if audios else ""})
