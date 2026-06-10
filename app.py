@@ -24,7 +24,7 @@ import anthropic
 # Local dev:  set these in your shell. Render: add them as secret env vars.
 API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 SARVAM_KEY = os.environ.get("SARVAM_API_KEY", "")
-MODEL = "claude-sonnet-4-6-20251001"   # fast model for the short classify/reply turn (was claude-sonnet-4-6)
+MODEL = "claude-sonnet-4-6"   # fast model for the short classify/reply turn (was claude-sonnet-4-6)
 
 # Sarvam (Indian-language speech) settings
 SARVAM_STT_URL = "https://api.sarvam.ai/speech-to-text"
