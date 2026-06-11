@@ -45,10 +45,35 @@ evaluator Sneha Desai, approver Rahul Gupta):
   first), kanban selector 100, rewards 30, stories 30
 - intake detail lazy-fetches real problem/solution, attachments, language/source
 
+## Final pass (June 11, later): DB extended so EVERYTHING on screen is DB data
+kaizen.db now also contains: workflow_tracks (12), idea_classifications (17,771),
+implementation_tasks (30,790), award_definitions (10), award_highlight_rules (7),
+idea_keywords (62) and 5 walkthrough ideas. Created by extend_db_for_poc.py
+(included, idempotent). Both UIs now show a brief loading screen and render ONLY
+live DB data; the built-in demo dataset is used solely as an offline fallback.
+See Kaizen_Data_Provenance.xlsx for the screen-by-screen proof sheet.
+
+## Earlier sweep (June 11)
+- Endorsement & comment counts on every card (DB endorsements/comments)
+- Profile: joined year, reward points, award counts, areas — all from users/
+  reward_awards tables
+- Reviewer screen: real problem/solution text, real attachment counts, real
+  clarification comments, real evaluation criteria (impact/effort/feasibility)
+- Approver screen: real evaluator names + their actual scores
+- Console groups screen: the 14 real plant panels with their 62 real members
+- All reviewer/assignee name pools (intake designer, pipeline, kanban): real
+  group members from the DB
+- Rewards engagement rule: computed from real endorsements + comments
+- Voice greeting uses the live persona's name
+- The 5 dup-check seed ideas stay in memory for voice duplicate detection but
+  no longer appear in any list
+
 ## Still mock (by design, per handoff)
 - All writes — buttons show toasts only; persistence comes with Postgres
-- Console: groups screen, intake workflow-track designer drag/drop, kanban task
-  cards, reviewer pool names — demo interactivity over real idea rows
+- Kanban task checklists: the 10-step implementation template (no tasks table
+  exists in the DB) — but assignees, progress and dates derive from real data
+- Intake LLM classification confidences: deterministic placeholders (the
+  designed LLM pipeline isn't built yet; no confidence data exists)
 - Login — role switcher uses seeded personas
 
 ## New API endpoints (read-only)

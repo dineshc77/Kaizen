@@ -397,6 +397,14 @@ def api_idea_detail(code):
                e.impact_score, e.effort_score, e.feasibility_score
            FROM evaluations e JOIN users u ON u.id=e.evaluator_id
            WHERE e.idea_id=? ORDER BY e.date""", [iid]))
+    cls = rows(con.execute(
+        """SELECT label, value, confidence FROM idea_classifications
+           WHERE idea_id=? ORDER BY id""", [iid]))
+    tasks = rows(con.execute(
+        """SELECT t.seq, t.title, t.phase, u.name AS assignee, t.due_date, t.status,
+                  t.blocked_reason
+           FROM implementation_tasks t LEFT JOIN users u ON u.id=t.assignee_id
+           WHERE t.idea_id=? ORDER BY t.seq""", [iid]))
     apprs = rows(con.execute(
         """SELECT u.name AS approver, a.decision, a.comment, a.date
            FROM approvals a JOIN users u ON u.id=a.approver_id
@@ -414,6 +422,7 @@ def api_idea_detail(code):
     return jsonify({"idea": dict(idea), "outcome": dict(outcome) if outcome else None,
                     "benefits": benefits, "history": history, "evaluations": evals,
                     "approvals": apprs, "comments": comments, "collaborators": collaborators,
+                    "classifications": cls, "tasks": tasks,
                     "attachments": {"photos": att["photos"] or 0, "total": att["total"] or 0}})
 
 
@@ -430,12 +439,12 @@ def api_all_ideas():
     con = db()
     data = [[r["id"], r["title"], r["dept"], r["cat"], r["tier"], r["stage"],
              r["est"], r["act"], r["score"], SLA_MAP.get(r["sla"], "-"),
-             month_label(r["sd"]), r["sub"], r["plant"], r["endo"], r["cm"]]
+             month_label(r["sd"]), r["sub"], r["plant"], r["endo"], r["cm"], r["collab"]]
             for r in con.execute(IDEA_SELECT + f" WHERE {wsql}", params)]
     con.close()
     return jsonify({"count": len(data),
                     "cols": ["id", "title", "dept", "cat", "tier", "stage", "est", "act",
-                             "score", "sla", "month", "sub", "plant", "endo", "cm"],
+                             "score", "sla", "month", "sub", "plant", "endo", "cm", "collab"],
                     "ideas": data})
 
 
@@ -473,6 +482,8 @@ def api_bootstrap():
             "SELECT COUNT(DISTINCT track_id) FROM ideas WHERE submitter_id=?", [emp["id"]]).fetchone()[0]
 
     plants = [r["name"] for r in con.execute("SELECT name FROM plants ORDER BY id")]
+    workflow_tracks = rows(con.execute(
+        "SELECT key, name, domain, phase, always_present, color, default_sla_days FROM workflow_tracks"))
     departments = [r["name"] for r in con.execute("SELECT name FROM departments ORDER BY name")]
     tracks = [r["name"] for r in con.execute("SELECT name FROM tracks ORDER BY id")]
 
@@ -512,6 +523,7 @@ def api_bootstrap():
 
     out = {
         "plant": plant, "plants": plants, "departments": departments, "tracks": tracks,
+        "workflow_tracks": workflow_tracks,
         "personas": {
             "employee": emp,
             "evaluator": persona("evaluator"),
@@ -684,10 +696,77 @@ def api_groups():
         LEFT JOIN tracks t ON t.id=g.track_id WHERE 1=1 {psql}""", params))
     for g in groups:
         g["members"] = rows(con.execute(
-            """SELECT u.name, gm.role_in_group FROM group_members gm
-               JOIN users u ON u.id=gm.user_id WHERE gm.group_id=?""", [g["id"]]))
+            """SELECT u.name, gm.role_in_group AS role, d.name AS dept,
+                  CASE WHEN ? = 'approval'
+                       THEN (SELECT COUNT(*) FROM approvals a WHERE a.approver_id = u.id)
+                       ELSE (SELECT COUNT(*) FROM evaluations e WHERE e.evaluator_id = u.id)
+                  END AS n_reviews
+               FROM group_members gm
+               JOIN users u ON u.id = gm.user_id
+               LEFT JOIN departments d ON d.id = u.department_id
+               WHERE gm.group_id = ?""", [g["purpose"], g["id"]]))
     con.close()
     return jsonify({"groups": groups})
+
+
+@app.route("/api/intake-meta")
+def api_intake_meta():
+    """Bulk classification + attachment metadata for the console's intake cards."""
+    plant = request.args.get("plant")
+    limit = min(int(request.args.get("limit", 12) or 12), 40)
+    params = []
+    psql = plant_clause(plant, params)
+    con = db()
+    ideas = rows(con.execute(f"""
+        SELECT i.id AS iid, i.idea_code AS id, i.problem_statement, i.proposed_solution
+        FROM ideas i JOIN plants p ON p.id=i.plant_id
+        WHERE i.current_stage_id=1 {psql}
+        ORDER BY i.idea_code DESC LIMIT ?""", params + [limit]))
+    out = []
+    for it in ideas:
+        cls = rows(con.execute(
+            "SELECT label, value, confidence FROM idea_classifications WHERE idea_id=? ORDER BY id",
+            [it["iid"]]))
+        att = con.execute(
+            """SELECT SUM(CASE WHEN type='photo' THEN 1 ELSE 0 END) photos, COUNT(*) total
+               FROM idea_attachments WHERE idea_id=?""", [it["iid"]]).fetchone()
+        out.append({"id": it["id"],
+                    "desc": " ".join(x for x in [it["problem_statement"], it["proposed_solution"]] if x),
+                    "classifications": cls,
+                    "photos": att["photos"] or 0, "total": att["total"] or 0})
+    con.close()
+    return jsonify({"meta": out})
+
+
+@app.route("/api/award-config")
+def api_award_config():
+    con = db()
+    defs = rows(con.execute(
+        """SELECT id, name, short, kind, icon, color, description, join_mode, conds_json
+           FROM award_definitions WHERE active=1"""))
+    for d in defs:
+        d["conds"] = json.loads(d.pop("conds_json") or "[]")
+    rules = rows(con.execute(
+        """SELECT id, label, description, icon, color, aspect, op, threshold, unit
+           FROM award_highlight_rules WHERE active=1"""))
+    con.close()
+    return jsonify({"definitions": defs, "rules": rules})
+
+
+@app.route("/api/dup-keywords")
+def api_dup_keywords():
+    """Ideas that carry duplicate-detection keyword vocabularies (voice flow)."""
+    con = db()
+    data = []
+    for r in con.execute(IDEA_SELECT + """
+            WHERE i.id IN (SELECT DISTINCT idea_id FROM idea_keywords)"""):
+        d = shape(r)
+        d["kw"] = " ".join(k["keyword"] for k in rows(con.execute(
+            "SELECT keyword FROM idea_keywords WHERE idea_id=(SELECT id FROM ideas WHERE idea_code=?)",
+            [d["id"]])))
+        data.append(d)
+    con.close()
+    return jsonify({"ideas": data})
 
 
 if __name__ == "__main__":

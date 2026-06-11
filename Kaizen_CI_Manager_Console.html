@@ -674,22 +674,23 @@ const IMPACT={
  'Auto strapping-tension control':['productivity','Strap rework ↓']};
 const INTAKE_STATE={};
 const INTAKE_FETCHED={};
-function intakeFetchMeta(d){ /* lazy-load real idea detail into INTAKE_META */
- if(!d||INTAKE_FETCHED[d.id]||INTAKE_META[d.title])return;INTAKE_FETCHED[d.id]=1;
+function metaFromCls(cls,desc,photos,total){ /* DB classification rows -> intake meta */
+ const m={desc:desc||'',cls:{},tracks:{},att:[photos||0,Math.max(0,(total||0)-(photos||0))]};
+ (cls||[]).forEach(c=>{if(c.label==='workflow_track')m.tracks[c.value]=c.confidence;else m.cls[c.label]=[c.value,c.confidence];});
+ return m;
+}
+function intakeFetchMeta(d){ /* lazy-load real classification rows from the DB */
+ if(!d||INTAKE_FETCHED[d.id]||INTAKE_META[d.id])return;INTAKE_FETCHED[d.id]=1;
  fetch(API_BASE+'/api/idea/'+encodeURIComponent(d.id)).then(r=>r.ok?r.json():null).then(dt=>{
   if(!dt||!dt.idea)return;const i=dt.idea;const at=dt.attachments||{photos:0,total:0};
-  const conf=v=>78+Math.abs([...String(v||'')].reduce((a,c)=>a+c.charCodeAt(0),0))%19;
-  INTAKE_META[d.title]={
-   desc:[i.problem_statement,i.proposed_solution].filter(Boolean).join(' '),
-   cls:{Department:[d.dept,conf(d.dept)],Track:[d.cat,conf(d.cat)],Tier:[TIERLAB[d.tier]||d.tier,conf(d.tier)],Language:[(i.submission_language||'en').toUpperCase()+' · '+(i.submission_source==='voice'?'Voice':'Form'),conf(i.submission_language)]},
-   att:[at.photos||0,Math.max(0,(at.total||0)-(at.photos||0))]};
+  INTAKE_META[d.id]=metaFromCls(dt.classifications,[i.problem_statement,i.proposed_solution].filter(Boolean).join(' '),at.photos,at.total);
   if(cur==='intake'&&SEL.intake===d.id)VIEWS.intake();
  }).catch(()=>{});
 }
 let DRAG_KEY=null;
 function intakeState(id){
  if(!INTAKE_STATE[id]){
-  const s=IDEAS.find(d=>d.id===id), m=INTAKE_META[s.title]||{tracks:{technical:96,finance:70}};
+  const s=IDEAS.find(d=>d.id===id), m=INTAKE_META[s.id]||INTAKE_META[s.title]||{tracks:{technical:96,finance:70}};
   const tracks={};Object.keys(m.tracks).forEach(k=>{const ph=TRACKS[k].phase;const place=ph==='eval'?{ph:'ev',lv:0}:{ph:'ap',lv:0};tracks[k]={lead:leadForTrack(k),sla:place.ph==='ev'?2:1,conf:m.tracks[k],place};});
   if(!tracks.technical)tracks.technical={lead:leadForTrack('technical'),sla:2,conf:96,place:{ph:'ev',lv:0}};
   INTAKE_STATE[id]={tier:s.tier,tracks,log:[],pending:null};
@@ -719,18 +720,18 @@ function intakeDragLeave(e){e.currentTarget.classList.remove('drop-hover');}
 function intakeDrop(e,ph,lv){e.preventDefault();e.currentTarget.classList.remove('drop-hover');const k=DRAG_KEY||(e.dataTransfer&&e.dataTransfer.getData('text/plain'));DRAG_KEY=null;if(!k)return;const st=intakeState(SEL.intake),tr=st.tracks[k];if(!tr)return;if(tr.place.ph===ph&&tr.place.lv===lv)return;tr.place={ph,lv};st.log.unshift({a:'Moved group',d:TRACKS[k].name+' → '+(ph==='ev'?'Evaluation':'Approval')+' L'+(lv+1),r:''});VIEWS.intake();}
 function intakeConfirm(id){const st=intakeState(id);if(st.pending){toast('Resolve the pending change first');return;}const s=IDEAS.find(d=>d.id===id);s.stage='evaluation';toast('Workflow activated — L1 reviewers notified · SLA clocks started · employee notified');SEL.intake=null;renderNav();VIEWS.intake();}
 VIEWS.intake=function(){
- const list=IDEAS.filter(d=>d.stage==='intake');
+ const list=IDEAS.filter(d=>d.stage==='intake').sort((a,b)=>b.id.localeCompare(a.id));
  topbar('CI Manager intake review','Validate · '+list.length+' awaiting','');
  if(!list.length){document.getElementById('view').innerHTML=`<div class="card cardp" style="text-align:center;padding:54px 20px"><div style="width:54px;height:54px;border-radius:50%;background:var(--emerald-soft);color:var(--emerald);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:26px"><i class="ti ti-check"></i></div><h3 style="justify-content:center">Intake queue is clear</h3><div class="sub">Every submitted idea has been validated and routed into its workflow.</div></div>`;return;}
  if(!list.find(d=>d.id===SEL.intake))SEL.intake=list[0].id;
- const s=IDEAS.find(d=>d.id===SEL.intake),st=intakeState(s.id),m=INTAKE_META[s.title]||{cls:{},desc:'',att:[0,0]},td=TIERDEF[st.tier];
+ const s=IDEAS.find(d=>d.id===SEL.intake),st=intakeState(s.id),m=INTAKE_META[s.id]||INTAKE_META[s.title]||{cls:{},desc:'',att:[0,0]},td=TIERDEF[st.tier];
  intakeFetchMeta(s);
  const evN=td.ev.length,apN=td.ap.length;
  Object.values(st.tracks).forEach(tr=>{if(!tr.place)return;if(tr.place.ph==='ev'&&tr.place.lv>=evN)tr.place.lv=evN-1;if(tr.place.ph==='ap'&&tr.place.lv>=apN)tr.place.lv=apN-1;});
  // top selector + stats
  const totalEst=list.reduce((a,d)=>a+d.est,0);
  const tierMix=['A','B','C'].map(t=>({t,n:list.filter(d=>intakeState(d.id).tier===t).length})).filter(x=>x.n);
- const avgConf=Math.round(list.reduce((a,d)=>{const mm=INTAKE_META[d.title];const cs=mm?Object.values(mm.cls).map(v=>v[1]):[80];return a+cs.reduce((x,y)=>x+y,0)/cs.length;},0)/list.length);
+ const avgConf=Math.round(list.reduce((a,d)=>{const mm=INTAKE_META[d.id]||INTAKE_META[d.title];const cs=mm&&Object.keys(mm.cls).length?Object.values(mm.cls).map(v=>v[1]):[80];return a+cs.reduce((x,y)=>x+y,0)/cs.length;},0)/list.length);
  const cards=list.slice(0,12).map(d=>{const ds=intakeState(d.id),nt=Object.keys(ds.tracks).length;const im=IMPACT[d.title]||['money',fmtL(d.est)],ic=IMPACTYPE[im[0]];
   return `<button class="awcard${d.id===s.id?' on':''}" onclick="selIntake('${d.id}')"><div class="aw-top"><span class="tier ${ds.tier}">${ds.tier}</span>${d.sla==='breach'?'<span class="pill bad sm"><i class="ti ti-clock-exclamation"></i>Breached</span>':d.sla==='warn'?'<span class="pill warn sm"><i class="ti ti-clock"></i>At risk</span>':'<span class="pill ok sm"><i class="ti ti-clock"></i>On track</span>'}</div><div class="aw-title">${d.title}</div><div class="aw-sub">${d.dept} · ${d.plant}</div><div class="aw-foot"><span class="aw-est" style="color:${ic[0]}"><i class="ti ${ic[1]}"></i>${im[1]}</span><span class="aw-trk"><i class="ti ti-stack-2"></i>${nt} tracks</span></div></button>`;}).join('');
  const topHtml=`<div class="intake-top"><div class="awhead"><span class="aw-h-l"><i class="ti ti-inbox"></i>Awaiting your review</span><div class="aw-stats"><span class="awstat"><b>${list.length}</b>ideas</span><span class="awstat"><b>${avgConf}%</b>avg confidence</span><span class="awstat tiermix">${tierMix.map(x=>`<span class="tier ${x.t}">${x.t}</span>×${x.n}`).join('&nbsp;')}</span></div></div><div class="aw-row">${cards}</div></div>`;
@@ -862,7 +863,20 @@ function boardFor(s){
 }
 /* editable, persistent per-idea board state */
 const KAN_STATE={};let TASK_SEQ=1,KDRAG=null;
+const KAN_FETCHED={};
+function kanDate(iso){if(!iso)return '';const d=new Date(iso);return d.getDate()+' '+d.toLocaleString('en',{month:'short'});}
+function kanFetch(id){ /* load this idea's real task board from implementation_tasks */
+ if(KAN_FETCHED[id])return;KAN_FETCHED[id]=1;
+ fetch(API_BASE+'/api/idea/'+encodeURIComponent(id)).then(r=>r.ok?r.json():null).then(dt=>{
+  if(!dt||!dt.tasks||!dt.tasks.length)return;
+  const cols={todo:[],inprogress:[],blocked:[],review:[],done:[]};
+  dt.tasks.forEach(t=>{(cols[t.status]||cols.todo).push({id:'T'+(TASK_SEQ++),t:t.title,ph:t.phase,who:t.assignee||'—',due:kanDate(t.due_date),reason:t.blocked_reason||''});});
+  KAN_STATE[id]={cols,adding:null};
+  if(cur==='kanban'&&SEL.kanban===id)VIEWS.kanban();
+ }).catch(()=>{});
+}
 function kanState(id){
+ kanFetch(id);
  if(!KAN_STATE[id]){
   const b=boardFor(IDEAS.find(d=>d.id===id));
   const cols={todo:[],inprogress:[],blocked:[],review:[],done:[]};
@@ -965,8 +979,8 @@ const REWARD_CATALOG=[
  {id:'spot',on:true,name:'Spot Recognition',short:'Spot',kind:'Recognition',icon:'ti-confetti',clr:'var(--blue)',desc:'Quick recognition for highly-endorsed ideas',join:'all',conds:[{a:'eng',op:'gte',th:170}]},
  {id:'team',on:true,name:'Team Excellence',short:'Team',kind:'Recognition',icon:'ti-users-group',clr:'#0f8a8a',desc:'For cross-department or multi-plant collaboration',join:'any',conds:[{a:'replicable',op:'is'},{a:'eng',op:'gte',th:190}]},
  {id:'cert',on:true,name:'Certificate of Appreciation',short:'Certificate',kind:'Recognition',icon:'ti-certificate',clr:'#7a7a72',desc:'Baseline acknowledgement for every implemented idea',join:'all',conds:[]}];
-const REWCOND={score:['Reward score','/100'],roi:['Realized savings','₹ L'],eng:['Engagement','pts'],variance:['Beat estimate','%'],safety:['Safety flag',''],sustain:['Sustainability flag',''],replicable:['Replicable flag','']};
-function rewAspect(d,a){const m=rewMeta(d);return {score:d.score,roi:(d.act||0),eng:m.eng,variance:(d.act&&d.est?((d.act-d.est)/d.est*100):0),safety:m.safety,sustain:m.sustain,replicable:m.replicable}[a];}
+const REWCOND={score:['Reward score','/100'],roi:['Realized savings','₹ L'],eng:['Engagement','pts'],collab:['Collaborators','+'],variance:['Beat estimate','%'],safety:['Safety flag',''],sustain:['Sustainability flag',''],replicable:['Replicable flag','']};
+function rewAspect(d,a){const m=rewMeta(d);return {score:d.score,roi:(d.act||0),eng:m.eng,collab:(d.collab||0),variance:(d.act&&d.est?((d.act-d.est)/d.est*100):0),safety:m.safety,sustain:m.sustain,replicable:m.replicable}[a];}
 function rewardApplies(d,r){if(!r.conds.length)return true;const res=r.conds.map(c=>c.op==='is'?!!rewAspect(d,c.a):rewAspect(d,c.a)>=c.th);return r.join==='any'?res.some(Boolean):res.every(Boolean);}
 function applicableRewards(d){const all=REWARD_CATALOG.filter(r=>r.on&&rewardApplies(d,r));const medals=all.filter(r=>r.kind==='Medal'),rest=all.filter(r=>r.kind!=='Medal');return medals.length?[medals[0]].concat(rest):rest;}
 function topReward(d){return applicableRewards(d)[0]||null;}
@@ -1140,9 +1154,9 @@ VIEWS.groups=function(){
  const hdot=h=>`<span class="hdot" style="background:var(--${h[0]==='ok'?'emerald':h[0]==='warn'?'amber':'red'})" title="${h[1]}"></span>`;
  const litem=gg=>{const i=GROUPS.indexOf(gg),p=GPHASE[gg.phase],h=gHealth(gg);return `<div class="qitem" onclick="gsel(${i})" style="${i===GSEL?'border-color:var(--ember);background:var(--ember-soft)':''}"><span class="pill ${p[0]}"><i class="ti ${p[1]}"></i></span><div class="meta"><b>${gg.name}</b><span>Lead ${_fn(gg.lead)} · ${gg.members.length} member${gg.members.length>1?'s':''} · ${gLoad(gg)} active</span></div>${hdot(h)}<i class="ti ti-chevron-right muted"></i></div>`;};
  const sect=(t,arr)=>arr.length?`<div style="font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--muted-2);margin:14px 4px 8px">${t}</div>${arr.map(litem).join('')}`:'';
- const members=g.members.map(m=>{const isLead=m===g.lead,homeTrack=tkeys.find(tk=>TRACKS[tk].lead===m),home=homeTrack?TRACKS[homeTrack].domain:((IDEAS.find(d=>d.sub===m)||{}).dept||'Reviewer'),active=(m.length+g.depts.length)%4,ta=(1+m.length%3)+'.'+(m.charCodeAt(1)%9)+'d';
-   return `<tr style="cursor:default"><td><div style="display:flex;align-items:center;gap:9px"><div class="avatar" style="width:30px;height:30px;background:${_sc(m)[1]}">${_sc(m)[0]}</div><div><b>${m}</b><br><span class="muted" style="font-size:11px">${home}</span></div></div></td><td>${isLead?'<span class="pill ember sm"><i class="ti ti-star"></i>Lead</span>':`<button class="btn sm" onclick="gSetLead(${GSEL},'${m}')"><i class="ti ti-star"></i>Make lead</button>`}</td><td><span class="pill ${active?'work':'muted'} sm">${active} active</span></td><td class="muted">${ta}</td><td style="text-align:right">${g.members.length>1?`<button class="btn sm" onclick="gRemoveMember(${GSEL},'${m}')" title="Remove"><i class="ti ti-user-minus"></i></button>`:'<span class="muted" style="font-size:11px">last member</span>'}</td></tr>`;}).join('');
- const avail=Object.keys(SUBS).filter(n=>!g.members.includes(n));
+ const members=g.members.map(m=>{const isLead=m===g.lead,mi=(g.minfo&&g.minfo[m])||{};const homeTrack=tkeys.find(tk=>TRACKS[tk].lead===m),home=mi.dept||(homeTrack?TRACKS[homeTrack].domain:((IDEAS.find(d=>d.sub===m)||{}).dept||'Reviewer')),active=mi.n!=null?mi.n:(m.length+g.depts.length)%4,ta=mi.role||((1+m.length%3)+'.'+(m.charCodeAt(1)%9)+'d');
+   return `<tr style="cursor:default"><td><div style="display:flex;align-items:center;gap:9px"><div class="avatar" style="width:30px;height:30px;background:${_sc(m)[1]}">${_sc(m)[0]}</div><div><b>${m}</b><br><span class="muted" style="font-size:11px">${home}</span></div></div></td><td>${isLead?'<span class="pill ember sm"><i class="ti ti-star"></i>Lead</span>':`<button class="btn sm" onclick="gSetLead(${GSEL},'${m}')"><i class="ti ti-star"></i>Make lead</button>`}</td><td><span class="pill ${active?'work':'muted'} sm">${active} reviews</span></td><td class="muted" style="text-transform:capitalize">${ta}</td><td style="text-align:right">${g.members.length>1?`<button class="btn sm" onclick="gRemoveMember(${GSEL},'${m}')" title="Remove"><i class="ti ti-user-minus"></i></button>`:'<span class="muted" style="font-size:11px">last member</span>'}</td></tr>`;}).join('');
+ const avail=kpeople().filter(n=>!g.members.includes(n)).slice(0,30);
  const trackChip=g.track?`<span class="tag" style="background:${TRACKS[g.track].clr}1a;color:${TRACKS[g.track].clr};border-color:${TRACKS[g.track].clr}55">${TRACKS[g.track].name} · ${TRACKS[g.track].domain}</span>`:'<span class="tag">Decision / approval node</span>';
  const detail=`<div class="card cardp"><div style="display:flex;align-items:center;gap:11px;flex-wrap:wrap"><span class="pill ${pm[0]}"><i class="ti ${pm[1]}"></i>${pm[2]}</span><h3 style="font-size:16px;margin:0">${g.name}</h3><span style="margin-left:auto" class="pill ${hh[0]}"><i class="ti ${hh[0]==='ok'?'ti-circle-check':hh[0]==='warn'?'ti-alert-triangle':'ti-x'}"></i>${hh[1]}</span></div>
    ${g.note?`<div style="margin-top:10px;font-size:12.5px;color:var(--muted)"><i class="ti ti-info-circle"></i> ${g.note}</div>`:''}
@@ -1154,24 +1168,25 @@ VIEWS.groups=function(){
     <div style="flex:1;background:var(--surface-2);border-radius:11px;padding:11px;text-align:center"><div style="display:flex;align-items:center;justify-content:center;gap:5px"><span class="mono" style="font-weight:700;font-size:18px">SLA</span><select class="tsel" onchange="gSetSLA(${GSEL},this.value)">${[1,2,3,5].map(dd=>`<option ${g.sla===dd?'selected':''} value="${dd}">${dd}d</option>`).join('')}</select></div><div class="muted" style="font-size:10px;font-weight:600">TURNAROUND TARGET</div></div></div>
    <hr class="sep"/>
    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><h3 style="margin:0"><i class="ti ti-users"></i>Reviewers</h3></div>
-   <table class="tbl"><thead><tr><th>Member</th><th>Role</th><th>Active</th><th>Avg turnaround</th><th></th></tr></thead><tbody>${members}</tbody></table>
+   <table class="tbl"><thead><tr><th>Member</th><th>Lead</th><th>Reviews done</th><th>Role</th><th></th></tr></thead><tbody>${members}</tbody></table>
    <div class="addtrk" style="margin-top:12px;padding-top:12px"><span class="muted" style="font-size:12px;display:flex;align-items:center;gap:5px"><i class="ti ti-user-plus"></i>Add a reviewer to this group</span><select class="minisel" ${avail.length?'':'disabled'} onchange="gAddMember(${GSEL},this.value)"><option value="">${avail.length?'Select a person…':'Everyone added'}</option>${avail.map(n=>`<option>${n}</option>`).join('')}</select></div>
    <div style="margin-top:16px"><div style="font-size:10.5px;font-weight:700;color:var(--muted-2);letter-spacing:.05em;margin-bottom:8px">WORKLOAD · IDEAS REVIEWED</div><div class="chartbox sm"><canvas id="gWork"></canvas></div></div>
   </div>`;
  const covRow=key=>{const gg=trackGroup(key),t=TRACKS[key],h=gg?gHealth(gg):['bad','Uncovered'];return `<div class="covrow" style="border-left:3px solid ${t.clr}" ${gg?`onclick="gsel(${GROUPS.indexOf(gg)})"`:''}><div class="cov-t"><b>${t.name}</b><span class="muted">${gg?'→ '+gg.name+' · lead '+_fn(gg.lead):'No group assigned'}</span></div><span class="covm">${gg?gg.members.length:0} rev</span><span class="pill ${h[0]} sm"><i class="ti ${h[0]==='ok'?'ti-check':h[0]==='warn'?'ti-alert-triangle':'ti-x'}"></i>${h[1]}</span></div>`;};
  document.getElementById('view').innerHTML=`
-  <div class="kpis" style="grid-template-columns:repeat(4,1fr)">${k('ti-checklist','#2A6FE0','Reviewer groups',GROUPS.filter(x=>x.track).length)}${k('ti-gavel','#D98A12','Approval authorities',GROUPS.filter(x=>x.phase==='decision').length)}${k('ti-users','#159468','Active reviewers',reviewers.length)}${k('ti-shield-check',covered<tkeys.length?'#D8423A':'#159468','Tracks staffed',covered+'/'+tkeys.length)}</div>
+  <div class="kpis" style="grid-template-columns:repeat(4,1fr)">${k('ti-checklist','#2A6FE0','Reviewer groups',GROUPS.filter(x=>x.phase==='eval'||x.phase==='both').length)}${k('ti-gavel','#D98A12','Approval authorities',GROUPS.filter(x=>x.phase==='decision').length)}${k('ti-users','#159468','Active reviewers',reviewers.length)}${k('ti-shield-check',covered<tkeys.length?'#D8423A':'#159468','Tracks staffed',covered+'/'+tkeys.length)}</div>
   <div class="g wr" style="align-items:start"><div class="card cardp"><h3><i class="ti ti-folders"></i>All groups</h3>${sect('EVALUATION',GROUPS.filter(x=>x.phase==='eval'))}${sect('EVAL + APPROVAL',GROUPS.filter(x=>x.phase==='both'))}${sect('APPROVAL',GROUPS.filter(x=>x.phase==='appr'))}${sect('DECISION AUTHORITY',GROUPS.filter(x=>x.phase==='decision'))}</div>${detail}</div>`;
- mk('gWork',{type:'bar',data:{labels:g.members.map(m=>_sc(m)[0]),datasets:[{data:g.members.map(m=>9+m.charCodeAt(0)%15),backgroundColor:g.members.map(m=>m===g.lead?'#EF5026':_sc(m)[1]),borderRadius:6,barThickness:34}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:GRID,ticks:{precision:0}},x:noGrid}}});
+ mk('gWork',{type:'bar',data:{labels:g.members.map(m=>_sc(m)[0]),datasets:[{data:g.members.map(m=>(g.minfo&&g.minfo[m]&&g.minfo[m].n!=null)?g.minfo[m].n:9+m.charCodeAt(0)%15),backgroundColor:g.members.map(m=>m===g.lead?'#EF5026':_sc(m)[1]),borderRadius:6,barThickness:34}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:GRID,ticks:{precision:0}},x:noGrid}}});
 };
-renderNav();go('dashboard');
+renderNav();
+document.getElementById('view').innerHTML='<div style="display:grid;place-items:center;height:55vh;color:var(--muted);font-size:13.5px;font-weight:600">Loading live data from kaizen.db…</div>';
 
 /* ===================== LIVE DATA (kaizen.db via the Flask backend) =====================
    Renders the built-in demo data instantly, then replaces IDEAS with ALL ideas from the
    database (compact rows, gzipped ~380 KB) so every chart, KPI, funnel and table on this
    console aggregates the real 20k-idea dataset client-side. Read-only. */
-function mapRow(r){const[id,title,dept,cat,tier,stage,est,act,score,sla,month,sub,plant,endo,cm]=r;const sc=_sc(sub);
- return {id,title,dept,cat,tier,stage,est,act,score,sla,month:month||'-',sub,plant,init:sc[0],clr:sc[1],endo,cm:cm||0};}
+function mapRow(r){const[id,title,dept,cat,tier,stage,est,act,score,sla,month,sub,plant,endo,cm,collab]=r;const sc=_sc(sub);
+ return {id,title,dept,cat,tier,stage,est,act,score,sla,month:month||'-',sub,plant,init:sc[0],clr:sc[1],endo,cm:cm||0,collab:collab||0};}
 async function loadLive(){
  try{
   const j=async u=>{const r=await fetch(API_BASE+u);if(!r.ok)throw new Error(u+' '+r.status);return r.json();};
@@ -1184,13 +1199,36 @@ async function loadLive(){
    if(w)w.innerHTML=`<div class="avatar" style="width:32px;height:32px;background:${sc[1]}">${sc[0]}</div><div><b>${mgr.name}</b>CI Manager · ${mgr.plant}</div>`;}
   PUBLISHED.clear();
   IDEAS.filter(d=>d.stage==='done'&&d.act!=null).sort((a,b)=>b.act-a.act).slice(0,4).forEach(d=>PUBLISHED.add(d.id));
+  if(boot.workflow_tracks&&boot.workflow_tracks.length){ /* designed review tracks from workflow_tracks */
+   Object.keys(TRACKS).forEach(k=>delete TRACKS[k]);
+   boot.workflow_tracks.forEach(t=>{TRACKS[t.key]={name:t.name,domain:t.domain,phase:t.phase==='appr'?'appr':'eval',clr:t.color,always:!!t.always_present,sla:t.default_sla_days};});
+  }
+  try{ /* award engine config from award_definitions + award_highlight_rules */
+   const ac=await j('/api/award-config');
+   if(ac.rules&&ac.rules.length){
+    REWARD_RULES.length=0;
+    ac.rules.forEach(r=>REWARD_RULES.push({id:r.id,on:true,icon:r.icon,clr:r.color,label:r.label,desc:r.description,unit:r.unit||'',th:r.threshold,
+     test:(d,m,rr)=>r.op==='is'?!!rewAspect(d,r.aspect):(rewAspect(d,r.aspect)||0)>=rr.th,
+     why:(d,m)=>{const v=rewAspect(d,r.aspect);return r.op==='is'?r.description:(r.aspect==='roi'?fmtL(v)+' realized':Math.round(v)+(r.unit?' '+r.unit:''));}}));
+   }
+   if(ac.definitions&&ac.definitions.length){
+    REWARD_CATALOG.length=0;
+    ac.definitions.forEach(a=>REWARD_CATALOG.push({id:a.id,on:true,name:a.name,short:a.short,kind:a.kind,icon:a.icon,clr:a.color,desc:a.description,join:a.join_mode,
+     conds:a.conds.map(c=>({a:c.a,op:c.op==='is'?'is':'gte',th:c.th}))}));
+   }
+  }catch(e){console.warn('award config load failed',e);}
+  try{ /* intake classification metadata for the visible cards */
+   const im=await j('/api/intake-meta?limit=40');
+   (im.meta||[]).forEach(x=>{INTAKE_META[x.id]=metaFromCls(x.classifications,x.desc,x.photos,x.total);INTAKE_FETCHED[x.id]=1;});
+  }catch(e){console.warn('intake meta load failed',e);}
   try{ /* real evaluator & approver groups */
    const gj=await j('/api/groups');
    if(gj.groups&&gj.groups.length){
     GROUPS.length=0;
     gj.groups.forEach(g=>{const mem=g.members.map(m=>m.name);
+     const minfo={};g.members.forEach(m=>{minfo[m.name]={dept:m.dept,n:m.n_reviews,role:m.role};});
      GROUPS.push({key:'g'+g.id,track:null,name:g.name,phase:g.purpose==='approval'?'appr':'eval',
-      lead:mem[0]||'—',members:mem,depts:[g.department||g.plant],tiers:['A','B','C'],sla:2,
+      lead:mem[0]||'—',members:mem,minfo,depts:[g.department||g.plant],tiers:['A','B','C'],sla:2,
       note:(g.purpose==='approval'?'Approval board':'Evaluation panel')+' · '+g.plant});});
     GSEL=0;
     REVIEWER_POOL.length=0;
@@ -1199,7 +1237,7 @@ async function loadLive(){
   }catch(e){console.warn('groups load failed',e);}
   renderNav();clearCharts();go(cur);
   console.log('Kaizen console: live data loaded —',IDEAS.length,'ideas ·',PLANTS_CYCLE.length,'plants');
- }catch(e){console.warn('Kaizen console: backend unreachable — showing built-in demo data.',e);}
+ }catch(e){console.warn('Kaizen console: backend unreachable — showing built-in demo data.',e);renderNav();clearCharts();go(cur);}
 }
 loadLive();
 

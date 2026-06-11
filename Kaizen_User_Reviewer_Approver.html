@@ -910,7 +910,7 @@ function attach(inp){const box=document.getElementById('attachList');if(!box){in
  inp.value='';}
 function setFeed(f){feedFilter=f;APPS.user();}
 /*APPS*/
-render();
+document.getElementById('app').innerHTML='<div style="display:grid;place-items:center;height:80vh;color:#8a877c;font-size:13.5px;font-weight:600;font-family:system-ui">Loading live data from kaizen.db…</div>';
 
 /* ===================== LIVE DATA (kaizen.db via the Flask backend) =====================
    Renders the built-in demo data immediately, then replaces it with real ideas from
@@ -936,13 +936,14 @@ async function loadLive(){
    j('/api/approval-queue?plant='+enc(emp.plant)),
    j('/api/leaderboard?plant='+enc(emp.plant))]);
   LB=lb.leaders||[];
-  const seedIdeas=IDEAS.filter(d=>d.kw);seedIdeas.forEach(d=>d.hide=1); // kept for findDup, hidden from lists
-  const seen=new Set(seedIdeas.map(d=>d.id)),merged=[];
+  let dupIdeas=[];
+  try{const dk=await j('/api/dup-keywords');dupIdeas=(dk.ideas||[]).map(r=>{const o=mapIdea(r);o.kw=r.kw;return o;});}catch(e){}
+  const seen=new Set(dupIdeas.map(d=>d.id)),merged=[];
   [...mine.ideas,...feed.ideas,...stories.ideas,...evq.ideas,...apq.ideas].forEach(r=>{if(seen.has(r.id))return;seen.add(r.id);merged.push(mapIdea(r));});
-  IDEAS.length=0;IDEAS.push(...merged,...seedIdeas);
+  IDEAS.length=0;IDEAS.push(...merged,...dupIdeas);
   clearCharts();render();
   console.log('Kaizen portal: live data loaded —',merged.length,'ideas from kaizen.db · user',ME.user);
- }catch(e){console.warn('Kaizen portal: backend unreachable — showing built-in demo data.',e);}
+ }catch(e){console.warn('Kaizen portal: backend unreachable — showing built-in demo data.',e);clearCharts();render();}
 }
 loadLive();
 
