@@ -477,7 +477,7 @@ function toast(m){const t=document.getElementById('toast');t.innerHTML='<i class
 /* ===== persona shell ===== */
 const API_BASE=''; // same origin as the Flask app
 const ME={user:'Priya Iyer',reviewer:'Deepak Kulkarni',approver:'R. Khanna'};
-let LB=[],PINFO=null;const PDEPT=()=>PINFO&&PINFO.employee?PINFO.employee.dept:'Spinning';const PPLANT=()=>PINFO&&PINFO.employee?PINFO.employee.plant:'Nagda';
+let LB=[],PINFO=null;const vis=d=>!d.hide;const PDEPT=()=>PINFO&&PINFO.employee?PINFO.employee.dept:'Spinning';const PPLANT=()=>PINFO&&PINFO.employee?PINFO.employee.plant:'Nagda';
 const PERSONAS=[['user'],['reviewer'],['approver']];
 const ROLEMETA={user:['Employee','ti-user'],reviewer:['Reviewer · Evaluator','ti-checklist'],approver:['Approver','ti-gavel']};
 let PERSONA='user',roleMenuOpen=false;
@@ -519,8 +519,8 @@ const SEED=[
 ];
 SEED.forEach((r,i)=>{const id="KZ-2026-"+String(521+i).padStart(4,"0");const sc=SUBS[r.sub]||["??","#888"];IDEAS.push(Object.assign({id:id,plant:"Nagda",init:sc[0],clr:sc[1]},r));ENDO[id]={n:24+i*9,on:false};COLLAB[id]=(r.collab||[]).slice();});
 function endorse(id,ev){if(ev)ev.stopPropagation();const s=ENDO[id]||(ENDO[id]={n:9,on:false});s.on=!s.on;s.n+=s.on?1:-1;const el=document.getElementById('end-'+id);if(el){el.className='endo'+(s.on?' on':'');el.innerHTML='<i class="ti ti-rosette-discount-check'+(s.on?'-filled':'')+'"></i>'+(s.on?'Endorsed':'Endorse')+' · '+s.n;}if(s.on)toast('You endorsed this idea — your support is now visible to the submitter');}
-function fcard(d){const likes=60+(d.id.charCodeAt(8)*7%180);const es=endoState(d);const body=d.act?`<div class="fc-ba"><div class="b">Before</div><div class="a">After</div></div><div class="fc-stat"><i class="ti ti-trending-up"></i>${fmtL(d.act)} / yr saved · verified</div>`:`<p style="font-size:13px;color:var(--muted);line-height:1.5">${d.dept} idea · estimated ${fmtL(d.est)}/yr impact</p>`;
- return `<div class="feedcard"><div class="fc-top"><div class="avatar" style="width:38px;height:38px;background:${d.clr}">${d.init}</div><div class="meta"><b>${d.sub}</b><span>${d.dept} · ${d.plant}</span></div>${stagePill(d.stage)}</div><div class="fc-body"><div class="fc-title">${d.title}</div>${body}</div><div class="fc-act"><span><i class="ti ti-heart"></i>${likes}</span><span><i class="ti ti-message-circle"></i>${likes%40}</span><button id="end-${d.id}" class="endo${es.on?' on':''}" title="I support this idea" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button><span style="margin-left:auto"><i class="ti ti-share-2"></i></span></div></div>`;}
+function fcard(d){const es=endoState(d);const body=d.act?`<div class="fc-ba"><div class="b">Before</div><div class="a">After</div></div><div class="fc-stat"><i class="ti ti-trending-up"></i>${fmtL(d.act)} / yr saved · verified</div>`:`<p style="font-size:13px;color:var(--muted);line-height:1.5">${d.dept} idea · estimated ${fmtL(d.est)}/yr impact</p>`;
+ return `<div class="feedcard"><div class="fc-top"><div class="avatar" style="width:38px;height:38px;background:${d.clr}">${d.init}</div><div class="meta"><b>${d.sub}</b><span>${d.dept} · ${d.plant}</span></div>${stagePill(d.stage)}</div><div class="fc-body"><div class="fc-title">${d.title}</div>${body}</div><div class="fc-act"><span><i class="ti ti-message-circle"></i>${d.cm||0}</span><button id="end-${d.id}" class="endo${es.on?' on':''}" title="I support this idea" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button><span style="margin-left:auto"><i class="ti ti-share-2"></i></span></div></div>`;}
 function ugo(v){userView=v;APPS.user();}
 const DETAIL={};
 function uopen(id){userSel=id;userView='detail';APPS.user();
@@ -532,7 +532,7 @@ function detailExtras(d){const dt=DETAIL[d.id];if(!dt)return '';const i=dt.idea;
 function detailActivity(d){const dt=DETAIL[d.id];if(!dt||!dt.history||!dt.history.length)return null;
  return dt.history.slice(-4).map(h=>{const nm=h.actor||'System';const sc=_sc(nm);return `<div style="display:flex;gap:11px;margin-bottom:13px"><div class="avatar" style="width:28px;height:28px;background:${sc[1]};font-size:10px">${sc[0]}</div><div style="font-size:12px"><b>${h.action||((h.from_stage?h.from_stage+' → ':'')+(h.to_stage||''))}</b><br><span class="muted">${nm} · ${h.ts||''}${h.comment?' · '+h.comment:''}</span></div></div>`;}).join('');}
 APPS.user=function(){
- const me=ME.user, mine=IDEAS.filter(d=>d.sub===me), feed=IDEAS.filter(d=>['done','implementation','approval','evaluation'].includes(d.stage)).slice(0,12), stories=IDEAS.filter(d=>d.stage==='done');
+ const me=ME.user, mine=IDEAS.filter(d=>d.sub===me), feed=IDEAS.filter(vis).filter(d=>['done','implementation','approval','evaluation'].includes(d.stage)).slice(0,12), stories=IDEAS.filter(vis).filter(d=>d.stage==='done');
  let body='';
  if(userView==='home'){
   body=`<div class="appbar"><div class="logo"><span class="mk">K</span>Kaizen</div><div style="flex:1"></div><span class="pill muted"><i class="ti ti-map-pin"></i>Packaging</span><i class="ti ti-bell" style="font-size:20px"></i></div>
@@ -592,10 +592,11 @@ const slaPill={ok:'<span class="pill ok"><i class="ti ti-clock"></i>On track</sp
 
 /* ===== REVIEWER ===== */
 function rgo(v){revView=v;clearCharts();APPS.reviewer();}
-function rsel(id){revSel=id;revView='evaluate';clearCharts();APPS.reviewer();}
-function evalTot(){let t=0;for(let i=0;i<4;i++){t+=+document.getElementById('c'+i).value;}document.getElementById('etot').textContent=t+' / 100';}
+function rsel(id){revSel=id;revView='evaluate';clearCharts();APPS.reviewer();
+ if(!DETAIL[id]){fetch(API_BASE+'/api/idea/'+id).then(r=>r.ok?r.json():null).then(j=>{if(j&&!j.error){DETAIL[id]=j;if(revView==='evaluate'&&revSel===id)APPS.reviewer();}}).catch(()=>{});}}
+function evalTot(){let t=0,mx=0,i=0;for(;;i++){const el=document.getElementById('c'+i);if(!el)break;t+=+el.value;mx+=+el.max;}document.getElementById('etot').textContent=(mx&&mx<100)?Math.round(t/mx*100)+' / 100':t+' / 100';}
 APPS.reviewer=function(){
- const queue=IDEAS.filter(d=>d.stage==='evaluation'), past=IDEAS.filter(d=>['approval','implementation','done','rejected'].includes(d.stage)&&d.score);
+ const queue=IDEAS.filter(vis).filter(d=>d.stage==='evaluation'), past=IDEAS.filter(vis).filter(d=>['approval','implementation','done','rejected'].includes(d.stage)&&d.score);
  if(!queue.find(d=>d.id===revSel))revSel=queue[0].id;
  const who={role:'Evaluator workspace',name:ME.reviewer,sub:'Reviewer · '+PPLANT(),init:_sc(ME.reviewer)[0],clr:_sc(ME.reviewer)[1]};
  const nav=[{k:'queue',t:'My queue',i:'ti-checklist',c:queue.length,fn:"rgo('queue')"},{k:'evaluate',t:'Evaluate',i:'ti-edit',fn:"rgo('evaluate')"},{k:'history',t:'History',i:'ti-history',c:past.length,fn:"rgo('history')"}];
@@ -612,13 +613,15 @@ APPS.reviewer=function(){
    </tbody></table></div>`;
  } else if(revView==='evaluate'){
   const s=IDEAS.find(d=>d.id===revSel);title='Evaluate idea';crumb='Reviewer · scoring';
-  const cr=[['Savings impact',Math.round(s.score*.34),30],['Replicability',Math.round(s.score*.24),25],['Effort & originality',Math.round(s.score*.28),30],['Safety / quality',Math.round(s.score*.14),15]];
+  const dd=DETAIL[s.id],ev0=dd&&dd.evaluations&&dd.evaluations[0];
+  const cr=ev0?[['Impact',ev0.impact_score,5],['Effort',ev0.effort_score,5],['Feasibility',ev0.feasibility_score,5]]:[['Savings impact',Math.round(s.score*.34),30],['Replicability',Math.round(s.score*.24),25],['Effort & originality',Math.round(s.score*.28),30],['Safety / quality',Math.round(s.score*.14),15]];
+  const ratt=dd&&dd.attachments?dd.attachments:null;const rcm=dd&&dd.comments?dd.comments:[];
   body=`<a onclick="rgo('queue')" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:14px;cursor:pointer"><i class="ti ti-arrow-left"></i>Back to my queue</a><div class="g wr"><div class="card cardp"><div style="display:flex;align-items:center;gap:10px"><span class="tag mono">${s.id}</span><span class="tier ${s.tier}">${s.tier}</span><span class="pill muted">${s.cat}</span><span style="margin-left:auto">${slaPill[s.sla]}</span></div>
     <h3 style="margin-top:12px;font-size:16px">${s.title}</h3>
-    <p style="font-size:13px;color:var(--ink-2);line-height:1.55;margin:10px 0">Submitted by ${s.sub} (${s.dept}, ${s.plant}). Estimated impact ${fmtL(s.est)}/yr. Full description, attachments and process data available below.</p>
-    <div style="display:flex;gap:7px"><span class="tag"><i class="ti ti-photo"></i> 2 photos</span><span class="tag"><i class="ti ti-file"></i> Process data</span></div>
+    <p style="font-size:13px;color:var(--ink-2);line-height:1.55;margin:10px 0">${dd&&dd.idea.problem_statement?dd.idea.problem_statement+(dd.idea.proposed_solution?' <b>Proposed:</b> '+dd.idea.proposed_solution:''):`Submitted by ${s.sub} (${s.dept}, ${s.plant}). Estimated impact ${fmtL(s.est)}/yr.`}</p>
+    <div style="display:flex;gap:7px"><span class="tag"><i class="ti ti-photo"></i> ${ratt?ratt.photos:0} photos</span><span class="tag"><i class="ti ti-file"></i> ${ratt?Math.max(0,ratt.total-ratt.photos):0} docs</span><span class="tag"><i class="ti ti-coins"></i> Est. ${fmtL(s.est)}/yr</span></div>
     <hr class="sep"/><div style="font-size:11px;font-weight:700;color:var(--muted-2);letter-spacing:.05em;margin-bottom:10px">CLARIFICATION THREAD</div>
-    <div style="display:flex;gap:10px;margin-bottom:10px"><div class="avatar" style="width:28px;height:28px;background:${s.clr};font-size:10px">${s.init}</div><div style="background:var(--surface-2);border-radius:10px;padding:9px 12px;font-size:12.5px">Payback was estimated using last quarter's energy rates.</div></div>
+    ${rcm.length?rcm.slice(0,2).map(c=>{const sc=_sc(c.user||s.sub);return `<div style="display:flex;gap:10px;margin-bottom:10px"><div class="avatar" style="width:28px;height:28px;background:${sc[1]};font-size:10px">${sc[0]}</div><div style="background:var(--surface-2);border-radius:10px;padding:9px 12px;font-size:12.5px">${c.text}</div></div>`;}).join(''):`<div class="muted" style="font-size:12px;margin-bottom:10px">No clarifications yet — ask the first question.</div>`}
     <div style="background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:5px 5px 5px 13px;display:flex;align-items:center;gap:8px"><input class="input" style="border:none;background:none;padding:8px 0" placeholder="Ask a clarification…"><button class="btn prim sm" onclick="toast('Clarification sent to submitter')"><i class="ti ti-send"></i></button></div>
    </div>
    <div class="card cardp"><h3><i class="ti ti-adjustments-star"></i>Score this idea</h3><div class="sub">Drag to set each criterion</div>
@@ -631,7 +634,7 @@ APPS.reviewer=function(){
  } else {
   title='Evaluation history';crumb='Reviewer · '+past.length+' reviewed';
   body=`<div class="card" style="overflow:hidden"><table class="tbl"><thead><tr><th>Idea</th><th>Dept</th><th>My score</th><th>Outcome</th></tr></thead><tbody>
-   ${past.map(d=>`<tr style="cursor:default"><td class="tt">${d.title}</td><td class="muted">${d.dept}</td><td class="mono">${Math.min(95,d.score+2)}/100</td><td>${d.stage==='rejected'?'<span class="pill bad">Rejected</span>':d.stage==='done'?'<span class="pill ok">Implemented</span>':'<span class="pill work">'+STLAB[d.stage]+'</span>'}</td></tr>`).join('')}
+   ${past.map(d=>`<tr style="cursor:default"><td class="tt">${d.title}</td><td class="muted">${d.dept}</td><td class="mono">${d.score}/100</td><td>${d.stage==='rejected'?'<span class="pill bad">Rejected</span>':d.stage==='done'?'<span class="pill ok">Implemented</span>':'<span class="pill work">'+STLAB[d.stage]+'</span>'}</td></tr>`).join('')}
   </tbody></table></div>`;
  }
  document.getElementById('app').innerHTML=consoleShell(nav,revView,who,title,crumb,body,right);
@@ -644,9 +647,10 @@ APPS.reviewer=function(){
 
 /* ===== APPROVER ===== */
 function ago(v){appView=v;clearCharts();APPS.approver();}
-function asel(id){appSel=id;appView='approve';clearCharts();APPS.approver();}
+function asel(id){appSel=id;appView='approve';clearCharts();APPS.approver();
+ if(!DETAIL[id]){fetch(API_BASE+'/api/idea/'+id).then(r=>r.ok?r.json():null).then(j=>{if(j&&!j.error){DETAIL[id]=j;if(appView==='approve'&&appSel===id)APPS.approver();}}).catch(()=>{});}}
 APPS.approver=function(){
- const queue=IDEAS.filter(d=>d.stage==='approval'), approved=IDEAS.filter(d=>['implementation','done'].includes(d.stage)), rejected=IDEAS.filter(d=>d.stage==='rejected');
+ const queue=IDEAS.filter(vis).filter(d=>d.stage==='approval'), approved=IDEAS.filter(vis).filter(d=>['implementation','done'].includes(d.stage)), rejected=IDEAS.filter(vis).filter(d=>d.stage==='rejected');
  if(!queue.find(d=>d.id===appSel))appSel=queue[0].id;
  const who={role:'Approver workspace',name:ME.approver,sub:'Approver · '+PPLANT(),init:_sc(ME.approver)[0],clr:_sc(ME.approver)[1]};
  const nav=[{k:'queue',t:'My approvals',i:'ti-checkbox',c:queue.length,fn:"ago('queue')"},{k:'approve',t:'Approve',i:'ti-gavel',fn:"ago('approve')"},{k:'history',t:'History',i:'ti-history',c:approved.length+rejected.length,fn:"ago('history')"}];
@@ -662,12 +666,12 @@ APPS.approver=function(){
    </tbody></table></div>`;
  } else if(appView==='approve'){
   const s=IDEAS.find(d=>d.id===appSel);title='Approval decision';crumb='Approver · review';
-  const evs=[['Deepak Kulkarni','#159468',Math.min(95,s.score+4)],['Neha Shah','#2A6FE0',Math.max(60,s.score-4)]];
+  const add=DETAIL[s.id];const evs=(add&&add.evaluations&&add.evaluations.length)?add.evaluations.slice(0,3).map(e=>[e.evaluator,_sc(e.evaluator)[1],e.total_score]):[['Evaluation panel','#159468',s.score]];
   body=`<a onclick="ago('queue')" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:14px;cursor:pointer"><i class="ti ti-arrow-left"></i>Back to my approvals</a><div class="g wr"><div class="card cardp"><div style="display:flex;align-items:center;gap:10px"><span class="tag mono">${s.id}</span><span class="tier ${s.tier}">${s.tier}</span><span class="pill muted">${s.dept}</span><span style="margin-left:auto">${slaPill[s.sla]}</span></div>
     <h3 style="margin-top:12px;font-size:16px">${s.title}</h3>
     <div style="font-size:11px;font-weight:700;color:var(--muted-2);letter-spacing:.05em;margin:14px 0 10px">EVALUATION SUMMARY</div>
     <div style="background:var(--emerald-soft);border-radius:11px;padding:11px;display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:600;color:var(--emerald);margin-bottom:10px"><i class="ti ti-calculator"></i>Average evaluation score · ${s.score} / 100</div>
-    ${evs.map(e=>`<div style="display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:8px"><div class="avatar" style="width:30px;height:30px;background:${e[1]}">${SUBS[e[0]][0]}</div><div style="flex:1;font-size:12.5px"><b>${e[0]}</b><br><span class="muted">Scored ${e[2]}/100</span></div><span class="pill ok"><i class="ti ti-check"></i>Voted</span></div>`).join('')}
+    ${evs.map(e=>`<div style="display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:8px"><div class="avatar" style="width:30px;height:30px;background:${e[1]}">${_sc(e[0])[0]}</div><div style="flex:1;font-size:12.5px"><b>${e[0]}</b><br><span class="muted">Scored ${e[2]}/100</span></div><span class="pill ok"><i class="ti ti-check"></i>Voted</span></div>`).join('')}
     <hr class="sep"/><div style="font-size:11px;font-weight:700;color:var(--muted-2);letter-spacing:.05em;margin-bottom:10px">REQUIRED DOCUMENTS</div>
     <div style="display:flex;flex-direction:column;gap:7px;font-size:12.5px"><div style="display:flex;gap:9px"><i class="ti ti-circle-check" style="color:var(--emerald)"></i>Cost estimate</div><div style="display:flex;gap:9px"><i class="ti ti-circle-check" style="color:var(--emerald)"></i>Payback calculation</div><div style="display:flex;gap:9px"><i class="ti ti-circle-dashed" style="color:var(--amber)"></i>Vendor quote · pending</div></div>
    </div>
@@ -697,7 +701,7 @@ function ideaCard(d){const order=['intake','evaluation','approval','implementati
  return `<div class="card cardp" style="cursor:pointer" onclick="uopen('${d.id}')"><div style="display:flex;align-items:center;gap:11px;margin-bottom:11px"><div class="avatar" style="width:38px;height:38px;border-radius:11px;background:${CATCLR[d.cat]}"><i class="ti ti-bulb"></i></div><div style="flex:1;min-width:0"><div style="font-weight:600;font-family:var(--disp);font-size:14.5px">${d.title}</div><span class="tag mono">${d.id}</span></div>${stagePill(d.stage)}</div><div class="bar"><i style="width:${pct}%;background:${d.stage==='rejected'?'var(--red)':'var(--ember)'}"></i></div><div class="muted" style="font-size:11.5px;margin-top:9px">${d.dept} · ${d.plant} · est ${fmtL(d.est)}/yr${d.act?' · realized '+fmtL(d.act):''}</div></div>`;}
 function storyCard(d){const es=endoState(d);return `<div class="card" style="overflow:hidden"><div style="height:120px;background:linear-gradient(135deg,${d.clr},#0f6e54);display:flex;align-items:flex-end;padding:14px"><div style="color:#fff;font-family:var(--disp);font-weight:600;font-size:15px;line-height:1.2">${d.title}</div></div><div class="cardp"><div style="display:flex;align-items:center;justify-content:space-between"><span class="mono" style="font-weight:700;font-size:18px;color:var(--emerald)">${fmtL(d.act)}</span><span class="pill ${rewardTier(d.score)==='Gold'?'warn':'muted'}"><i class="ti ti-award"></i>${rewardTier(d.score)}</span></div><div style="display:flex;align-items:center;gap:9px;margin-top:11px"><div class="avatar" style="width:30px;height:30px;background:${d.clr}">${d.init}</div><div style="font-size:12.5px"><b>${d.sub}</b><br><span class="muted">${d.dept} · ${d.plant}</span></div></div><button id="end-${d.id}" class="endo${es.on?' on':''}" style="width:100%;justify-content:center;margin-top:12px" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button></div></div>`;}
 APPS.user=function(){
- const me=ME.user, mine=IDEAS.filter(d=>d.sub===me), feed=IDEAS.filter(d=>['done','implementation','approval','evaluation'].includes(d.stage)).slice(0,12), stories=IDEAS.filter(d=>d.stage==='done');
+ const me=ME.user, mine=IDEAS.filter(d=>d.sub===me), feed=IDEAS.filter(vis).filter(d=>['done','implementation','approval','evaluation'].includes(d.stage)).slice(0,12), stories=IDEAS.filter(vis).filter(d=>d.stage==='done');
  const impl=mine.filter(d=>d.stage==='done'), saved=sum(impl,d=>d.act);
  const board=(LB&&LB.length)?LB.slice(0,5).map(l=>[l.name,l.saved]):Object.entries((()=>{const m={};IDEAS.filter(d=>d.act).forEach(d=>m[d.sub]=(m[d.sub]||0)+d.act);return m;})()).sort((a,b)=>b[1]-a[1]).slice(0,5);
  const navI=[['home','Feed','ti-news'],['mine','My ideas','ti-bulb'],['stories','Stories','ti-trophy'],['profile','Profile','ti-user-circle']];
@@ -705,8 +709,8 @@ APPS.user=function(){
  const sidebar=`<aside class="side" style="background:var(--d-bg)"><div class="lg"><span class="mark" style="background:var(--ember)">K</span><div>Kaizen<small>Idea Hub</small></div></div>${roleSwitch()}<div class="sec">Workspace</div><nav class="nav">${navI.map(n=>`<a class="${n[0]===active?'on':''}" onclick="ugo('${n[0]}')"><i class="ti ${n[2]}"></i>${n[1]}</a>`).join('')}</nav><button class="btn prim" style="margin:16px 6px 4px" onclick="ugo('submit')"><i class="ti ti-plus"></i>Submit idea</button><div class="who"><div class="avatar" style="width:32px;height:32px;background:${_sc(ME.user)[1]}">${_sc(ME.user)[0]}</div><div><b>${ME.user}</b>${PDEPT()} · ${PPLANT()}</div></div></aside>`;
  const TT={home:['Idea Hub · Feed','Ideas in your department'],mine:['Idea Hub · My ideas','My ideas'],stories:['Idea Hub · Stories','Success stories'],profile:['Idea Hub · Profile','My profile'],detail:['Idea Hub · Tracking','Idea detail'],submit:['Idea Hub · New idea','Submit an idea']};
  const tt=TT[userView]||['Idea Hub','Idea Hub'];
- const topbar=`<div class="topbar"><h1>${tt[1]}</h1><div style="flex:1"></div><div class="wsrch"><i class="ti ti-search"></i>Search ideas…</div><i class="ti ti-bell" style="font-size:19px;color:var(--muted)"></i><div class="avatar" style="width:32px;height:32px;background:#5b4ad1">PI</div></div>`;
- const profMini=`<div class="railcard"><div style="display:flex;align-items:center;gap:11px"><div class="avatar" style="width:44px;height:44px;background:#5b4ad1;font-size:15px">PI</div><div><div style="font-weight:700;font-family:var(--disp)">Priya Iyer</div><div class="muted" style="font-size:12px">Spinning · Nagda</div></div></div>
+ const topbar=`<div class="topbar"><h1>${tt[1]}</h1><div style="flex:1"></div><div class="wsrch"><i class="ti ti-search"></i>Search ideas…</div><i class="ti ti-bell" style="font-size:19px;color:var(--muted)"></i><div class="avatar" style="width:32px;height:32px;background:${_sc(ME.user)[1]}">${_sc(ME.user)[0]}</div></div>`;
+ const profMini=`<div class="railcard"><div style="display:flex;align-items:center;gap:11px"><div class="avatar" style="width:44px;height:44px;background:${_sc(ME.user)[1]};font-size:15px">${_sc(ME.user)[0]}</div><div><div style="font-weight:700;font-family:var(--disp)">${ME.user}</div><div class="muted" style="font-size:12px">${PDEPT()} · ${PPLANT()}</div></div></div>
    <div style="display:flex;gap:8px;margin-top:14px"><div style="flex:1;text-align:center;background:var(--surface-2);border-radius:10px;padding:9px"><div class="mono" style="font-weight:700;font-size:17px">${mine.length}</div><div class="muted" style="font-size:9.5px;font-weight:600">IDEAS</div></div><div style="flex:1;text-align:center;background:var(--surface-2);border-radius:10px;padding:9px"><div class="mono" style="font-weight:700;font-size:17px;color:var(--emerald)">${impl.length}</div><div class="muted" style="font-size:9.5px;font-weight:600">LIVE</div></div><div style="flex:1;text-align:center;background:var(--surface-2);border-radius:10px;padding:9px"><div class="mono" style="font-weight:700;font-size:17px;color:var(--ember)">${fmtL(saved)}</div><div class="muted" style="font-size:9.5px;font-weight:600">SAVED</div></div></div>
    <button class="btn prim block" style="margin-top:14px" onclick="ugo('submit')"><i class="ti ti-plus"></i>Submit an idea</button></div>`;
  const boardCard=`<div class="railcard"><h3><i class="ti ti-star"></i>Top contributors</h3><div style="margin-top:12px;display:flex;flex-direction:column;gap:11px">${board.map(([n,v],i)=>`<div style="display:flex;align-items:center;gap:10px"><span class="mono muted" style="font-weight:700;width:14px">${i+1}</span><div class="avatar" style="width:28px;height:28px;background:${_sc(n)[1]}">${_sc(n)[0]}</div><div style="flex:1;font-size:12.5px;font-weight:600">${n}</div><span class="mono" style="color:var(--emerald);font-weight:700;font-size:12px">${fmtL(v)}</span></div>`).join('')}</div></div>`;
@@ -768,7 +772,7 @@ APPS.user=function(){
  } else if(userView==='stories'){
   content=`<div class="web-grid3">${stories.map(storyCard).join('')}</div>`;
  } else {
-  content=`<div class="web-2"><div><div class="card cardp" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:13px"><div class="avatar" style="width:54px;height:54px;background:#5b4ad1;font-size:19px">PI</div><div><div style="font-weight:700;font-size:18px;font-family:var(--disp)">Priya Iyer</div><div class="muted" style="font-size:13px">Spinning · Nagda · joined 2024</div></div><div style="margin-left:auto;display:flex;gap:8px"><span class="pill ember"><i class="ti ti-award"></i>1 Gold</span></div></div>
+  content=`<div class="web-2"><div><div class="card cardp" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:13px"><div class="avatar" style="width:54px;height:54px;background:${_sc(ME.user)[1]};font-size:19px">${_sc(ME.user)[0]}</div><div><div style="font-weight:700;font-size:18px;font-family:var(--disp)">${ME.user}</div><div class="muted" style="font-size:13px">${PDEPT()} · ${PPLANT()} · joined ${PINFO&&PINFO.employee&&PINFO.employee.joined?PINFO.employee.joined:'2024'}</div></div><div style="margin-left:auto;display:flex;gap:8px">${(()=>{const e=PINFO&&PINFO.employee;if(!e)return '<span class="pill ember"><i class="ti ti-award"></i>1 Gold</span>';const aw=e.awards||{};const tot=Object.values(aw).reduce((a,b)=>a+b,0);return tot?`<span class="pill ember"><i class="ti ti-award"></i>${tot} award${tot>1?'s':''}</span>`:`<span class="pill ember"><i class="ti ti-coin"></i>${e.points||0} pts</span>`;})()}</div></div>
     <div style="display:flex;gap:10px;margin-top:16px"><div style="flex:1;text-align:center;background:var(--surface-2);border-radius:12px;padding:13px"><div class="mono" style="font-weight:700;font-size:21px">${mine.length}</div><div class="muted" style="font-size:10.5px;font-weight:600">SUBMITTED</div></div><div style="flex:1;text-align:center;background:var(--surface-2);border-radius:12px;padding:13px"><div class="mono" style="font-weight:700;font-size:21px;color:var(--emerald)">${impl.length}</div><div class="muted" style="font-size:10.5px;font-weight:600">IMPLEMENTED</div></div><div style="flex:1;text-align:center;background:var(--surface-2);border-radius:12px;padding:13px"><div class="mono" style="font-weight:700;font-size:21px;color:var(--ember)">${fmtL(saved)}</div><div class="muted" style="font-size:10.5px;font-weight:600">SAVED / YR</div></div></div></div>
     <h2 class="vh">My ideas</h2><div class="web-grid2">${mine.map(ideaCard).join('')}</div></div>
    <div class="sticky">
@@ -778,9 +782,9 @@ APPS.user=function(){
      </div></div>
     <div class="railcard" style="margin-top:16px"><h3><i class="ti ti-medal"></i>Recognition</h3>
      <div style="margin-top:13px;display:flex;flex-direction:column;gap:13px">
-      <div style="display:flex;align-items:center;gap:11px"><span style="width:32px;height:32px;border-radius:9px;background:var(--ember-soft);color:var(--ember-d);display:grid;place-items:center;font-size:16px;flex:none"><i class="ti ti-award"></i></span><div style="font-size:12.5px;line-height:1.3"><b>Gold Award</b><br><span class="muted" style="font-size:11px">For ${fmtL(saved)}/yr realized impact</span></div></div>
+      <div style="display:flex;align-items:center;gap:11px"><span style="width:32px;height:32px;border-radius:9px;background:var(--ember-soft);color:var(--ember-d);display:grid;place-items:center;font-size:16px;flex:none"><i class="ti ti-award"></i></span><div style="font-size:12.5px;line-height:1.3"><b>${(()=>{const e=PINFO&&PINFO.employee,aw=e&&e.awards||{};return Object.keys(aw).length?Object.entries(aw).map(([k,v])=>v+'× '+k.replace(/_/g,' ')).join(' · '):(e?e.points+' reward points':'Gold Award');})()}</b><br><span class="muted" style="font-size:11px">For ${fmtL(saved)}/yr realized impact</span></div></div>
       <div style="display:flex;align-items:center;gap:11px"><span style="width:32px;height:32px;border-radius:9px;background:rgba(21,148,104,.13);color:var(--emerald);display:grid;place-items:center;font-size:16px;flex:none"><i class="ti ti-rosette-discount-check"></i></span><div style="font-size:12.5px;line-height:1.3"><b>${mine.reduce((a,d)=>a+endoState(d).n,0)} endorsements</b><br><span class="muted" style="font-size:11px">Received from colleagues</span></div></div>
-      <div style="display:flex;align-items:center;gap:11px"><span style="width:32px;height:32px;border-radius:9px;background:rgba(42,111,224,.13);color:var(--blue);display:grid;place-items:center;font-size:16px;flex:none"><i class="ti ti-flame"></i></span><div style="font-size:12.5px;line-height:1.3"><b>Active contributor</b><br><span class="muted" style="font-size:11px">Ideas raised across 4 areas</span></div></div>
+      <div style="display:flex;align-items:center;gap:11px"><span style="width:32px;height:32px;border-radius:9px;background:rgba(42,111,224,.13);color:var(--blue);display:grid;place-items:center;font-size:16px;flex:none"><i class="ti ti-flame"></i></span><div style="font-size:12.5px;line-height:1.3"><b>Active contributor</b><br><span class="muted" style="font-size:11px">Ideas raised across ${PINFO&&PINFO.employee&&PINFO.employee.areas?PINFO.employee.areas:[...new Set(mine.map(d=>d.cat))].length} areas</span></div></div>
      </div></div>
    </div></div>`;
  }
@@ -874,15 +878,15 @@ const DEPTFEED=[
   desc:'Manual spin-finish dosing varies operator to operator, drifting finish-on-yarn out of spec. Closed-loop dosing control would hold it within band and cut downstream customer complaints.'}];
 DEPTFEED.forEach(d=>{d.dept='Spinning';d.plant='Nagda';d.init=SUBS[d.sub][0];d.clr=SUBS[d.sub][1];ENDO[d.id]={n:d.end,on:false};});
 const SPINBOARD=[['Anita Mehta',8.2],['Deepak Kulkarni',6.5],['Rakesh Nair',5.1],['Neha Shah',4.4],['Manish Gupta',3.8]];
-function deptCard(d){const likes=60+(d.id.charCodeAt(8)*7%180);const es=endoState(d);const impact=d.act?`<span class="fc-impact real"><i class="ti ti-trending-up"></i>${fmtL(d.act)}/yr saved</span>`:`<span class="fc-impact est"><i class="ti ti-target"></i>est ${fmtL(d.est)}/yr</span>`;
- return `<div class="feedcard"><div class="fc-top"><div class="avatar" style="width:38px;height:38px;background:${d.clr}">${d.init}</div><div class="meta"><b>${d.sub}</b><span>${d.dept} · ${d.plant}</span></div>${stagePill(d.stage)}</div><div class="fc-body"><div class="fc-title">${d.title}</div><p class="fc-desc">${descFor(d)}</p>${impact}</div><div class="fc-act"><span><i class="ti ti-heart"></i>${likes}</span><span><i class="ti ti-message-circle"></i>${likes%40}</span><button id="end-${d.id}" class="endo${es.on?' on':''}" title="I support this idea" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button><span style="margin-left:auto"><i class="ti ti-share-2"></i></span></div></div>`;}
+function deptCard(d){const es=endoState(d);const impact=d.act?`<span class="fc-impact real"><i class="ti ti-trending-up"></i>${fmtL(d.act)}/yr saved</span>`:`<span class="fc-impact est"><i class="ti ti-target"></i>est ${fmtL(d.est)}/yr</span>`;
+ return `<div class="feedcard"><div class="fc-top"><div class="avatar" style="width:38px;height:38px;background:${d.clr}">${d.init}</div><div class="meta"><b>${d.sub}</b><span>${d.dept} · ${d.plant}</span></div>${stagePill(d.stage)}</div><div class="fc-body"><div class="fc-title">${d.title}</div><p class="fc-desc">${descFor(d)}</p>${impact}</div><div class="fc-act"><span><i class="ti ti-message-circle"></i>${d.cm||0}</span><button id="end-${d.id}" class="endo${es.on?' on':''}" title="I support this idea" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button><span style="margin-left:auto"><i class="ti ti-share-2"></i></span></div></div>`;}
 /* ===== focused feed: interactive idea card + rail initiatives ===== */
 function idnum(s){let n=0;for(let i=0;i<s.length;i++)n+=s.charCodeAt(i)*(i+1);return n;}
 const LIKES={};
 function likeState(d){if(!LIKES[d.id])LIKES[d.id]={n:60+(idnum(d.id)*7%180),on:false};return LIKES[d.id];}
 function likeToggle(id,ev){if(ev)ev.stopPropagation();const s=LIKES[id]||(LIKES[id]={n:80,on:false});s.on=!s.on;s.n+=s.on?1:-1;const el=document.getElementById('like-'+id);if(el){el.className='iact'+(s.on?' liked':'');el.innerHTML='<i class="ti ti-heart'+(s.on?'-filled':'')+'"></i>'+s.n;}}
 function cmt(id,ev){if(ev)ev.stopPropagation();toast('Comment thread opened — join the discussion');}
-function ideaCardX(d){const es=endoState(d),ls=likeState(d),cat=CATCLR[d.cat],cmts=idnum(d.id)%34+4;
+function ideaCardX(d){const es=endoState(d),ls=likeState(d),cat=CATCLR[d.cat],cmts=d.cm||0;
  const endorsers=Object.keys(SUBS).filter(n=>n!==d.sub).slice(0,3);
  const impact=d.act?`<span class="fc-impact real"><i class="ti ti-trending-up"></i>${fmtL(d.act)}/yr saved</span>`:`<span class="fc-impact est"><i class="ti ti-target"></i>est ${fmtL(d.est)}/yr impact</span>`;
  const trend=es.n>=38?`<span class="catchip" style="background:var(--ember-soft);color:var(--ember-d)"><i class="ti ti-flame"></i>Trending</span>`:'';
@@ -914,7 +918,7 @@ render();
    queues + the plant leaderboard. The 5 seeded similar-idea cards are kept because the
    voice duplicate-check demo matches against their keywords. Read-only. */
 function mapIdea(r){const sc=_sc(r.sub);ENDO[r.id]={n:r.endo||0,on:false};
- return {id:r.id,title:r.title,dept:r.dept,cat:r.cat,tier:r.tier,stage:r.stage,est:r.est,act:r.act,score:r.score,sla:r.sla||'-',month:r.month||'-',sub:r.sub,plant:r.plant,init:sc[0],clr:sc[1]};}
+ return {id:r.id,title:r.title,dept:r.dept,cat:r.cat,tier:r.tier,stage:r.stage,est:r.est,act:r.act,score:r.score,sla:r.sla||'-',month:r.month||'-',sub:r.sub,plant:r.plant,init:sc[0],clr:sc[1],cm:r.cm||0};}
 async function loadLive(){
  try{
   const j=async u=>{const r=await fetch(API_BASE+u);if(!r.ok)throw new Error(u+' '+r.status);return r.json();};
@@ -932,7 +936,7 @@ async function loadLive(){
    j('/api/approval-queue?plant='+enc(emp.plant)),
    j('/api/leaderboard?plant='+enc(emp.plant))]);
   LB=lb.leaders||[];
-  const seedIdeas=IDEAS.filter(d=>d.kw); // keep dup-check demo cards
+  const seedIdeas=IDEAS.filter(d=>d.kw);seedIdeas.forEach(d=>d.hide=1); // kept for findDup, hidden from lists
   const seen=new Set(seedIdeas.map(d=>d.id)),merged=[];
   [...mine.ideas,...feed.ideas,...stories.ideas,...evq.ideas,...apq.ideas].forEach(r=>{if(seen.has(r.id))return;seen.add(r.id);merged.push(mapIdea(r));});
   IDEAS.length=0;IDEAS.push(...merged,...seedIdeas);
@@ -950,7 +954,8 @@ loadLive();
 const VOICE=(function(){
  const API=''; // same origin as the Flask app when served; '' = relative
  const params=new URLSearchParams(location.search);
- const EMP_NAME=(params.get('name')||params.get('emp')||'Priya').trim();
+ const EMP_NAME0=(params.get('name')||params.get('emp')||'').trim();
+ const EMP_NAME=()=>EMP_NAME0||((typeof ME!=='undefined'&&ME.user)?ME.user.split(' ')[0]:'there');
  const FORM_DEPTS=['Spinning','Viscose','Spinbath','After-treatment','Auxiliary','Utilities','ETP','Quality','Maintenance','Process/Digital','Safety','Packing'];
  /* Claude (server) returns the voice-script department list -> map to the portal's 12 */
  const DEPT_MAP={'Pulp':'Viscose','Viscose':'Viscose','Spinning':'Spinning','Spin Bath / Acid':'Spinbath','Auxiliary & CS2':'Auxiliary','Aftertreatment':'After-treatment','Quality Control':'Quality','Mechanical Maintenance':'Maintenance','Electrical Maintenance':'Maintenance','Instrumentation':'Process/Digital','Power & Utilities':'Utilities','Effluent / ETP':'ETP','Stores & Logistics':'Packing','Packing & Dispatch':'Packing','Safety':'Safety','Security':'Safety','HR / Admin':'Process/Digital'};
@@ -1110,7 +1115,7 @@ const VOICE=(function(){
   if(online){
    history.push({role:'user',content:text});
    try{
-    const r=await fetch(API+'/api/converse',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({lang,name:EMP_NAME,messages:history})});
+    const r=await fetch(API+'/api/converse',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({lang,name:EMP_NAME(),messages:history})});
     const d=await r.json(); if(d.error)throw new Error(d.error);
     data=d; history.push({role:'assistant',content:JSON.stringify(d)});
    }catch(e){ showErr('AI error: '+(e.message||e)); online=false; } // drop to local for the rest
@@ -1163,7 +1168,7 @@ const VOICE=(function(){
   const dept=detectDept(all);
   if(!dept&&!askedDept)return {action:'ask',speech:LANGS[lang].askDept};
   const tier=detectTier(all);
-  return {action:'final',speech:LANGS[lang].thanks(EMP_NAME),title:makeTitle(idea),description:sentence(stripTrailing(cleanText(idea))),department:dept||'Process/Digital',tier:tier.tier,tier_reason:tier.reason,cost_estimate:tier.cost};
+  return {action:'final',speech:LANGS[lang].thanks(EMP_NAME()),title:makeTitle(idea),description:sentence(stripTrailing(cleanText(idea))),department:dept||'Process/Digital',tier:tier.tier,tier_reason:tier.reason,cost_estimate:tier.cost};
  }
 
  /* ---------- pre-fill the Submit form + land on Review ---------- */
@@ -1206,7 +1211,7 @@ const VOICE=(function(){
   showScreen('vConvo'); const t=$('vType'); if(t)t.classList.remove('show'); hideErr(); setYou('');
   let micP=Promise.resolve();
   if(online&&!micStream){ micP=initMic().catch(()=>{ online=false; showErr(LANGS[lang].micErr); }); }
-  await say(LANGS[lang].welcome(EMP_NAME)); // greet (text reveals in sync with the voice); mic initialises in parallel
+  await say(LANGS[lang].welcome(EMP_NAME())); // greet (text reveals in sync with the voice); mic initialises in parallel
   await micP;
   turn();
  }

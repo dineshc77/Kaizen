@@ -492,6 +492,9 @@ const NAV=[
  {k:'reports',t:'Reports & analytics',i:'ti-chart-histogram'}
 ];
 let cur='dashboard';
+const API_BASE='';
+let CYCLE=null,CONTRIB_LIVE=null;const REVIEWER_POOL=[];
+function kpeople(){return REVIEWER_POOL.length?REVIEWER_POOL:Object.keys(SUBS);}
 function renderNav(){document.getElementById('nav').innerHTML=NAV.map(n=>`<a class="${n.k===cur?'on':''}" onclick="go('${n.k}')"><i class="ti ${n.i}"></i>${n.t}${n.c?`<span class="cnt">${n.c()}</span>`:''}</a>`).join('');}
 function topbar(title,crumb,right=''){document.getElementById('topbar').innerHTML=`<div><h1>${title}</h1></div>${right}`;}
 function toast(msg){const t=document.getElementById('toast');t.innerHTML='<i class="ti ti-circle-check"></i>'+msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
@@ -729,7 +732,7 @@ VIEWS.intake=function(){
  const tierMix=['A','B','C'].map(t=>({t,n:list.filter(d=>intakeState(d.id).tier===t).length})).filter(x=>x.n);
  const avgConf=Math.round(list.reduce((a,d)=>{const mm=INTAKE_META[d.title];const cs=mm?Object.values(mm.cls).map(v=>v[1]):[80];return a+cs.reduce((x,y)=>x+y,0)/cs.length;},0)/list.length);
  const cards=list.slice(0,12).map(d=>{const ds=intakeState(d.id),nt=Object.keys(ds.tracks).length;const im=IMPACT[d.title]||['money',fmtL(d.est)],ic=IMPACTYPE[im[0]];
-  return `<button class="awcard${d.id===s.id?' on':''}" onclick="selIntake('${d.id}')"><div class="aw-top"><span class="tier ${ds.tier}">${ds.tier}</span><span class="pill warn sm"><i class="ti ti-clock"></i>1d</span></div><div class="aw-title">${d.title}</div><div class="aw-sub">${d.dept} · ${d.plant}</div><div class="aw-foot"><span class="aw-est" style="color:${ic[0]}"><i class="ti ${ic[1]}"></i>${im[1]}</span><span class="aw-trk"><i class="ti ti-stack-2"></i>${nt} tracks</span></div></button>`;}).join('');
+  return `<button class="awcard${d.id===s.id?' on':''}" onclick="selIntake('${d.id}')"><div class="aw-top"><span class="tier ${ds.tier}">${ds.tier}</span>${d.sla==='breach'?'<span class="pill bad sm"><i class="ti ti-clock-exclamation"></i>Breached</span>':d.sla==='warn'?'<span class="pill warn sm"><i class="ti ti-clock"></i>At risk</span>':'<span class="pill ok sm"><i class="ti ti-clock"></i>On track</span>'}</div><div class="aw-title">${d.title}</div><div class="aw-sub">${d.dept} · ${d.plant}</div><div class="aw-foot"><span class="aw-est" style="color:${ic[0]}"><i class="ti ${ic[1]}"></i>${im[1]}</span><span class="aw-trk"><i class="ti ti-stack-2"></i>${nt} tracks</span></div></button>`;}).join('');
  const topHtml=`<div class="intake-top"><div class="awhead"><span class="aw-h-l"><i class="ti ti-inbox"></i>Awaiting your review</span><div class="aw-stats"><span class="awstat"><b>${list.length}</b>ideas</span><span class="awstat"><b>${avgConf}%</b>avg confidence</span><span class="awstat tiermix">${tierMix.map(x=>`<span class="tier ${x.t}">${x.t}</span>×${x.n}`).join('&nbsp;')}</span></div></div><div class="aw-row">${cards}</div></div>`;
  // section B
  const clsHtml=Object.entries(m.cls||{}).map(([k,v])=>`<div class="clsfield"><div class="cl-k">${k}</div><div class="cl-v">${v[0]}</div><div class="cl-cf"><div class="cl-bar"><i style="width:${v[1]}%;background:${v[1]>=85?'var(--emerald)':v[1]>=70?'var(--amber)':'var(--red)'}"></i></div><span>${v[1]}%</span></div></div>`).join('');
@@ -779,7 +782,7 @@ VIEWS.intake=function(){
 
 /* ---------- PIPELINE ---------- */
 function reviewersFor(d){
- const pool=['Deepak Kulkarni','Neha Shah','Anita Mehta','Manish Gupta','Arjun Rao'];
+ const pool=kpeople();
  const n=d.tier==='C'?3:2;
  return pool.slice(0,n).map((nm,i)=>{let st=d.stage==='approval'?'Voted':(i<n-1?'Voted':(d.sla==='breach'?'Overdue':d.sla==='warn'?'Pending':'Voted'));
   return {nm,st,score:st==='Voted'?Math.min(95,(d.score||70)-4+i*5):null};});
@@ -832,11 +835,10 @@ const IMPL_FLOW=[
  ['SOP update & operator training','Rollout','Imran Sheikh'],
  ['30-day ROI verification','Verify','Arjun Rao']];
 const PHASECLR={Design:'#5b4ad1',Procure:'#D98A12',Install:'#2A6FE0',Commission:'#0f8a8a',Rollout:'#159468',Verify:'#EF5026'};
-const KMONTH=['10 Jun','12 Jun','14 Jun','16 Jun','18 Jun','20 Jun','23 Jun','25 Jun','27 Jun','30 Jun'];
+const KMONTH=Array.from({length:10},(_,i)=>{const dt=new Date(Date.now()+(i*2+1)*864e5);return dt.getDate()+' '+dt.toLocaleString('en',{month:'short'});});
 const KCOLS=[['todo','To do','#9B9A92'],['inprogress','In progress','#2A6FE0'],['blocked','Blocked','#D8423A'],['review','Review','#D98A12'],['done','Done','#159468']];
 const KWIP={inprogress:3};
-const KTODAY=16; /* notional "today" — mid-June */
-const KPEOPLE=Object.keys(SUBS);
+const KTODAY=new Date().getDate();
 
 /* deterministic seed so each project starts with a distinct, sensible state */
 function boardFor(s){
@@ -844,8 +846,9 @@ function boardFor(s){
  let done=Math.round(2+((s.score-66)/20)*4);done=Math.max(2,Math.min(7,done));
  const blocked=(s.sla==='warn'||s.sla==='breach');
  const cols={todo:[],inprogress:[],blocked:[],review:[],done:[]};
+ const kp=kpeople();
  IMPL_FLOW.forEach(([t,ph,who],i)=>{
-  const card={t,ph,who,due:KMONTH[i]};
+  const card={t,ph,who:REVIEWER_POOL.length?kp[(i+parseInt((s.id||'').slice(-2))||0)%kp.length]:who,due:KMONTH[i]};
   let col;
   if(i<done)col='done';
   else if(i===done)col='inprogress';
@@ -889,7 +892,7 @@ VIEWS.kanban=function(){
  const total=Object.values(cols).reduce((a,c)=>a+c.length,0),done=cols.done.length,pct=total?Math.round(done/total*100):0,blockedN=cols.blocked.length;
  const target='30 Jun';
  topbar('Implementation board','Implement · '+list.length+' active',`<button class="btn sm" onclick="kanExport('${s.id}')"><i class="ti ti-file-export"></i>Export CSV</button>`);
- const av=(nm,sz)=>{const a=SUBS[nm]||['?','#888'];return `<span class="avatar" title="${nm}" style="width:${sz}px;height:${sz}px;background:${a[1]};font-size:${sz<22?8:9}px">${a[0]}</span>`;};
+ const av=(nm,sz)=>{const a=_sc(nm||'?');return `<span class="avatar" title="${nm}" style="width:${sz}px;height:${sz}px;background:${a[1]};font-size:${sz<22?8:9}px">${a[0]}</span>`;};
  const phaseTag=ph=>`<span class="phase" style="background:${(PHASECLR[ph]||'#888')}1a;color:${PHASECLR[ph]||'#888'}">${ph}</span>`;
  const overdue=(t,key)=>key!=='done'&&(parseInt(t.due)||31)<KTODAY;
  const renderCard=(t,key)=>{const isB=key==='blocked',isD=key==='done',ov=overdue(t,key);
@@ -897,12 +900,12 @@ VIEWS.kanban=function(){
     <div class="ktop">${phaseTag(t.ph)}<span class="kt-actions"><i class="ti ti-grip-vertical kgrip" title="Drag to move"></i><button class="ktx" title="Delete task" onclick="kanDel('${s.id}','${t.id}')"><i class="ti ti-x"></i></button></span></div>
     <div class="kt">${t.t}</div>
     ${isB?`<input class="kreason-i" value="${(t.reason||'').replace(/"/g,'&quot;')}" placeholder="Blocker reason…" onchange="kanReason('${s.id}','${t.id}',this.value)">`:''}
-    <div class="kf"><span class="kassign">${av(t.who,20)}<select class="ksel" onchange="kanAssign('${s.id}','${t.id}',this.value)">${KPEOPLE.map(p=>`<option ${p===t.who?'selected':''}>${p}</option>`).join('')}</select></span><select class="ksel xs ${ov?'over':''}" title="Due date" onchange="kanDue('${s.id}','${t.id}',this.value)">${KMONTH.map(d=>`<option ${d===t.due?'selected':''}>${d}</option>`).join('')}</select></div>
+    <div class="kf"><span class="kassign">${av(t.who,20)}<select class="ksel" onchange="kanAssign('${s.id}','${t.id}',this.value)">${kpeople().map(p=>`<option ${p===t.who?'selected':''}>${p}</option>`).join('')}</select></span><select class="ksel xs ${ov?'over':''}" title="Due date" onchange="kanDue('${s.id}','${t.id}',this.value)">${KMONTH.map(d=>`<option ${d===t.due?'selected':''}>${d}</option>`).join('')}</select></div>
    </div>`;};
  const addForm=col=>`<div class="kaddform">
    <input id="ktTitle" class="kfi" placeholder="Task title" autofocus>
    <div class="kfrow"><select id="ktPhase" class="kfi sm">${Object.keys(PHASECLR).map(p=>`<option>${p}</option>`).join('')}</select><select id="ktDue" class="kfi sm">${KMONTH.map(d=>`<option ${d==='30 Jun'?'selected':''}>${d}</option>`).join('')}</select></div>
-   <select id="ktWho" class="kfi sm" style="margin-top:6px">${KPEOPLE.map(p=>`<option>${p}</option>`).join('')}</select>
+   <select id="ktWho" class="kfi sm" style="margin-top:6px">${kpeople().map(p=>`<option>${p}</option>`).join('')}</select>
    <div class="kfa"><button class="btn sm" onclick="kanAddCancel('${s.id}')">Cancel</button><button class="btn prim sm" onclick="kanAddSubmit('${s.id}','${col}')"><i class="ti ti-plus"></i>Add</button></div>
   </div>`;
  const column=(key,label,dot)=>{const cards=cols[key],wip=KWIP[key],over=wip&&cards.length>wip,ct=wip?`${cards.length} / ${wip}`:String(cards.length),adding=st.adding===key;
@@ -937,12 +940,12 @@ function selRew(id){SEL.rewards=id;VIEWS.rewards();}
 
 /* ---- reward logic engine (editable) ---- */
 let rewFilter='all',rulesOpen=false;
-function rewMeta(d){const seed=parseInt((d.id||'').slice(-3))||0;
- const likes=46+(seed*7%120)+Math.round(d.score*0.6),comments=6+(seed*3%26),endorse=2+(seed%10);
- return {likes,comments,endorse,eng:likes+comments+endorse,safety:d.cat==='Safety',sustain:['Environment','Energy'].includes(d.cat),replicable:['Energy','Maintenance','Quality'].includes(d.cat)};}
+function rewMeta(d){
+ const comments=d.cm||0,endorse=d.endo||0,likes=endorse; /* engagement = real endorsements + comments */
+ return {likes,comments,endorse,eng:endorse*4+comments*10,safety:d.cat==='Safety',sustain:['Environment','Energy'].includes(d.cat),replicable:['Energy','Maintenance','Quality'].includes(d.cat)};}
 const REWARD_RULES=[
  {id:'fin',on:true,icon:'ti-coin-rupee',clr:'var(--emerald)',label:'High financial impact',desc:'Realized savings at or above the threshold',unit:'₹ L',th:10,test:(d,m,r)=>(d.act||0)>=r.th,why:d=>fmtL(d.act)+' realized'},
- {id:'eng',on:true,icon:'ti-heart',clr:'var(--red)',label:'Strong engagement',desc:'Likes + comments + endorsements above the threshold',unit:'pts',th:160,test:(d,m,r)=>m.eng>=r.th,why:(d,m)=>m.eng+' likes · comments · endorsements'},
+ {id:'eng',on:true,icon:'ti-heart',clr:'var(--red)',label:'Strong engagement',desc:'Endorsements + comments score above the threshold',unit:'pts',th:120,test:(d,m,r)=>m.eng>=r.th,why:(d,m)=>m.eng+' likes · comments · endorsements'},
  {id:'safe',on:true,icon:'ti-shield-check',clr:'var(--red)',label:'Safety improvement',desc:'Idea improves plant or worker safety',th:null,test:(d,m)=>m.safety,why:()=>'Improves plant / worker safety'},
  {id:'env',on:true,icon:'ti-leaf',clr:'var(--teal)',label:'Sustainability impact',desc:'Reduces energy, water, waste or emissions',th:null,test:(d,m)=>m.sustain,why:d=>d.cat+' — resource saving'},
  {id:'score',on:true,icon:'ti-star',clr:'var(--amber)',label:'High evaluation score',desc:'Reward score at or above the threshold',unit:'/100',th:85,test:(d,m,r)=>d.score>=r.th,why:d=>'Reward score '+d.score},
@@ -1123,8 +1126,8 @@ function gSetLead(i,name){GROUPS[i].lead=name;toast(_fn(name)+' is now the lead 
 function gSetSLA(i,v){GROUPS[i].sla=+v;VIEWS.groups();}
 /* linkage used by the intake workflow assembly */
 function trackGroup(key){return GROUPS.find(g=>g.track===key);}
-function reviewersForTrack(key){const g=trackGroup(key);if(!g||!g.members.length)return Object.keys(SUBS);return [g.lead].concat(g.members.filter(m=>m!==g.lead));}
-function leadForTrack(key){const g=trackGroup(key);return g?g.lead:(TRACKS[key]?TRACKS[key].lead:Object.keys(SUBS)[0]);}
+function reviewersForTrack(key){const g=trackGroup(key);if(!g||!g.members.length)return kpeople().slice(0,8);return [g.lead].concat(g.members.filter(m=>m!==g.lead));}
+function leadForTrack(key){const g=trackGroup(key);if(g)return g.lead;const p=kpeople();const h=[...key].reduce((a,c)=>a+c.charCodeAt(0),0);return p[h%p.length];}
 
 VIEWS.groups=function(){
  const reviewers=[...new Set(GROUPS.flatMap(g=>g.members))];
@@ -1167,10 +1170,8 @@ renderNav();go('dashboard');
    Renders the built-in demo data instantly, then replaces IDEAS with ALL ideas from the
    database (compact rows, gzipped ~380 KB) so every chart, KPI, funnel and table on this
    console aggregates the real 20k-idea dataset client-side. Read-only. */
-const API_BASE='';
-let CYCLE=null,CONTRIB_LIVE=null;
-function mapRow(r){const[id,title,dept,cat,tier,stage,est,act,score,sla,month,sub,plant,endo]=r;const sc=_sc(sub);
- return {id,title,dept,cat,tier,stage,est,act,score,sla,month:month||'-',sub,plant,init:sc[0],clr:sc[1],endo};}
+function mapRow(r){const[id,title,dept,cat,tier,stage,est,act,score,sla,month,sub,plant,endo,cm]=r;const sc=_sc(sub);
+ return {id,title,dept,cat,tier,stage,est,act,score,sla,month:month||'-',sub,plant,init:sc[0],clr:sc[1],endo,cm:cm||0};}
 async function loadLive(){
  try{
   const j=async u=>{const r=await fetch(API_BASE+u);if(!r.ok)throw new Error(u+' '+r.status);return r.json();};
@@ -1183,6 +1184,19 @@ async function loadLive(){
    if(w)w.innerHTML=`<div class="avatar" style="width:32px;height:32px;background:${sc[1]}">${sc[0]}</div><div><b>${mgr.name}</b>CI Manager · ${mgr.plant}</div>`;}
   PUBLISHED.clear();
   IDEAS.filter(d=>d.stage==='done'&&d.act!=null).sort((a,b)=>b.act-a.act).slice(0,4).forEach(d=>PUBLISHED.add(d.id));
+  try{ /* real evaluator & approver groups */
+   const gj=await j('/api/groups');
+   if(gj.groups&&gj.groups.length){
+    GROUPS.length=0;
+    gj.groups.forEach(g=>{const mem=g.members.map(m=>m.name);
+     GROUPS.push({key:'g'+g.id,track:null,name:g.name,phase:g.purpose==='approval'?'appr':'eval',
+      lead:mem[0]||'—',members:mem,depts:[g.department||g.plant],tiers:['A','B','C'],sla:2,
+      note:(g.purpose==='approval'?'Approval board':'Evaluation panel')+' · '+g.plant});});
+    GSEL=0;
+    REVIEWER_POOL.length=0;
+    [...new Set(gj.groups.flatMap(g=>g.members.map(m=>m.name)))].forEach(n=>REVIEWER_POOL.push(n));
+   }
+  }catch(e){console.warn('groups load failed',e);}
   renderNav();clearCharts();go(cur);
   console.log('Kaizen console: live data loaded —',IDEAS.length,'ideas ·',PLANTS_CYCLE.length,'plants');
  }catch(e){console.warn('Kaizen console: backend unreachable — showing built-in demo data.',e);}

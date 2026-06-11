@@ -256,7 +256,8 @@ IDEA_SELECT = """
 SELECT i.idea_code AS id, i.title, d.name AS dept, t.name AS cat, ti.name AS tier,
        s.code AS stage, i.estimated_savings AS est, bs.v AS act, i.score,
        i.sla_status AS sla, i.submitted_date AS sd, u.name AS sub, p.name AS plant,
-       i.endorsement_count AS endo, i.collaborator_count AS collab
+       i.endorsement_count AS endo, i.collaborator_count AS collab,
+       COALESCE(cmt.c, 0) AS cm
 FROM ideas i
 JOIN departments d ON d.id = i.department_id
 JOIN tracks t      ON t.id = i.track_id
@@ -267,6 +268,8 @@ JOIN plants p      ON p.id = i.plant_id
 LEFT JOIN (SELECT idea_id, ROUND(SUM(quantified_value),1) v
            FROM idea_benefits WHERE benefit_type_id = 1 GROUP BY idea_id) bs
        ON bs.idea_id = i.id
+LEFT JOIN (SELECT idea_id, COUNT(*) c FROM comments GROUP BY idea_id) cmt
+       ON cmt.idea_id = i.id
 """
 
 
@@ -277,7 +280,7 @@ def shape(r):
         "tier": r["tier"], "stage": r["stage"], "est": r["est"], "act": r["act"],
         "score": r["score"], "sla": SLA_MAP.get(r["sla"], "-"),
         "month": month_label(r["sd"]), "date": r["sd"], "sub": r["sub"],
-        "plant": r["plant"], "endo": r["endo"], "collab": r["collab"],
+        "plant": r["plant"], "endo": r["endo"], "collab": r["collab"], "cm": r["cm"],
     }
 
 
@@ -390,7 +393,8 @@ def api_idea_detail(code):
            LEFT JOIN stages st ON st.id=w.to_stage_id
            WHERE w.idea_id=? ORDER BY w.ts""", [iid]))
     evals = rows(con.execute(
-        """SELECT u.name AS evaluator, e.total_score, e.decision, e.comment, e.date
+        """SELECT u.name AS evaluator, e.total_score, e.decision, e.comment, e.date,
+               e.impact_score, e.effort_score, e.feasibility_score
            FROM evaluations e JOIN users u ON u.id=e.evaluator_id
            WHERE e.idea_id=? ORDER BY e.date""", [iid]))
     apprs = rows(con.execute(
@@ -418,7 +422,7 @@ def api_idea_detail(code):
 def api_all_ideas():
     """Compact array-of-arrays of every idea (optionally per plant) for the
     CI-manager console, whose charts aggregate client-side.
-    Row: [id,title,dept,cat,tier,stage,est,act,score,sla,month,sub,plant,endo]
+    Row: [id,title,dept,cat,tier,stage,est,act,score,sla,month,sub,plant,endo,cm]
     ~3.3 MB raw / ~380 KB gzipped for all 20,793 ideas."""
     plant = request.args.get("plant")
     params = []
@@ -426,12 +430,12 @@ def api_all_ideas():
     con = db()
     data = [[r["id"], r["title"], r["dept"], r["cat"], r["tier"], r["stage"],
              r["est"], r["act"], r["score"], SLA_MAP.get(r["sla"], "-"),
-             month_label(r["sd"]), r["sub"], r["plant"], r["endo"]]
+             month_label(r["sd"]), r["sub"], r["plant"], r["endo"], r["cm"]]
             for r in con.execute(IDEA_SELECT + f" WHERE {wsql}", params)]
     con.close()
     return jsonify({"count": len(data),
                     "cols": ["id", "title", "dept", "cat", "tier", "stage", "est", "act",
-                             "score", "sla", "month", "sub", "plant", "endo"],
+                             "score", "sla", "month", "sub", "plant", "endo", "cm"],
                     "ideas": data})
 
 
@@ -454,10 +458,19 @@ def api_bootstrap():
     # demo employee = the plant's most active submitter
     epsql, eparams = ("WHERE p.name=?", [plant]) if plant != "All" else ("", [])
     emp = con.execute(
-        f"""SELECT u.id, u.name, u.emp_code, d.name AS dept, p.name AS plant, COUNT(*) n
+        f"""SELECT u.id, u.name, u.emp_code, d.name AS dept, p.name AS plant, COUNT(*) n,
+               u.joined_date, u.points_balance AS points
            FROM users u JOIN ideas i ON i.submitter_id=u.id
            JOIN plants p ON p.id=u.plant_id LEFT JOIN departments d ON d.id=u.department_id
            {epsql} GROUP BY u.id ORDER BY n DESC LIMIT 1""", eparams).fetchone()
+    emp = dict(emp) if emp else None
+    if emp:
+        emp["joined"] = (emp.pop("joined_date") or "")[:4]
+        emp["awards"] = {r["award_type"]: r["c"] for r in con.execute(
+            "SELECT award_type, COUNT(*) c FROM reward_awards WHERE recipient_id=? GROUP BY award_type",
+            [emp["id"]])}
+        emp["areas"] = con.execute(
+            "SELECT COUNT(DISTINCT track_id) FROM ideas WHERE submitter_id=?", [emp["id"]]).fetchone()[0]
 
     plants = [r["name"] for r in con.execute("SELECT name FROM plants ORDER BY id")]
     departments = [r["name"] for r in con.execute("SELECT name FROM departments ORDER BY name")]
@@ -500,7 +513,7 @@ def api_bootstrap():
     out = {
         "plant": plant, "plants": plants, "departments": departments, "tracks": tracks,
         "personas": {
-            "employee": dict(emp) if emp else None,
+            "employee": emp,
             "evaluator": persona("evaluator"),
             "approver": persona("approver"),
             "ci_manager": persona("ci_manager"),
