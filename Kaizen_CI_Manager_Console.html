@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Kaizen · CI Manager Console — Grasim Fibre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Sora:wght@500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/dist/tabler-icons.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --ink:#15171C;--ink-2:#2A2E37;--surface:#FFFFFF;--surface-2:#FAF9F5;--bg:#EFEDE6;
+  --line:rgba(21,23,28,.10);--line-2:rgba(21,23,28,.16);--muted:#6E6D66;--muted-2:#9B9A92;
+  --ember:#EF5026;--ember-d:#C23C18;--ember-soft:#FCEAE3;
+  --emerald:#159468;--emerald-soft:#E2F2EB;--amber:#D98A12;--amber-soft:#FBEFD7;
+  --blue:#2A6FE0;--blue-soft:#E5EEFC;--red:#D8423A;--red-soft:#FBE6E4;--violet:#5b4ad1;--violet-soft:#ECEAFE;--teal:#0f8a8a;
+  --d-bg:#0E1116;--d-panel:#161B22;--d-panel-2:#1C232C;--d-line:rgba(255,255,255,.09);--d-text:#E9EAE4;--d-muted:#9098A2;
+  --r:12px;--r-lg:16px;
+  --sh:0 1px 2px rgba(21,23,28,.05),0 6px 22px rgba(21,23,28,.06);
+  --sh-lg:0 2px 6px rgba(21,23,28,.06),0 24px 60px rgba(21,23,28,.13);
+  --sans:"Hanken Grotesk",sans-serif;--disp:"Sora",sans-serif;--mono:"JetBrains Mono",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.mono{font-family:var(--mono);font-feature-settings:"tnum"}
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+
+/* sidebar */
+.side{background:var(--d-bg);color:var(--d-muted);padding:18px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.side .lg{display:flex;align-items:center;gap:10px;color:#fff;font-family:var(--disp);font-weight:700;font-size:15px;padding:4px 8px 4px}
+.side .lg .mark{width:30px;height:30px;border-radius:8px;background:var(--ember);display:grid;place-items:center;font-size:15px;position:relative;overflow:hidden}
+.side .lg small{display:block;font-family:var(--sans);font-weight:500;font-size:10px;color:var(--d-muted);margin-top:-1px}
+.side .sec{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#5d646e;font-weight:700;margin:18px 10px 7px}
+.nav a{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:9px;font-size:13px;font-weight:500;color:var(--d-muted);position:relative}
+.nav a .ti{font-size:18px}
+.nav a .cnt{margin-left:auto;font-family:var(--mono);font-size:10.5px;font-weight:600;background:var(--d-panel-2);padding:2px 7px;border-radius:99px}
+.nav a.on{background:var(--d-panel-2);color:#fff}
+.nav a.on::before{content:"";position:absolute;left:-14px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--ember)}
+.nav a:hover{color:#fff}
+.side .who{margin-top:auto;display:flex;align-items:center;gap:10px;padding:11px 8px 2px;border-top:1px solid var(--d-line);font-size:12.5px}
+.side .who b{color:#fff;font-weight:600;display:block}
+
+/* main */
+.main{display:flex;flex-direction:column;min-width:0}
+.topbar{display:flex;align-items:center;gap:14px;padding:15px 26px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.topbar h1{font-family:var(--disp);font-size:19px;font-weight:600;letter-spacing:-.02em}
+.topbar .crumb{font-size:11px;color:var(--muted);font-weight:600}
+.topbar .srch{margin-left:8px;flex:1;max-width:300px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.topbar .srch input{border:none;background:none;outline:none;font:inherit;color:var(--ink);width:100%}
+.seg{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:3px}
+.seg button{font-size:12px;font-weight:600;color:var(--muted);padding:6px 11px;border-radius:7px}
+.seg button.on{background:var(--ink);color:#fff}
+.view{padding:24px 26px 60px;overflow:auto}
+
+/* bits */
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 9px;border-radius:999px;line-height:1}
+.pill .ti{font-size:13px}
+.pill.ok{background:var(--emerald-soft);color:var(--emerald)}.pill.work{background:var(--blue-soft);color:var(--blue)}
+.pill.warn{background:var(--amber-soft);color:var(--amber)}.pill.bad{background:var(--red-soft);color:var(--red)}
+.pill.muted{background:rgba(21,23,28,.06);color:var(--muted)}.pill.ember{background:var(--ember-soft);color:var(--ember-d)}
+.pill.violet{background:var(--violet-soft);color:var(--violet)}
+.tag{font-size:10px;font-weight:600;padding:3px 7px;border-radius:6px;background:rgba(21,23,28,.05);color:var(--muted)}
+.tier{font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 7px;border-radius:6px}
+.tier.A{background:var(--emerald-soft);color:var(--emerald)}.tier.B{background:var(--blue-soft);color:var(--blue)}.tier.C{background:var(--violet-soft);color:var(--violet)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:13px;padding:10px 16px;border-radius:10px;background:var(--surface);border:1px solid var(--line-2);transition:.15s}
+.btn:hover{border-color:var(--ink-2)}
+.btn.prim{background:var(--ember);color:#fff;border-color:var(--ember)}.btn.prim:hover{background:var(--ember-d)}
+.btn.sm{padding:7px 12px;font-size:12px}
+.btn.block{width:100%}
+.avatar{border-radius:50%;flex:none;display:grid;place-items:center;font-weight:600;color:#fff;font-size:11px}
+.bar{height:7px;border-radius:99px;background:rgba(21,23,28,.08);overflow:hidden}.bar>i{display:block;height:100%;border-radius:99px;background:var(--ember)}
+hr.sep{border:none;border-top:1px solid var(--line);margin:14px 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh)}
+.cardp{padding:18px}
+.card h3{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.card .sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+
+/* kpi */
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:13px;margin-bottom:18px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:15px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.kpi .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:16px;margin-bottom:10px}
+.kpi .lab{font-size:11px;color:var(--muted);font-weight:600}
+.kpi .val{font-family:var(--disp);font-size:25px;font-weight:600;letter-spacing:-.02em;margin-top:2px}
+.kpi .val small{font-size:13px;color:var(--muted)}
+.kpi .delta{font-size:11px;font-weight:600;color:var(--emerald);margin-top:3px;display:flex;align-items:center;gap:3px}
+
+/* grids */
+.g{display:grid;gap:16px}
+.g>*,.kpis>*{min-width:0}
+.g.c2{grid-template-columns:1fr 1fr}.g.c3{grid-template-columns:repeat(3,1fr)}
+.g.wl{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g.wl>:first-child{grid-column:span 2}.g.wr{grid-template-columns:1fr 1.5fr}
+.aqcard{display:flex;flex-direction:column}
+.aqcard #aq{flex:0 0 auto}
+.chartbox{position:relative;width:100%;height:240px}
+.chartbox.tall{height:280px}
+.chartbox.sm{height:200px}
+.dash{display:flex;flex-direction:column;gap:16px}
+.dash .kpis{margin-bottom:0}
+.cardhead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.minisel{font-family:var(--sans);font-size:11.5px;font-weight:600;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line-2);border-radius:8px;padding:6px 26px 6px 10px;cursor:pointer;outline:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236E6D66' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");background-repeat:no-repeat;background-position:right 7px center;transition:.15s}
+.minisel:hover{border-color:var(--ink-2)}
+
+/* list rows */
+.qitem{display:flex;align-items:center;gap:11px;padding:11px;border:1px solid var(--line);border-radius:11px;margin-bottom:9px;cursor:pointer;transition:.12s}
+.qitem:hover{border-color:var(--line-2);background:var(--surface-2)}
+.qitem .meta{flex:1;min-width:0}
+.qitem .meta b{font-size:13px;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qitem .meta span{font-size:11px;color:var(--muted)}
+.contrib .cval{display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex:none}
+.contrib .cval .v{font-family:var(--mono);font-weight:700;font-size:14.5px;letter-spacing:-.01em}
+.contrib .cval .k{font-size:10px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:4px}
+.contrib .cval .k .ti{font-size:12px}
+
+/* table */
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{text-align:left;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-2);font-weight:700;padding:10px 12px;border-bottom:1px solid var(--line)}
+.tbl td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr{cursor:pointer}
+.tbl tbody tr:hover{background:var(--surface-2)}
+.tbl .tt{font-weight:600}
+.tbl td.exptog{width:30px;text-align:center;padding-right:0}
+.tbl tr.piperow.on td.exptog i{color:var(--ember)}
+.tbl tr.exprow{cursor:default}
+.tbl tr.exprow:hover{background:transparent}
+.tbl tr.exprow>td{padding:0 12px 16px;background:var(--ember-soft);border-bottom:1px solid var(--line)}
+.pipe-detail{animation:expand .18s ease}
+@keyframes expand{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.muted{color:var(--muted)}
+
+/* implementation board */
+.implayout{display:grid;grid-template-columns:290px 1fr;gap:16px;align-items:start}
+.prail{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh);padding:10px;position:sticky;top:84px;max-height:calc(100vh - 110px);overflow:auto}
+.prail-h{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--ink);padding:6px 8px 10px}
+.prail-h .ti{font-size:16px;color:var(--muted)}
+.prail-h .ct{margin-left:auto;font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);padding:2px 7px;border-radius:99px}
+.prow{border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:8px;cursor:pointer;transition:.13s;position:relative}
+.prow:hover{border-color:var(--line-2);background:var(--surface-2)}
+.prow.on{border-color:var(--ember);background:var(--ember-soft)}
+.prow.on::before{content:"";position:absolute;left:0;top:11px;bottom:11px;width:3px;border-radius:0 3px 3px 0;background:var(--ember)}
+.pr-top{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.pr-title{font-size:12.5px;font-weight:600;line-height:1.3;margin-bottom:7px}
+.pr-meta{display:flex;align-items:center;justify-content:space-between;font-size:10.5px;font-weight:600;color:var(--muted);margin-bottom:8px}
+.pr-meta span{display:flex;align-items:center;gap:4px}.pr-meta .ti{font-size:12px}
+.pr-bar{height:5px;border-radius:99px;background:rgba(21,23,28,.08);overflow:hidden}
+.pr-bar>i{display:block;height:100%;border-radius:99px;background:var(--ember)}
+.pr-pct{font-size:10px;font-weight:600;color:var(--muted);margin-top:5px;font-family:var(--mono)}
+
+.impboard{min-width:0}
+.impsum{margin-bottom:16px;padding:16px 18px}
+.impsum-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.impsum-head b{font-size:15px;font-weight:600}
+.idsel{font-family:var(--sans);font-size:14px;font-weight:600;color:var(--ink);background:var(--surface-2);border:1px solid var(--line-2);border-radius:10px;padding:9px 38px 9px 13px;cursor:pointer;outline:none;appearance:none;max-width:520px;text-overflow:ellipsis;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23EF5026' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");background-repeat:no-repeat;background-position:right 11px center;transition:.15s}
+.idsel:hover{border-color:var(--ember)}
+.idsel:focus{border-color:var(--ember);box-shadow:0 0 0 3px var(--ember-soft)}
+.impsum-stats{display:flex;gap:26px;margin:16px 0 12px;flex-wrap:wrap}
+.ist .il{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.ist .iv{font-family:var(--disp);font-size:18px;font-weight:600;margin-top:3px;display:flex;align-items:center;gap:6px}
+.ist .iv small{font-family:var(--sans);font-size:11px;font-weight:500;color:var(--muted)}
+.ist .iv.ow{font-family:var(--sans);font-size:12.5px;font-weight:600}
+.impbar{height:7px;border-radius:99px;background:rgba(21,23,28,.08);overflow:hidden}
+.impbar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--ember),var(--amber))}
+
+/* kanban */
+.kanban{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.kcol{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:10px;min-height:360px}
+.kcol .h{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:10px;padding:2px 4px}
+.kcol .h .hl{display:flex;align-items:center;gap:7px}
+.kcol .h .dot{width:7px;height:7px;border-radius:50%}
+.kcol .h .ct{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.kempty{font-size:11px;color:var(--muted-2);text-align:center;padding:24px 0;border:1px dashed var(--line-2);border-radius:9px}
+.kcard{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:11px;margin-bottom:9px;box-shadow:var(--sh)}
+.kcard.blocked{border-color:rgba(216,66,58,.4);background:var(--red-soft)}
+.kcard.is-done{opacity:.62}
+.kcard.is-done .kt{text-decoration:line-through;color:var(--muted)}
+.ktop{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.phase{font-size:9.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:3px 7px;border-radius:6px}
+.kcard .kt{font-size:12px;font-weight:600;line-height:1.3;margin-bottom:9px}
+.kreason{font-size:10.5px;color:var(--red);font-weight:600;display:flex;align-items:flex-start;gap:5px;margin:-3px 0 9px}
+.kreason .ti{font-size:13px;flex:none;margin-top:1px}
+.kcard .kf{display:flex;align-items:center;justify-content:space-between}
+.kcard .due{font-size:10px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:4px}
+.kcard .due.over{color:var(--red)}
+.kcol{display:flex;flex-direction:column}
+.kbody{flex:1}
+.kcol.kdrop{border-color:var(--ember);background:var(--ember-soft);box-shadow:inset 0 0 0 1.5px var(--ember)}
+.ct.wipover{color:var(--red);font-weight:700}
+.kcard[draggable]{cursor:grab}
+.kcard[draggable]:active{cursor:grabbing}
+.ktop{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px}
+.kt-actions{display:flex;align-items:center;gap:3px}
+.kgrip{color:var(--muted-2);font-size:14px;cursor:grab}
+.ktx{border:none;background:transparent;color:var(--muted-2);cursor:pointer;padding:1px;border-radius:5px;display:flex}
+.ktx:hover{color:var(--red);background:var(--red-soft)}
+.kcard .kf{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.kassign{display:flex;align-items:center;gap:5px;min-width:0}
+.ksel{font-family:var(--sans);font-size:10.5px;font-weight:600;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:3px 5px;cursor:pointer;outline:none;max-width:104px;text-overflow:ellipsis}
+.ksel:hover{border-color:var(--ink-2)}
+.ksel.xs{max-width:78px}
+.ksel.over{color:var(--red);border-color:rgba(216,66,58,.4)}
+.kreason-i{width:100%;font-family:var(--sans);font-size:11px;color:var(--red);background:var(--surface);border:1px solid rgba(216,66,58,.35);border-radius:7px;padding:5px 7px;margin-bottom:8px;outline:none;box-sizing:border-box}
+.kreason-i:focus{border-color:var(--red)}
+.kadd{width:100%;margin-top:4px;border:1px dashed var(--line-2);background:transparent;color:var(--muted);border-radius:9px;padding:8px;font-size:11.5px;font-weight:600;font-family:var(--sans);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:.13s}
+.kadd:hover{border-color:var(--ember);color:var(--ember);background:var(--surface)}
+.kaddform{background:var(--surface);border:1px solid var(--ember);border-radius:10px;padding:9px;margin-bottom:9px;box-shadow:var(--sh)}
+.kfi{width:100%;font-family:var(--sans);font-size:12px;font-weight:500;color:var(--ink);border:1px solid var(--line-2);border-radius:7px;padding:6px 8px;outline:none;box-sizing:border-box;background:var(--surface-2)}
+.kfi:focus{border-color:var(--ember)}
+.kfi.sm{font-size:11px;padding:5px 6px;font-weight:600}
+.kfrow{display:flex;gap:6px;margin:6px 0}
+.kfrow .kfi{flex:1;min-width:0}
+.kfa{display:flex;justify-content:flex-end;gap:6px;margin-top:8px}
+.pill.sm{font-size:9.5px;padding:3px 6px}
+
+/* intake review */
+.intake-wrap{display:flex;flex-direction:column;gap:16px}
+.ireview{display:flex;flex-direction:column;gap:16px;min-width:0}
+.intake-top{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh);padding:14px 16px}
+.awhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.aw-h-l{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+.aw-h-l .ti{color:var(--ember);font-size:17px}
+.aw-stats{display:flex;gap:8px;flex-wrap:wrap}
+.awstat{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-radius:99px;padding:5px 11px}
+.awstat b{font-family:var(--disp);font-size:13px;font-weight:700;color:var(--ink)}
+.awstat.tiermix .tier{margin:0 1px}
+.aw-row{display:flex;gap:11px;overflow-x:auto;padding-bottom:3px}
+.awcard{flex:0 0 224px;text-align:left;background:var(--surface-2);border:1px solid var(--line);border-radius:13px;padding:12px;cursor:pointer;transition:.13s;font-family:inherit;display:flex;flex-direction:column;gap:7px}
+.awcard:hover{border-color:var(--line-2);transform:translateY(-1px)}
+.awcard.on{border-color:var(--ember);background:var(--ember-soft);box-shadow:0 0 0 2px var(--ember-soft)}
+.aw-top{display:flex;align-items:center;justify-content:space-between}
+.aw-title{font-size:12.5px;font-weight:600;line-height:1.32;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:33px}
+.aw-sub{font-size:11px;color:var(--muted)}
+.aw-foot{display:flex;align-items:center;justify-content:space-between;font-size:10.5px;font-weight:600;color:var(--muted);border-top:1px solid var(--line);padding-top:8px;margin-top:auto}
+.aw-foot .ti{font-size:12px}
+.aw-est{display:flex;align-items:center;gap:4px;color:var(--ink-2)}
+.aw-trk{display:flex;align-items:center;gap:4px}
+.ihead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ihead b{font-size:15px;font-weight:600}
+.sec-h{font-size:11px;font-weight:700;color:var(--muted-2);letter-spacing:.05em;margin-bottom:10px}
+.sec-h.sec-row{display:flex;align-items:center;gap:8px}
+.sec-sub{font-weight:600;color:var(--muted);letter-spacing:0;text-transform:none;font-size:10.5px;margin-left:8px}
+.tierpick{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:0;text-transform:none}
+.tierbtn{width:30px;height:26px;border:1px solid var(--line-2);background:var(--surface);border-radius:8px;font-weight:700;font-size:12px;color:var(--muted);cursor:pointer;transition:.13s}
+.tierbtn:hover{border-color:var(--ember);color:var(--ember)}
+.tierbtn.on{background:var(--ember);color:#fff;border-color:var(--ember)}
+.idesc{font-size:13px;line-height:1.55;color:var(--ink-2);margin:0 0 12px}
+.submeta{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.atts{display:flex;gap:7px;flex-wrap:wrap}
+.clsgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.clsfield{background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:10px}
+.cl-k{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.cl-v{font-weight:600;font-size:13px;margin:3px 0 7px}
+.cl-cf{display:flex;align-items:center;gap:7px}
+.cl-bar{flex:1;height:5px;border-radius:99px;background:rgba(21,23,28,.08);overflow:hidden}
+.cl-bar>i{display:block;height:100%;border-radius:99px}
+.cl-cf span{font-size:10px;font-weight:700;color:var(--muted);font-family:var(--mono)}
+.phase-wrap{display:flex;flex-direction:column;margin-top:4px}
+.phase{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--surface-2)}
+.phase-t{font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.phase-t .ti{color:var(--ember);font-size:16px}
+.phase-link{display:flex;justify-content:center;color:var(--muted-2);padding:5px 0}
+.lvl{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:10px}
+.lvl.dz{transition:border-color .12s,background .12s,box-shadow .12s}
+.lvl.drop-hover{border-color:var(--ember);background:var(--ember-soft);box-shadow:inset 0 0 0 1.5px var(--ember)}
+.lvl-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.lvl-lab{font-size:11.5px;font-weight:700}
+.lvl-tag{font-size:10px;font-weight:600;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);padding:2px 8px;border-radius:99px}
+.lvl-body{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;min-height:20px}
+.lvl-node{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink-2);padding:5px 3px}
+.lvl-node .ti{color:var(--muted);font-size:16px}
+.lvl-node.decide{color:var(--ember)}.lvl-node.decide .ti{color:var(--ember)}
+.lvl-arrow{display:flex;justify-content:center;color:var(--muted-2);font-size:15px;padding:5px 0}
+.authchip{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink-2);background:var(--ember-soft);border:1px dashed rgba(239,80,38,.35);border-radius:9px;padding:9px 11px}
+.authchip .ti{color:var(--ember);font-size:16px}
+.auth-tag{margin-left:auto;font-size:9px;font-weight:700;color:var(--ember);text-transform:uppercase;letter-spacing:.04em}
+.dzhint{display:flex;align-items:center;justify-content:center;gap:7px;font-size:11.5px;color:var(--muted-2);border:1px dashed var(--line-2);border-radius:9px;padding:14px;grid-column:1/-1}
+.dzhint .ti{font-size:15px}
+.trk{background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:8px 9px}
+.trk[draggable]{cursor:grab}
+.trk[draggable]:active{cursor:grabbing}
+.trk-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.trk-n{font-size:12px;font-weight:600;display:flex;align-items:center;gap:5px}
+.drag-h{color:var(--muted-2);font-size:14px}
+.trk-cf{font-size:9.5px;font-weight:700;color:var(--muted);font-family:var(--mono);background:var(--surface);border:1px solid var(--line);padding:1px 5px;border-radius:99px}
+.trk-x{border:none;background:transparent;color:var(--muted-2);cursor:pointer;padding:2px;border-radius:6px;display:flex}
+.trk-x:hover{color:var(--red);background:var(--red-soft)}
+.trk-lock{color:var(--muted-2);display:flex}.trk-lock .ti{font-size:13px}
+.trk-ctrl{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.trk-ctrl>.ti{color:var(--muted);font-size:14px}
+.tsel{font-family:var(--sans);font-size:11px;font-weight:600;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:4px 6px;cursor:pointer;outline:none;max-width:128px}
+.tsel:hover{border-color:var(--ink-2)}.tsel.xs{max-width:56px;padding:4px}
+.trk-sla{font-size:10.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:4px}
+.addtrk{display:flex;align-items:center;gap:10px;margin-top:13px;padding-top:13px;border-top:1px solid var(--line);flex-wrap:wrap}
+.reasonbox{background:rgba(217,138,18,.08);border:1px solid rgba(217,138,18,.45);border-radius:12px;padding:12px;margin-bottom:13px}
+.rb-h{font-size:12.5px;font-weight:700;color:var(--amber);display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.rb-i{width:100%;border:1px solid var(--line-2);border-radius:9px;padding:9px 11px;font-family:var(--sans);font-size:12.5px;resize:vertical;min-height:54px;outline:none;box-sizing:border-box;background:var(--surface)}
+.rb-i:focus{border-color:var(--ember);box-shadow:0 0 0 3px var(--ember-soft)}
+.rb-a{display:flex;justify-content:flex-end;gap:8px;margin-top:9px}
+.logwrap{display:flex;flex-direction:column;gap:7px;max-height:230px;overflow:auto}
+.logrow{border-left:3px solid var(--ember);background:var(--surface-2);border-radius:8px;padding:8px 10px}
+.log-a{font-size:12px}
+.log-d{font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--mono)}
+.iactions{display:flex;gap:9px;margin-top:14px}
+
+/* rewards & roi */
+.rew-wrap{display:flex;flex-direction:column;gap:16px}
+.rew-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.rstat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:13px 15px;display:flex;align-items:center;gap:11px}
+.rstat .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--surface-2);font-size:17px;color:var(--muted);flex:none}
+.rstat .rs-v{font-family:var(--disp);font-size:19px;font-weight:600;line-height:1.1}
+.rstat .rs-l{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-top:2px}
+.seg.sm.rewseg button{font-size:11.5px;padding:5px 11px}
+.rewitem .rew-badges{display:flex;gap:5px;align-items:center;flex:none}
+.pill.ember{background:var(--ember-soft);color:var(--ember)}
+.roi-i{width:70px;font-family:var(--mono);font-size:18px;font-weight:700;color:var(--emerald);background:var(--surface);border:1px solid rgba(21,148,104,.4);border-radius:8px;padding:3px 7px;outline:none}
+.roi-i:focus{border-color:var(--emerald);box-shadow:0 0 0 3px var(--emerald-soft)}
+.sugbar{background:var(--ember-soft);border:1px solid rgba(239,80,38,.28);border-radius:11px;padding:10px 12px;font-size:12.5px;font-weight:600;color:var(--ember);display:flex;align-items:center;gap:9px;margin:10px 0}
+.sugbar .ti{font-size:16px;flex:none}.sugbar b{color:var(--ink)}
+.critlist{display:flex;flex-direction:column;gap:8px}
+.critrow{display:flex;align-items:center;gap:10px;font-size:12.5px}
+.cric{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-size:15px;flex:none}
+.critrow .muted{font-weight:500}
+.engrow{display:flex;gap:16px;margin-top:13px;font-size:11.5px;font-weight:600;color:var(--muted)}
+.engrow span{display:flex;align-items:center;gap:5px}.engrow .ti{font-size:14px}
+.rulelist{display:flex;flex-direction:column;gap:9px;margin-top:14px}
+.rule{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:11px 13px;transition:.13s}
+.rule.off{opacity:.55}
+.rule-txt{flex:1;display:flex;flex-direction:column;min-width:0}
+.rule-txt b{font-size:13px}
+.rule-txt .muted{font-size:11.5px}
+.rule-th{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--muted);flex:none}
+.thin{width:60px;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink);background:var(--surface-2);border:1px solid var(--line-2);border-radius:7px;padding:4px 6px;outline:none;text-align:center}
+.thin:focus{border-color:var(--ember)}.thin:disabled{opacity:.4}
+.switch{width:38px;height:22px;border-radius:99px;border:none;background:var(--line-2);cursor:pointer;padding:0;position:relative;flex:none;transition:.15s}
+.switch.on{background:var(--ember)}
+.switch span{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s}
+.switch.on span{left:19px}
+.rulenote{margin-top:13px;font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:10px;padding:10px 12px}
+.rulenote .ti{color:var(--ember);font-size:15px;flex:none}.rulenote b{color:var(--ink)}
+.rkind{font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:1px 6px;margin-left:5px;vertical-align:middle}
+.condrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:7px}
+.condchip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:3px 8px}
+.condchip .ti{font-size:13px;color:var(--emerald)}
+.condchip.none{color:var(--muted);font-weight:500}
+.condjoin{font-size:9.5px;font-weight:700;color:var(--muted-2);letter-spacing:.04em}
+.thin.xs{width:48px;font-size:11.5px;padding:2px 4px}
+.rcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:9px;margin-top:11px}
+.rcard{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:11px;padding:9px 11px;background:var(--surface-2)}
+.rc-t{flex:1;min-width:0;display:flex;flex-direction:column}
+.rc-t b{font-size:12.5px;line-height:1.2}
+.rc-t .muted{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;margin-top:1px}
+.rcard .btn.sm{padding:5px 9px;font-size:11px}
+.backlink{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--muted);font-family:var(--sans);font-size:12.5px;font-weight:600;cursor:pointer;padding:2px 0;margin-bottom:8px;transition:.13s}
+.backlink:hover{color:var(--ember)}
+.backlink .ti{font-size:16px}
+.storymeta{font-size:11.5px;color:var(--muted);font-weight:600;margin:2px 0 12px}.storymeta b{color:var(--ink)}
+.storylist{display:flex;flex-direction:column;gap:8px}
+.storyli{cursor:pointer;margin:0}
+.storyli-r{display:flex;align-items:center;gap:7px;flex:none}
+.storyli-r .chev{color:var(--muted-2);font-size:17px;transition:.13s}
+.storyli:hover .chev{color:var(--ember);transform:translateX(2px)}
+.storyhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hdot{width:9px;height:9px;border-radius:50%;flex:none;margin-right:2px}
+.covsum{font-size:11.5px;font-weight:600;color:var(--muted)}.covsum b{color:var(--amber)}
+.covgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:14px}
+.covrow{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:11px;padding:10px 12px;cursor:pointer;transition:.13s}
+.covrow:hover{border-color:var(--line-2);background:var(--surface-2)}
+.cov-t{flex:1;min-width:0;display:flex;flex-direction:column}
+.cov-t b{font-size:12.5px;line-height:1.2}
+.cov-t .muted{font-size:11px;margin-top:1px}
+.covm{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted);flex:none}
+
+/* field */
+.field{margin-bottom:13px}.field label{font-size:12px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:6px}
+.input{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--ink);font-family:inherit}
+.input.area{min-height:70px;resize:none}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chips button{font-size:12px;font-weight:600;padding:7px 12px;border-radius:99px;border:1px solid var(--line-2);color:var(--ink-2);background:var(--surface)}
+.chips button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:11px;font-size:13px;font-weight:600;box-shadow:var(--sh-lg);opacity:0;transition:.25s;z-index:99;display:flex;align-items:center;gap:9px;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.g.c2,.g.c3,.g.wl,.g.wr{grid-template-columns:1fr}.app{grid-template-columns:1fr}.side{position:relative;height:auto;flex-direction:row;flex-wrap:wrap}.implayout{grid-template-columns:1fr}.prail{position:relative;top:0;max-height:none}.kanban{grid-auto-flow:column;grid-auto-columns:minmax(220px,1fr);grid-template-columns:none;overflow-x:auto}.intake{grid-template-columns:1fr}.clsgrid,.lvl-tracks{grid-template-columns:1fr}.rew-stats{grid-template-columns:repeat(2,1fr)}.covgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="lg"><span class="mark">K</span><div>Kaizen<small>CI Manager Console</small></div></div>
+    <div class="sec">Operate</div>
+    <nav class="nav" id="nav"></nav>
+    <div class="who" id="whoBox"><div class="avatar" style="width:32px;height:32px;background:#5b4ad1">VS</div><div><b>Vikram Saxena</b>CI Manager</div></div>
+  </aside>
+  <main class="main">
+    <div class="topbar" id="topbar"></div>
+    <div class="view" id="view"></div>
+  </main>
+</div>
+<div id="toast"></div>
+<script>
+/* ============ DATA ============ */
+const SUBS={
+ 'Priya Iyer':['PI','#5b4ad1'],'Rakesh Nair':['RN','#159468'],'Suresh Menon':['SM','#D98A12'],
+ 'Arjun Rao':['AR','#2A6FE0'],'Deepak Kulkarni':['DK','#159468'],'Neha Shah':['NS','#2A6FE0'],
+ 'Anita Mehta':['AM','#D98A12'],'Kavita Joshi':['KJ','#c2476a'],'Imran Sheikh':['IS','#0f8a8a'],
+ 'Manish Gupta':['MG','#7a5cd1'],'Sunita Patil':['SP','#c2476a'],'Vikram Saxena':['VS','#5b4ad1']};
+const CATCLR={'Energy':'#D98A12','Maintenance':'#2A6FE0','Process':'#5b4ad1','Quality':'#159468','Safety':'#D8423A','Environment':'#0f8a8a','ML/Digital':'#EF5026','Energy Conservation':'#D98A12','Cost Reduction':'#5b4ad1','Sustainability':'#0f8a8a','Productivity':'#2A6FE0','Digitalization':'#EF5026','5S & Housekeeping':'#7a5cd1'};
+const STAGES=['intake','evaluation','approval','implementation','done','rejected','on_hold'];
+const STLAB={intake:'Intake',evaluation:'Evaluation',approval:'Approval',implementation:'Implementation',done:'Done',rejected:'Rejected',on_hold:'On hold'};
+const MONTHS=['Dec','Jan','Feb','Mar','Apr','May','Jun'];
+const _sc=m=>{if(SUBS[m])return SUBS[m];const cl=['#5b4ad1','#159468','#D98A12','#2A6FE0','#c2476a','#0f8a8a','#7a5cd1','#EF5026'];let h=0;for(const ch of String(m))h=(h*31+ch.charCodeAt(0))>>>0;return [String(m).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(),cl[h%cl.length]];};
+let _id=480;
+const RAW=[
+ ['Auto shut-off on idle conveyor line 3','Maintenance','Energy','B','done',3.6,4.2,84,'-','Mar','Priya Iyer'],
+ ['Vision check for label alignment','Quality','ML/Digital','C','done',9.5,11.8,88,'-','Jan','Suresh Menon'],
+ ['Steam-trap audit & replacement','Utilities','Energy','B','done',6.8,7.5,79,'-','Feb','Arjun Rao'],
+ ['Compressed-air leak survey','Utilities','Energy','A','done',2.1,2.6,72,'-','Mar','Imran Sheikh'],
+ ['Counter-current wash-water recycling','After-treatment','Environment','C','done',14,16.2,90,'-','Dec','Kavita Joshi'],
+ ['Cooling-tower fan VFD retrofit','Utilities','Energy','B','done',8.2,9.1,81,'-','Feb','Manish Gupta'],
+ ['Reusable pump seal-kit standardization','Maintenance','Maintenance','A','done',3.0,3.4,75,'-','Mar','Rakesh Nair'],
+ ['Condensate recovery loop expansion','Utilities','Energy','B','done',5.5,null,77,'-','Jan','Sunita Patil'],
+ ['Bale-weight giveaway reduction','Packing','Process','A','done',4.4,null,73,'-','Apr','Neha Shah'],
+ ['Vibration predictive maintenance — spin machines','Maintenance','ML/Digital','C','implementation',12,null,86,'ok','May','Deepak Kulkarni'],
+ ['Boiler combustion O2-trim auto control','Utilities','ML/Digital','C','implementation',9.8,null,83,'warn','May','Arjun Rao'],
+ ['Predictive COD dosing — ETP','ETP','ML/Digital','C','implementation',7.2,null,80,'ok','Apr','Imran Sheikh'],
+ ['Spinneret cleaning-cycle optimization','Spinning','Process','B','implementation',4.1,null,74,'ok','May','Anita Mehta'],
+ ['Dryer-line heat recovery','After-treatment','Energy','B','implementation',6.6,null,78,'ok','Apr','Manish Gupta'],
+ ['Thermography hotspot detection — switchgear','Maintenance','Safety','A','implementation',2.3,null,71,'ok','May','Sunita Patil'],
+ ['Spare-parts kitting & min-max inventory','Maintenance','Maintenance','B','implementation',3.8,null,76,'warn','Jun','Rakesh Nair'],
+ ['Xanthation churn-time optimization','Viscose','Process','B','approval',5.4,null,72,'warn','May','Priya Iyer'],
+ ['H2SO4 dosing optimization — spin bath','Auxiliary','Environment','B','approval',4.7,null,70,'ok','Jun','Kavita Joshi'],
+ ['Glauber salt crystallization yield','Spinbath','Process','B','approval',6.1,null,75,'breach','May','Deepak Kulkarni'],
+ ['ZLD recovery yield improvement','ETP','Environment','C','approval',10.5,null,82,'ok','Jun','Imran Sheikh'],
+ ['Sulphur recovery efficiency improvement','Auxiliary','Energy','C','approval',8.0,null,79,'warn','Jun','Arjun Rao'],
+ ['RFID bale tracking & dispatch accuracy','Packing','ML/Digital','B','approval',3.2,null,68,'ok','Jun','Neha Shah'],
+ ['Predictive viscose-filter blockage','Viscose','ML/Digital','C','evaluation',7.7,null,71,'warn','Jun','Deepak Kulkarni'],
+ ['DCS process-tag anomaly detection','Process/Digital','ML/Digital','C','evaluation',9.0,null,69,'ok','Jun','Manish Gupta'],
+ ['Daily yield-prediction model','Process/Digital','ML/Digital','C','evaluation',11,null,73,'ok','Jun','Priya Iyer'],
+ ['AI-camera PPE-compliance monitoring','Safety','ML/Digital','B','evaluation',3.5,null,66,'warn','Jun','Sunita Patil'],
+ ['Spin-bath temperature setpoint optimization','Spinning','Process','B','evaluation',4.9,null,70,'ok','Jun','Anita Mehta'],
+ ['Bleaching chemical dosing optimization','After-treatment','Environment','B','evaluation',5.2,null,67,'breach','May','Kavita Joshi'],
+ ['Gearbox oil-analysis predictive program','Maintenance','ML/Digital','B','evaluation',4.0,null,72,'ok','Jun','Rakesh Nair'],
+ ['Plant energy-demand forecasting','Utilities','ML/Digital','C','evaluation',8.8,null,74,'ok','Jun','Arjun Rao'],
+ ['CS2 leak-detection sensor grid','Auxiliary','Safety','C','evaluation',6.3,null,68,'warn','Jun','Imran Sheikh'],
+ ['Gamified near-miss reporting','Safety','Safety','A','intake',1.8,null,null,'ok','Jun','Neha Shah'],
+ ['Lab sample turnaround reduction','Quality','Quality','A','intake',2.0,null,null,'ok','Jun','Manish Gupta'],
+ ['Live SPC dashboards for key parameters','Quality','ML/Digital','B','intake',3.6,null,null,'ok','Jun','Priya Iyer'],
+ ['Recover & rebale spinning-floor waste','Spinning','Process','A','intake',2.7,null,null,'ok','Jun','Anita Mehta'],
+ ['Auto strapping-tension control','Packing','Quality','A','intake',1.5,null,null,'ok','Jun','Sunita Patil'],
+ ['Oversize cooling fan manual swap','Utilities','Energy','B','rejected',5.0,null,41,'-','Feb','Arjun Rao'],
+ ['Redundant tank stirrer addition','Spinbath','Process','A','rejected',1.2,null,38,'-','Mar','Deepak Kulkarni'],
+ ['Duplicate conveyor guard proposal','Maintenance','Safety','A','rejected',0.8,null,35,'-','Apr','Rakesh Nair']
+];
+const PLANTS_CYCLE=['Nagda','Kharach','Vilayat','Harihar'];
+const IDEAS=RAW.map((r,i)=>{const[title,dept,cat,tier,stage,est,act,score,sla,month,sub]=r;
+  return {id:'KZ-2026-'+String(481+i).padStart(4,'0'),title,dept,cat,tier,stage,est,act,score,sla,month,sub,
+   plant:PLANTS_CYCLE[i%4],init:SUBS[sub][0],clr:SUBS[sub][1]};});
+
+/* ============ AGG HELPERS ============ */
+let filterPlant='All';
+let trendCat='All';
+const data=()=>filterPlant==='All'?IDEAS:IDEAS.filter(d=>d.plant===filterPlant);
+const cnt=(arr,fn)=>{const m={};arr.forEach(x=>{const k=fn(x);m[k]=(m[k]||0)+1});return m;};
+const sum=(arr,fn)=>arr.reduce((a,x)=>a+(fn(x)||0),0);
+const uniq=arr=>[...new Set(arr)];
+const fmtL=v=>(v==null||isNaN(v))?'—':v>=100?('₹'+(v/100).toFixed(2)+' Cr'):('₹'+v.toFixed(1)+' L');
+function rewardTier(s){if(s==null)return null;if(s>=80)return'Gold';if(s>=70)return'Silver';if(s>=60)return'Award';return'None';}
+
+/* ============ CHARTS ============ */
+Chart.defaults.font.family='Hanken Grotesk, sans-serif';
+Chart.defaults.font.size=11.5;Chart.defaults.color='#6E6D66';Chart.defaults.plugins.legend.labels.boxWidth=10;Chart.defaults.plugins.legend.labels.boxHeight=10;Chart.defaults.plugins.legend.labels.usePointStyle=true;Chart.defaults.plugins.legend.labels.pointStyle='circle';
+let CHARTS=[];
+function clearCharts(){CHARTS.forEach(c=>{try{c.destroy()}catch(e){}});CHARTS=[];}
+function mk(id,cfg){const el=document.getElementById(id);if(!el)return;const c=new Chart(el,cfg);CHARTS.push(c);return c;}
+const GRID={color:'rgba(21,23,28,.06)'};
+const noGrid={grid:{display:false}};
+
+/* ============ NAV ============ */
+const NAV=[
+ {k:'dashboard',t:'Dashboard',i:'ti-layout-dashboard'},
+ {k:'intake',t:'Idea intake',i:'ti-inbox',c:()=>IDEAS.filter(d=>d.stage==='intake').length},
+ {k:'pipeline',t:'Pipeline & SLA',i:'ti-git-branch',c:()=>IDEAS.filter(d=>['evaluation','approval'].includes(d.stage)).length},
+ {k:'kanban',t:'Implementation',i:'ti-layout-kanban',c:()=>IDEAS.filter(d=>d.stage==='implementation').length},
+ {k:'rewards',t:'Rewards & ROI',i:'ti-award',c:()=>IDEAS.filter(d=>d.stage==='done'&&rewardTier(d.score)!=='None').length},
+ {k:'stories',t:'Success stories',i:'ti-speakerphone'},
+ {k:'groups',t:'Groups',i:'ti-users-group'},
+ {k:'reports',t:'Reports & analytics',i:'ti-chart-histogram'}
+];
+let cur='dashboard';
+function renderNav(){document.getElementById('nav').innerHTML=NAV.map(n=>`<a class="${n.k===cur?'on':''}" onclick="go('${n.k}')"><i class="ti ${n.i}"></i>${n.t}${n.c?`<span class="cnt">${n.c()}</span>`:''}</a>`).join('');}
+function topbar(title,crumb,right=''){document.getElementById('topbar').innerHTML=`<div><h1>${title}</h1></div>${right}`;}
+function toast(msg){const t=document.getElementById('toast');t.innerHTML='<i class="ti ti-circle-check"></i>'+msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
+function go(k){cur=k;renderNav();clearCharts();VIEWS[k]();window.scrollTo(0,0);}
+
+const VIEWS={};
+const DEPTCLR=['#5b4ad1','#2A6FE0','#159468','#D98A12','#EF5026','#0f8a8a','#c2476a','#7a5cd1','#2A6FE0','#159468','#D98A12','#EF5026'];
+const SEL={intake:null,pipeline:null,kanban:null,rewards:null};
+function setPlant(p){filterPlant=p;go(cur);}
+function plantSeg(){return `<div class="seg">${['All',...PLANTS_CYCLE].map(p=>`<button class="${filterPlant===p?'on':''}" onclick="setPlant('${p}')">${p}</button>`).join('')}</div>`;}
+
+/* ---------- DASHBOARD ---------- */
+let trendChart=null;
+function renderTrend(){
+ const D=data();
+ const src=trendCat==='All'?D:D.filter(d=>d.cat===trendCat);
+ const subM=MONTHS.map(m=>src.filter(d=>d.month===m).length);
+ const impM=MONTHS.map(m=>src.filter(d=>d.month===m&&d.stage==='done').length);
+ if(trendChart){const i=CHARTS.indexOf(trendChart);if(i>-1)CHARTS.splice(i,1);try{trendChart.destroy()}catch(e){}}
+ trendChart=mk('cTrend',{type:'line',data:{labels:MONTHS,datasets:[
+   {label:'Submitted',data:subM,borderColor:'#2A6FE0',backgroundColor:'rgba(42,111,224,.12)',fill:true,tension:.35,pointRadius:3,borderWidth:2},
+   {label:'Implemented',data:impM,borderColor:'#159468',backgroundColor:'rgba(21,148,104,.10)',fill:true,tension:.35,pointRadius:3,borderWidth:2}]},
+   options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,grid:GRID,ticks:{precision:0}},x:noGrid}}});
+}
+function setTrendCat(v){trendCat=v;renderTrend();}
+VIEWS.dashboard=function(){
+ const D=data();
+ const pending=D.filter(d=>['intake','evaluation','approval'].includes(d.stage)).length;
+ const impl=D.filter(d=>d.stage==='done').length;
+ const roi=sum(D.filter(d=>d.stage==='done'),d=>d.act);
+ const part=uniq(D.map(d=>d.sub)).length;
+ const avgScore=Math.round(sum(D.filter(d=>d.score),d=>d.score)/D.filter(d=>d.score).length);
+ const breaches=D.filter(d=>d.sla==='breach').length;
+ const kpi=(ic,clr,lab,val,delta)=>`<div class="kpi"><div class="ic" style="background:${clr}22;color:${clr}"><i class="ti ${ic}"></i></div><div class="lab">${lab}</div><div class="val">${val}</div>${delta?`<div class="delta"><i class="ti ti-arrow-up-right"></i>${delta}</div>`:''}</div>`;
+ topbar('Command dashboard','Home · live data',plantSeg());
+ document.getElementById('view').innerHTML=`
+  <div class="dash">
+  <div class="kpis">
+   ${kpi('ti-bulb','#5b4ad1','Total ideas',D.length,'+'+D.filter(d=>d.month==='Jun').length+' this month')}
+   ${kpi('ti-loader','#2A6FE0','Active pipeline',pending,'')}
+   ${kpi('ti-circle-check','#159468','Implemented',impl,'')}
+   ${kpi('ti-coin-rupee','#D98A12','Realized ROI',fmtL(roi),'vs est')}
+   ${kpi('ti-gauge','#EF5026','Avg eval score',avgScore+'/100','')}
+   ${kpi('ti-users','#0f8a8a','Participation',part+' people','')}
+  </div>
+  <div class="g wl">
+   <div class="card cardp"><div class="cardhead"><div><h3><i class="ti ti-chart-line"></i>Submissions vs implementation</h3><div class="sub">Monthly · last 7 months</div></div>
+    <select class="minisel" id="trendCat" onchange="setTrendCat(this.value)">${['All',...Object.keys(CATCLR)].map(c=>`<option value="${c}" ${c===trendCat?'selected':''}>${c==='All'?'All categories':c}</option>`).join('')}</select></div>
+    <div class="chartbox" style="margin-top:10px"><canvas id="cTrend"></canvas></div></div>
+   <div class="card cardp"><h3><i class="ti ti-chart-pie"></i>By category</h3><div class="sub">All open + closed ideas</div><div class="chartbox" style="margin-top:10px"><canvas id="cCat"></canvas></div></div>
+  </div>
+  <div class="g c3">
+   <div class="card cardp"><h3><i class="ti ti-filter"></i>Pipeline funnel</h3><div class="sub">Ideas by stage</div><div class="chartbox sm" style="margin-top:10px"><canvas id="cStage"></canvas></div></div>
+   <div class="card cardp"><h3><i class="ti ti-building-factory"></i>By department</h3><div class="sub">Idea volume</div><div class="chartbox sm" style="margin-top:10px"><canvas id="cDept"></canvas></div></div>
+   <div class="card cardp"><h3><i class="ti ti-coins"></i>Savings: est vs realized</h3><div class="sub">₹ lakh by month</div><div class="chartbox sm" style="margin-top:10px"><canvas id="cSav"></canvas></div></div>
+  </div>
+  <div class="g wl">
+   <div class="card cardp aqcard"><h3><i class="ti ti-bolt"></i>Action queue</h3><div class="sub">Needs your decision</div><div style="margin-top:12px" id="aq"></div><button class="btn sm block" style="margin-top:auto" onclick="go('pipeline')"><i class="ti ti-arrow-right"></i>Open pipeline board</button></div>
+   <div class="card cardp"><h3><i class="ti ti-star"></i>Top contributors</h3><div class="sub">Multi-dimensional impact · this quarter</div><div style="margin-top:12px" id="tc"></div></div>
+  </div>
+  </div>`;
+ // action queue
+ const aq=[
+  ['ember','ti-inbox','Intake',IDEAS.filter(d=>d.stage==='intake').length+' ideas awaiting workflow review','intake'],
+  ['bad','ti-clock-exclamation','SLA',breaches+' ideas breaching SLA now','pipeline'],
+  ['work','ti-layout-kanban','Delivery',IDEAS.filter(d=>d.stage==='implementation'&&(d.sla==='warn'||d.sla==='breach')).length+' implementations need attention','kanban'],
+  ['ok','ti-award','Reward',IDEAS.filter(d=>d.stage==='done'&&rewardTier(d.score)!=='None').length+' ideas crossed reward threshold','rewards']];
+ document.getElementById('aq').innerHTML=aq.map(a=>`<div class="qitem" onclick="go('${a[4]}')"><span class="pill ${a[0]}"><i class="ti ${a[1]}"></i>${a[2]}</span><div class="meta"><b>${a[3]}</b></div><i class="ti ti-chevron-right muted"></i></div>`).join('');
+ // top contributors — impact across multiple dimensions, not money alone
+ const CTYPE={
+  money:['var(--emerald)','ti-coin-rupee','Cost saved'],
+  energy:['var(--amber)','ti-bolt','Energy saved'],
+  water:['var(--blue)','ti-droplet-filled','Water conserved'],
+  safety:['var(--red)','ti-shield-check','Safety impact'],
+  quality:['var(--violet)','ti-discount-check','Quality lift'],
+  volume:['var(--teal)','ti-bulb','Ideas landed']};
+ const CONTRIB=(CONTRIB_LIVE&&CONTRIB_LIVE.length)?CONTRIB_LIVE.map(c=>[c.name,c.dept,c.type,c.value]):[
+  ['Kavita Joshi','After-treatment','money','₹16.2 L'],
+  ['Arjun Rao','Utilities','energy','4.2 L kWh'],
+  ['Sunita Patil','Safety','safety','27 near-misses'],
+  ['Manish Gupta','Utilities','water','12,500 kL'],
+  ['Suresh Menon','Quality','quality','38% reject ↓']];
+ document.getElementById('tc').innerHTML=CONTRIB.map(([n,dept,ty,val])=>{const[clr,ic,lab]=CTYPE[ty];const av=_sc(n);
+  return `<div class="qitem contrib" style="cursor:default"><div class="avatar" style="width:32px;height:32px;background:${av[1]}">${av[0]}</div><div class="meta"><b>${n}</b><span>${dept}</span></div><div class="cval"><span class="v" style="color:${clr}">${val}</span><span class="k"><i class="ti ${ic}" style="color:${clr}"></i>${lab}</span></div></div>`;}).join('');
+ // charts
+ renderTrend();
+ const catC=cnt(D,d=>d.cat),catK=Object.keys(catC);
+ mk('cCat',{type:'doughnut',data:{labels:catK,datasets:[{data:catK.map(k=>catC[k]),backgroundColor:catK.map(k=>CATCLR[k]),borderWidth:2,borderColor:'#fff'}]},options:{maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right'}}}});
+ const stC=STAGES.map(s=>D.filter(d=>d.stage===s).length),stCl=['#5b4ad1','#2A6FE0','#D98A12','#159468','#36c98d','#D8423A','#9aa0a6'];
+ mk('cStage',{type:'bar',data:{labels:STAGES.map(s=>STLAB[s]),datasets:[{data:stC,backgroundColor:stCl,borderRadius:6,barThickness:18}]},options:{indexAxis:'y',maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,grid:GRID,ticks:{precision:0}},y:noGrid}}});
+ const dC=cnt(D,d=>d.dept),dK=Object.keys(dC).sort((a,b)=>dC[b]-dC[a]);
+ mk('cDept',{type:'bar',data:{labels:dK,datasets:[{data:dK.map(k=>dC[k]),backgroundColor:dK.map((_,i)=>DEPTCLR[i%DEPTCLR.length]),borderRadius:6}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:GRID,ticks:{precision:0}},x:{...noGrid,ticks:{font:{size:9.5},maxRotation:50,minRotation:30}}}}});
+ const estM=MONTHS.map(m=>+sum(D.filter(d=>d.month===m),d=>d.est).toFixed(1));
+ const actM=MONTHS.map(m=>+sum(D.filter(d=>d.month===m&&d.act),d=>d.act).toFixed(1));
+ mk('cSav',{type:'bar',data:{labels:MONTHS,datasets:[{label:'Estimated',data:estM,backgroundColor:'#C9C6BC',borderRadius:5},{label:'Realized',data:actM,backgroundColor:'#159468',borderRadius:5}]},options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,grid:GRID},x:noGrid}}});
+};
+
+/* ---------- REPORTS ---------- */
+VIEWS.reports=function(){
+ topbar('Reports & analytics','Insight · all plants','<button class="btn sm" onclick="toast(\'Exported reports.csv\')"><i class="ti ti-file-export"></i>Export CSV</button>');
+ document.getElementById('view').innerHTML=`
+  <div class="g c2" style="margin-bottom:16px">
+   <div class="card cardp"><h3><i class="ti ti-stack-2"></i>Ideas by department × stage</h3><div class="sub">Distribution across the pipeline</div><div class="chartbox tall" style="margin-top:10px"><canvas id="rDept"></canvas></div></div>
+   <div class="card cardp"><h3><i class="ti ti-chart-donut"></i>Ideas by type</h3><div class="sub">Category mix</div><div class="chartbox tall" style="margin-top:10px"><canvas id="rType"></canvas></div></div>
+  </div>
+  <div class="g c2" style="margin-bottom:16px">
+   <div class="card cardp"><h3><i class="ti ti-cash"></i>Savings by department</h3><div class="sub">₹ lakh · estimated vs realized</div><div class="chartbox" style="margin-top:10px"><canvas id="rSav"></canvas></div></div>
+   <div class="card cardp"><h3><i class="ti ti-map-pin"></i>Ideas by plant</h3><div class="sub">Cross-plant participation</div><div class="chartbox" style="margin-top:10px"><canvas id="rPlant"></canvas></div></div>
+  </div>
+  <div class="g c2" style="margin-bottom:16px">
+   <div class="card cardp"><h3><i class="ti ti-clock"></i>Avg time in stage</h3><div class="sub">Days</div><div class="chartbox sm" style="margin-top:10px"><canvas id="rCycle"></canvas></div></div>
+   <div class="card cardp"><h3><i class="ti ti-medal"></i>Reward distribution</h3><div class="sub">Implemented ideas</div><div class="chartbox sm" style="margin-top:10px"><canvas id="rReward"></canvas></div></div>
+  </div>
+  <div class="g c2">
+   <div class="card cardp"><h3><i class="ti ti-trending-up"></i>Cumulative savings</h3><div class="sub">₹ lakh realized</div><div class="chartbox" style="margin-top:10px"><canvas id="rCum"></canvas></div></div>
+   <div class="card cardp"><h3><i class="ti ti-chart-bar"></i>Monthly throughput</h3><div class="sub">Submitted vs implemented per month</div><div class="chartbox" style="margin-top:10px"><canvas id="rThru"></canvas></div></div>
+  </div>`;
+ const A=IDEAS;
+ const dK=uniq(A.map(d=>d.dept)).sort();
+ const actStages=['intake','evaluation','approval','implementation','done'],stCl=['#5b4ad1','#2A6FE0','#D98A12','#159468','#36c98d'];
+ mk('rDept',{type:'bar',data:{labels:dK,datasets:actStages.map((s,i)=>({label:STLAB[s],data:dK.map(d=>A.filter(x=>x.dept===d&&x.stage===s).length),backgroundColor:stCl[i],borderRadius:4,stack:'s'}))},options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true,...noGrid,ticks:{font:{size:9.5},maxRotation:50,minRotation:35}},y:{stacked:true,beginAtZero:true,grid:GRID,ticks:{precision:0}}}}});
+ const cC=cnt(A,d=>d.cat),cK=Object.keys(cC);
+ mk('rType',{type:'polarArea',data:{labels:cK,datasets:[{data:cK.map(k=>cC[k]),backgroundColor:cK.map(k=>CATCLR[k]+'cc'),borderWidth:1,borderColor:'#fff'}]},options:{maintainAspectRatio:false,plugins:{legend:{position:'right'}},scales:{r:{grid:GRID,ticks:{display:false}}}}});
+ const savE=dK.map(d=>+sum(A.filter(x=>x.dept===d),x=>x.est).toFixed(1));
+ const savA=dK.map(d=>+sum(A.filter(x=>x.dept===d&&x.act),x=>x.act).toFixed(1));
+ mk('rSav',{type:'bar',data:{labels:dK,datasets:[{label:'Estimated',data:savE,backgroundColor:'#C9C6BC',borderRadius:5},{label:'Realized',data:savA,backgroundColor:'#159468',borderRadius:5}]},options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,grid:GRID},x:{...noGrid,ticks:{font:{size:9.5},maxRotation:50,minRotation:35}}}}});
+ const pC=cnt(A,d=>d.plant),pK=PLANTS_CYCLE;
+ mk('rPlant',{type:'bar',data:{labels:pK,datasets:[{data:pK.map(k=>pC[k]||0),backgroundColor:['#EF5026','#2A6FE0','#159468','#D98A12','#5b4ad1','#0f8a8a','#c2476a'],borderRadius:6,barThickness:42}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:GRID,ticks:{precision:0}},x:noGrid}}});
+ const cyc=CYCLE?{intake:CYCLE.intake,evaluation:CYCLE.evaluation,approval:CYCLE.approval,implementation:CYCLE.implementation}:{intake:0.9,evaluation:4.6,approval:2.4,implementation:11.8};
+ mk('rCycle',{type:'bar',data:{labels:Object.keys(cyc).map(s=>STLAB[s]),datasets:[{data:Object.values(cyc),backgroundColor:'#5b4ad1',borderRadius:6}]},options:{indexAxis:'y',maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,grid:GRID},y:noGrid}}});
+ const done=A.filter(d=>d.stage==='done');const rC=cnt(done,d=>rewardTier(d.score));const rK=Object.keys(rC);
+ const rclr={Gold:'#D98A12',Silver:'#9aa0a6',Award:'#5b4ad1',None:'#C9C6BC'};
+ mk('rReward',{type:'doughnut',data:{labels:rK,datasets:[{data:rK.map(k=>rC[k]),backgroundColor:rK.map(k=>rclr[k]),borderWidth:2,borderColor:'#fff'}]},options:{maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'bottom'}}}});
+ let run=0;const cum=MONTHS.map(m=>{run+=sum(A.filter(d=>d.month===m&&d.act),d=>d.act);return +run.toFixed(1);});
+ mk('rCum',{type:'line',data:{labels:MONTHS,datasets:[{data:cum,borderColor:'#EF5026',backgroundColor:'rgba(239,80,38,.12)',fill:true,tension:.35,pointRadius:2,borderWidth:2}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:GRID},x:noGrid}}});
+ mk('rThru',{type:'bar',data:{labels:MONTHS,datasets:[{label:'Submitted',data:MONTHS.map(m=>A.filter(d=>d.month===m).length),backgroundColor:'#2A6FE0',borderRadius:5},{label:'Implemented',data:MONTHS.map(m=>A.filter(d=>d.month===m&&d.stage==='done').length),backgroundColor:'#159468',borderRadius:5}]},options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,grid:GRID,ticks:{precision:0}},x:noGrid}}});
+};
+/* ---------- INTAKE ---------- */
+const WF={A:{ev:[['Line engineering group',3]],ap:[['Plant CI head',1]]},
+ B:{ev:[['Line engineering group',3],['Energy & utilities group',2]],ap:[['Plant CI head',1]]},
+ C:{ev:[['Process excellence group',3],['Energy & utilities group',2],['Reliability group',2]],ap:[['Plant CI head',1],['Business-unit head',1]]}};
+const CX={A:['Low',30],B:['Moderate',58],C:['High',84]};
+const TIERLAB={A:'Tier A — Light',B:'Tier B — Standard',C:'Tier C — Full'};
+/* ---------- INTAKE REVIEW (Stage 3) ---------- */
+const TRACKS={
+ technical:{name:'Technical',domain:'Core feasibility',phase:'eval',clr:'#5b4ad1',lead:'Deepak Kulkarni',always:true},
+ safety:{name:'Safety / EHS',domain:'Hazard + risk',phase:'eval',clr:'#D8423A',lead:'Sunita Patil'},
+ environment:{name:'Environmental',domain:'Emissions + waste',phase:'eval',clr:'#0f8a8a',lead:'Imran Sheikh'},
+ quality:{name:'Quality / ISO',domain:'Standards + SOPs',phase:'eval',clr:'#159468',lead:'Manish Gupta'},
+ digital:{name:'IT / OT / Digital',domain:'Systems + control',phase:'eval',clr:'#EF5026',lead:'Priya Iyer'},
+ equipment:{name:'Machine / Equipment',domain:'Asset modification',phase:'eval',clr:'#2A6FE0',lead:'Rakesh Nair'},
+ finance:{name:'Finance',domain:'Cost + budget',phase:'both',clr:'#D98A12',lead:'Vikram Saxena'},
+ compliance:{name:'Compliance / Legal',domain:'Regulatory',phase:'both',clr:'#c2476a',lead:'Neha Shah'},
+ operations:{name:'Operations / Production',domain:'Downtime + timing',phase:'appr',clr:'#7a5cd1',lead:'Anita Mehta'},
+ hr:{name:'HR / People',domain:'Workforce impact',phase:'appr',clr:'#c2476a',lead:'Kavita Joshi'},
+ procurement:{name:'Procurement / SCM',domain:'Vendors + supply',phase:'appr',clr:'#0f8a8a',lead:'Arjun Rao'},
+ commercial:{name:'Commercial',domain:'Customer contracts',phase:'appr',clr:'#2A6FE0',lead:'Suresh Menon'}};
+const TIERDEF={
+ A:{ev:[{lab:'Evaluation · L1'}],ap:[{lab:'Approval · L1'}],decision:'Dept Manager'},
+ B:{ev:[{lab:'Evaluation · L1'},{lab:'Evaluation · L2',node:'Senior technical + finance review'}],
+    ap:[{lab:'Approval · L1'},{lab:'Approval · L2',node:'Dept Head / Business Head'}],decision:'Plant Head / GM'},
+ C:{ev:[{lab:'Evaluation · L1'},{lab:'Evaluation · L2',node:'Senior review — synthesis'}],
+    ap:[{lab:'Approval · L1',node:'Dept Head'},{lab:'Approval · L2',node:'Plant Head / GM'},{lab:'Approval · L3',node:'BU Head + Compliance'}],decision:'Plant Head'}};
+const INTAKE_META={
+ 'Gamified near-miss reporting':{desc:'Mobile near-miss reporting with points and a shop-floor leaderboard to lift hazard reporting. One-tap categorise, photo capture, supervisor close-out.',cls:{Complexity:['Low',93],Category:['Safety',96],Type:['Engagement / Process',88],Scope:['Single department',90]},tracks:{technical:97,safety:95,digital:82,finance:74},att:[2,1]},
+ 'Lab sample turnaround reduction':{desc:'Re-sequence the QC lab queue and add barcode sample tracking to cut average spin-bath sample turnaround from a full shift to under two hours.',cls:{Complexity:['Low',90],Category:['Quality',94],Type:['Process improvement',86],Scope:['Single department',88]},tracks:{technical:96,quality:93,finance:70},att:[1,2]},
+ 'Live SPC dashboards for key parameters':{desc:'Stream key process tags into live SPC charts with automatic control-limit alerts for operators and shift in-charges across viscose and spinning.',cls:{Complexity:['Moderate',84],Category:['ML / Digital',91],Type:['Digital / Analytics',89],Scope:['Cross-department',79]},tracks:{technical:95,digital:92,quality:80,finance:72},att:[3,1]},
+ 'Recover & rebale spinning-floor waste':{desc:'Collect, sort and rebale recoverable spinning-floor fibre waste instead of scrapping it — estimated material recovery and reduced disposal load.',cls:{Complexity:['Low',88],Category:['Process',90],Type:['Waste / Yield',85],Scope:['Single department',83]},tracks:{technical:96,environment:84,operations:78,finance:71},att:[2,0]},
+ 'Auto strapping-tension control':{desc:'Replace manual strapping-tension setting on the bale press with a closed-loop controller to cut strap breakages and rework in packing.',cls:{Complexity:['Low',91],Category:['Quality',86],Type:['Automation / Equipment',88],Scope:['Single department',90]},tracks:{technical:96,equipment:85,quality:79,finance:73},att:[1,1]}};
+/* primary form of value — not all ideas are about money */
+const IMPACTYPE={money:['var(--emerald)','ti-coin-rupee'],safety:['var(--red)','ti-shield-check'],quality:['var(--violet)','ti-discount-check'],time:['var(--blue)','ti-clock-bolt'],productivity:['var(--teal)','ti-trending-up'],energy:['var(--amber)','ti-bolt'],resource:['var(--blue)','ti-recycle']};
+const IMPACT={
+ 'Gamified near-miss reporting':['safety','Hazard reporting ↑'],
+ 'Lab sample turnaround reduction':['time','QC turnaround ↓'],
+ 'Live SPC dashboards for key parameters':['quality','Process control ↑'],
+ 'Recover & rebale spinning-floor waste':['resource','Fibre recovered'],
+ 'Auto strapping-tension control':['productivity','Strap rework ↓']};
+const INTAKE_STATE={};
+const INTAKE_FETCHED={};
+function intakeFetchMeta(d){ /* lazy-load real idea detail into INTAKE_META */
+ if(!d||INTAKE_FETCHED[d.id]||INTAKE_META[d.title])return;INTAKE_FETCHED[d.id]=1;
+ fetch(API_BASE+'/api/idea/'+encodeURIComponent(d.id)).then(r=>r.ok?r.json():null).then(dt=>{
+  if(!dt||!dt.idea)return;const i=dt.idea;const at=dt.attachments||{photos:0,total:0};
+  const conf=v=>78+Math.abs([...String(v||'')].reduce((a,c)=>a+c.charCodeAt(0),0))%19;
+  INTAKE_META[d.title]={
+   desc:[i.problem_statement,i.proposed_solution].filter(Boolean).join(' '),
+   cls:{Department:[d.dept,conf(d.dept)],Track:[d.cat,conf(d.cat)],Tier:[TIERLAB[d.tier]||d.tier,conf(d.tier)],Language:[(i.submission_language||'en').toUpperCase()+' · '+(i.submission_source==='voice'?'Voice':'Form'),conf(i.submission_language)]},
+   att:[at.photos||0,Math.max(0,(at.total||0)-(at.photos||0))]};
+  if(cur==='intake'&&SEL.intake===d.id)VIEWS.intake();
+ }).catch(()=>{});
+}
+let DRAG_KEY=null;
+function intakeState(id){
+ if(!INTAKE_STATE[id]){
+  const s=IDEAS.find(d=>d.id===id), m=INTAKE_META[s.title]||{tracks:{technical:96,finance:70}};
+  const tracks={};Object.keys(m.tracks).forEach(k=>{const ph=TRACKS[k].phase;const place=ph==='eval'?{ph:'ev',lv:0}:{ph:'ap',lv:0};tracks[k]={lead:leadForTrack(k),sla:place.ph==='ev'?2:1,conf:m.tracks[k],place};});
+  if(!tracks.technical)tracks.technical={lead:leadForTrack('technical'),sla:2,conf:96,place:{ph:'ev',lv:0}};
+  INTAKE_STATE[id]={tier:s.tier,tracks,log:[],pending:null};
+ }
+ return INTAKE_STATE[id];
+}
+function selIntake(id){SEL.intake=id;intakeState(id);VIEWS.intake();}
+function intakeReqTier(id,t){const st=intakeState(id);if(t===st.tier)return;st.pending={type:'tier',tier:t};VIEWS.intake();}
+function intakeReqRemove(id,k){intakeState(id).pending={type:'removeTrack',key:k};VIEWS.intake();}
+function intakeReqClose(id){intakeState(id).pending={type:'close'};VIEWS.intake();}
+function intakeCancelPending(id){intakeState(id).pending=null;VIEWS.intake();}
+function intakeApplyPending(id){
+ const st=intakeState(id),p=st.pending;if(!p)return;
+ const el=document.getElementById('reasonInput'),r=el?el.value.trim():'';
+ if(!r){toast('A reason is required — it will be logged');return;}
+ if(p.type==='tier'){st.log.unshift({a:'Changed base pipeline',d:TIERLAB[st.tier]+' → '+TIERLAB[p.tier],r});st.tier=p.tier;}
+ else if(p.type==='removeTrack'){st.log.unshift({a:'Removed track',d:TRACKS[p.key].name,r});delete st.tracks[p.key];}
+ else if(p.type==='close'){const s=IDEAS.find(d=>d.id===id);s.stage='rejected';s.sla='-';st.pending=null;toast('Idea closed — submitter notified with reason');SEL.intake=null;renderNav();VIEWS.intake();return;}
+ st.pending=null;VIEWS.intake();
+}
+function intakeAddTrack(id,k){if(!k)return;const st=intakeState(id);if(st.tracks[k])return;st.tracks[k]={lead:leadForTrack(k),sla:2,place:{ph:'ev',lv:0}};st.log.unshift({a:'Added track',d:TRACKS[k].name+' → Evaluation L1',r:'Manually added by CI Manager'});VIEWS.intake();}
+function intakeSwap(id,k,n){const st=intakeState(id);st.tracks[k].lead=n;st.log.unshift({a:'Swapped reviewer',d:TRACKS[k].name+' → '+n,r:''});VIEWS.intake();}
+function intakeSLA(id,k,v){const st=intakeState(id);st.tracks[k].sla=+v;st.log.unshift({a:'Adjusted SLA',d:TRACKS[k].name+' → '+v+'d',r:''});VIEWS.intake();}
+function intakeDragStart(e,k){DRAG_KEY=k;e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',k)}catch(_){}}
+function intakeDragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';e.currentTarget.classList.add('drop-hover');}
+function intakeDragLeave(e){e.currentTarget.classList.remove('drop-hover');}
+function intakeDrop(e,ph,lv){e.preventDefault();e.currentTarget.classList.remove('drop-hover');const k=DRAG_KEY||(e.dataTransfer&&e.dataTransfer.getData('text/plain'));DRAG_KEY=null;if(!k)return;const st=intakeState(SEL.intake),tr=st.tracks[k];if(!tr)return;if(tr.place.ph===ph&&tr.place.lv===lv)return;tr.place={ph,lv};st.log.unshift({a:'Moved group',d:TRACKS[k].name+' → '+(ph==='ev'?'Evaluation':'Approval')+' L'+(lv+1),r:''});VIEWS.intake();}
+function intakeConfirm(id){const st=intakeState(id);if(st.pending){toast('Resolve the pending change first');return;}const s=IDEAS.find(d=>d.id===id);s.stage='evaluation';toast('Workflow activated — L1 reviewers notified · SLA clocks started · employee notified');SEL.intake=null;renderNav();VIEWS.intake();}
+VIEWS.intake=function(){
+ const list=IDEAS.filter(d=>d.stage==='intake');
+ topbar('CI Manager intake review','Validate · '+list.length+' awaiting','');
+ if(!list.length){document.getElementById('view').innerHTML=`<div class="card cardp" style="text-align:center;padding:54px 20px"><div style="width:54px;height:54px;border-radius:50%;background:var(--emerald-soft);color:var(--emerald);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:26px"><i class="ti ti-check"></i></div><h3 style="justify-content:center">Intake queue is clear</h3><div class="sub">Every submitted idea has been validated and routed into its workflow.</div></div>`;return;}
+ if(!list.find(d=>d.id===SEL.intake))SEL.intake=list[0].id;
+ const s=IDEAS.find(d=>d.id===SEL.intake),st=intakeState(s.id),m=INTAKE_META[s.title]||{cls:{},desc:'',att:[0,0]},td=TIERDEF[st.tier];
+ intakeFetchMeta(s);
+ const evN=td.ev.length,apN=td.ap.length;
+ Object.values(st.tracks).forEach(tr=>{if(!tr.place)return;if(tr.place.ph==='ev'&&tr.place.lv>=evN)tr.place.lv=evN-1;if(tr.place.ph==='ap'&&tr.place.lv>=apN)tr.place.lv=apN-1;});
+ // top selector + stats
+ const totalEst=list.reduce((a,d)=>a+d.est,0);
+ const tierMix=['A','B','C'].map(t=>({t,n:list.filter(d=>intakeState(d.id).tier===t).length})).filter(x=>x.n);
+ const avgConf=Math.round(list.reduce((a,d)=>{const mm=INTAKE_META[d.title];const cs=mm?Object.values(mm.cls).map(v=>v[1]):[80];return a+cs.reduce((x,y)=>x+y,0)/cs.length;},0)/list.length);
+ const cards=list.slice(0,12).map(d=>{const ds=intakeState(d.id),nt=Object.keys(ds.tracks).length;const im=IMPACT[d.title]||['money',fmtL(d.est)],ic=IMPACTYPE[im[0]];
+  return `<button class="awcard${d.id===s.id?' on':''}" onclick="selIntake('${d.id}')"><div class="aw-top"><span class="tier ${ds.tier}">${ds.tier}</span><span class="pill warn sm"><i class="ti ti-clock"></i>1d</span></div><div class="aw-title">${d.title}</div><div class="aw-sub">${d.dept} · ${d.plant}</div><div class="aw-foot"><span class="aw-est" style="color:${ic[0]}"><i class="ti ${ic[1]}"></i>${im[1]}</span><span class="aw-trk"><i class="ti ti-stack-2"></i>${nt} tracks</span></div></button>`;}).join('');
+ const topHtml=`<div class="intake-top"><div class="awhead"><span class="aw-h-l"><i class="ti ti-inbox"></i>Awaiting your review</span><div class="aw-stats"><span class="awstat"><b>${list.length}</b>ideas</span><span class="awstat"><b>${avgConf}%</b>avg confidence</span><span class="awstat tiermix">${tierMix.map(x=>`<span class="tier ${x.t}">${x.t}</span>×${x.n}`).join('&nbsp;')}</span></div></div><div class="aw-row">${cards}</div></div>`;
+ // section B
+ const clsHtml=Object.entries(m.cls||{}).map(([k,v])=>`<div class="clsfield"><div class="cl-k">${k}</div><div class="cl-v">${v[0]}</div><div class="cl-cf"><div class="cl-bar"><i style="width:${v[1]}%;background:${v[1]>=85?'var(--emerald)':v[1]>=70?'var(--amber)':'var(--red)'}"></i></div><span>${v[1]}%</span></div></div>`).join('');
+ // section C — drop-zone levels
+ const trackCard=(key)=>{const t=TRACKS[key],tr=st.tracks[key];
+  return `<div class="trk" draggable="true" ondragstart="intakeDragStart(event,'${key}')" style="border-left:3px solid ${t.clr}"><div class="trk-h"><span class="trk-n"><i class="ti ti-grip-vertical drag-h"></i>${t.name}${tr.conf?` <span class="trk-cf">${tr.conf}%</span>`:''}</span>${t.always?'<span class="trk-lock" title="Always present — cannot remove"><i class="ti ti-lock"></i></span>':`<button class="trk-x" title="Remove track (reason required)" onclick="intakeReqRemove('${s.id}','${key}')"><i class="ti ti-x"></i></button>`}</div><div class="trk-ctrl"><i class="ti ti-user muted"></i><select class="tsel" onchange="intakeSwap('${s.id}','${key}',this.value)">${reviewersForTrack(key).map(n=>`<option ${n===tr.lead?'selected':''}>${n}</option>`).join('')}</select><span class="trk-sla">SLA<select class="tsel xs" onchange="intakeSLA('${s.id}','${key}',this.value)">${[1,2,3,5].map(dd=>`<option ${tr.sla===dd?'selected':''} value="${dd}">${dd}d</option>`).join('')}</select></span></div></div>`;};
+ const levelZone=(ph,lv,lvl)=>{const keys=Object.keys(st.tracks).filter(k=>st.tracks[k].place&&st.tracks[k].place.ph===ph&&st.tracks[k].place.lv===lv);const cnt=keys.length;
+  const tag=cnt>1?cnt+' parallel':(cnt===1?'1 group':(lvl.node?'authority':'empty'));
+  return `<div class="lvl dz" ondragover="intakeDragOver(event)" ondragleave="intakeDragLeave(event)" ondrop="intakeDrop(event,'${ph}',${lv})"><div class="lvl-h"><span class="lvl-lab">${lvl.lab}</span><span class="lvl-tag">${tag}</span></div><div class="lvl-body">${lvl.node?`<div class="authchip"><i class="ti ti-user-shield"></i>${lvl.node}<span class="auth-tag">authority</span></div>`:''}${keys.map(trackCard).join('')}${cnt===0&&!lvl.node?'<div class="dzhint"><i class="ti ti-arrow-down-circle"></i>Drag a group here</div>':''}</div></div>`;};
+ const evLevels=td.ev.map((lvl,i)=>levelZone('ev',i,lvl)).join('<div class="lvl-arrow"><i class="ti ti-arrow-narrow-down"></i></div>');
+ const apLevels=td.ap.map((lvl,i)=>levelZone('ap',i,lvl)).join('<div class="lvl-arrow"><i class="ti ti-arrow-narrow-down"></i></div>');
+ const avail=Object.keys(TRACKS).filter(k=>!st.tracks[k]);
+ const pend=st.pending?`<div class="reasonbox"><div class="rb-h"><i class="ti ti-pencil"></i>${st.pending.type==='tier'?'Reason for changing base pipeline to '+TIERLAB[st.pending.tier]:st.pending.type==='close'?'Reason for closing this idea as not viable':'Reason for removing the '+TRACKS[st.pending.key].name+' track'}</div><textarea id="reasonInput" class="rb-i" placeholder="Logged to the workflow audit trail and shared with affected reviewers…"></textarea><div class="rb-a"><button class="btn sm" onclick="intakeCancelPending('${s.id}')">Cancel</button><button class="btn prim sm" onclick="intakeApplyPending('${s.id}')"><i class="ti ti-check"></i>Confirm &amp; log</button></div></div>`:'';
+ const logHtml=st.log.length?st.log.map(l=>`<div class="logrow"><div class="log-a"><b>${l.a}</b>${l.r?` · <span class="muted">${l.r}</span>`:''}</div><div class="log-d">${l.d}</div></div>`).join(''):'<div class="muted" style="font-size:12px;padding:6px 0">No changes — confirming will activate the system-assembled workflow exactly as proposed.</div>';
+ document.getElementById('view').innerHTML=`<div class="intake-wrap">
+  ${topHtml}
+  <section class="ireview">
+   <div class="card cardp">
+    <div class="ihead"><span class="tag mono">${s.id}</span><b>${s.title}</b><span class="pill ember"><i class="ti ti-wand"></i>${TIERLAB[st.tier]}</span><span class="pill warn" style="margin-left:auto"><i class="ti ti-clock"></i>Intake SLA · 1 business day</span></div>
+    <div class="g c2" style="margin-top:14px;align-items:start">
+     <div class="sec"><div class="sec-h">SECTION A · THE IDEA</div><p class="idesc">${m.desc||''}</p>
+      <div class="submeta"><div class="avatar" style="width:30px;height:30px;background:${s.clr}">${s.init}</div><div style="font-size:12.5px"><b>${s.sub}</b><br><span class="muted">${s.dept} · ${s.plant}${m.cls&&m.cls.Scope?' · '+m.cls.Scope[0]:''}</span></div></div>
+      <div class="atts"><span class="tag"><i class="ti ti-photo"></i>${(m.att||[0,0])[0]} photos</span><span class="tag"><i class="ti ti-paperclip"></i>${(m.att||[0,0])[1]} docs</span><span class="tag"><i class="ti ti-coins"></i>Est. ${fmtL(s.est)}</span></div></div>
+     <div class="sec"><div class="sec-h">SECTION B · SYSTEM CLASSIFICATION<span class="sec-sub">LLM Pass 1 + Pass 2 · confidence shown</span></div><div class="clsgrid">${clsHtml}</div></div>
+    </div>
+   </div>
+   <div class="card cardp">
+    <div class="sec-h sec-row">SECTION C · ASSEMBLED WORKFLOW<span class="sec-sub">system proposes · drag any group between levels &amp; phases</span><span class="tierpick">Base pipeline ${['A','B','C'].map(t=>`<button class="tierbtn ${st.tier===t?'on':''}" onclick="intakeReqTier('${s.id}','${t}')">${t}</button>`).join('')}</span></div>
+    ${pend}
+    <div class="phase-wrap">
+     <div class="phase"><div class="phase-t"><i class="ti ti-list-check"></i>Evaluation phase</div>${evLevels}</div>
+     <div class="phase-link"><i class="ti ti-chevrons-down"></i></div>
+     <div class="phase"><div class="phase-t"><i class="ti ti-stamp"></i>Approval phase</div>${apLevels}</div>
+     <div class="phase-link"><i class="ti ti-chevrons-down"></i></div>
+     <div class="phase"><div class="phase-t"><i class="ti ti-gavel"></i>Decision phase</div><div class="lvl"><div class="lvl-node decide"><i class="ti ti-user-check"></i>${td.decision} · final go / no-go</div></div></div>
+    </div>
+    <div class="addtrk"><span class="muted" style="font-size:12px;display:flex;align-items:center;gap:5px"><i class="ti ti-plus"></i>Add specialist track</span>
+     <select class="minisel" ${avail.length?'':'disabled'} onchange="intakeAddTrack('${s.id}',this.value)"><option value="">${avail.length?'Select a track…':'All tracks added'}</option>${avail.map(k=>`<option value="${k}">${TRACKS[k].name} · ${TRACKS[k].domain}</option>`).join('')}</select></div>
+   </div>
+   <div class="card cardp">
+    <div class="sec-h">EDIT LOG<span class="sec-sub">every change logged with reason — validate, don't configure</span></div>
+    <div class="logwrap">${logHtml}</div>
+    <div class="iactions"><button class="btn" onclick="intakeReqClose('${s.id}')"><i class="ti ti-circle-x"></i>Close — not viable</button><button class="btn prim" style="flex:1" onclick="intakeConfirm('${s.id}')"><i class="ti ti-circle-check"></i>${st.log.length?'Confirm revised workflow & activate':'Confirm as assembled · activate'}</button></div>
+   </div>
+  </section></div>`;
+};
+
+/* ---------- PIPELINE ---------- */
+function reviewersFor(d){
+ const pool=['Deepak Kulkarni','Neha Shah','Anita Mehta','Manish Gupta','Arjun Rao'];
+ const n=d.tier==='C'?3:2;
+ return pool.slice(0,n).map((nm,i)=>{let st=d.stage==='approval'?'Voted':(i<n-1?'Voted':(d.sla==='breach'?'Overdue':d.sla==='warn'?'Pending':'Voted'));
+  return {nm,st,score:st==='Voted'?Math.min(95,(d.score||70)-4+i*5):null};});
+}
+function selPipe(id){SEL.pipeline=(SEL.pipeline===id?null:id);VIEWS.pipeline();}
+function pipeDetail(s){
+ const rv=reviewersFor(s);
+ return `<div class="g c2 pipe-detail">
+   <div class="card cardp"><h3><i class="ti ti-checklist"></i>${s.stage==='approval'?'Approval':'Evaluation'} progress</h3><div class="sub">${s.title}</div>
+    <div style="margin-top:12px;display:flex;flex-direction:column;gap:9px">
+     ${rv.map(r=>`<div style="display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:11px;padding:10px"><div class="avatar" style="width:32px;height:32px;background:${_sc(r.nm)[1]}">${_sc(r.nm)[0]}</div><div style="flex:1;font-size:12.5px"><b>${r.nm}</b><br><span class="muted">${r.score?'Scored '+r.score+'/100':'Awaiting score'}</span></div>${r.st==='Voted'?'<span class="pill ok"><i class="ti ti-check"></i>Voted</span>':r.st==='Overdue'?'<span class="pill bad"><i class="ti ti-alert-triangle"></i>Overdue</span>':'<span class="pill warn"><i class="ti ti-clock"></i>Pending</span>'}</div>`).join('')}
+    </div>
+    <div style="margin-top:12px;background:var(--emerald-soft);border-radius:11px;padding:11px;font-size:12.5px;font-weight:600;color:var(--emerald);display:flex;align-items:center;gap:9px"><i class="ti ti-calculator"></i>Average score so far · ${s.score||'—'} / 100</div>
+   </div>
+   <div class="card cardp"><h3><i class="ti ti-clock-hour-4"></i>SLA & escalation</h3><div class="sub">Live countdown</div>
+    <div style="display:flex;gap:12px;margin-top:14px"><div style="flex:1;text-align:center;background:var(--surface-2);border-radius:12px;padding:14px"><div class="mono" style="font-size:22px;font-weight:700;color:${s.sla==='breach'?'var(--red)':s.sla==='warn'?'var(--amber)':'var(--ink)'}">${s.sla==='breach'?'-02:10':s.sla==='warn'?'04:12':'1d 6h'}</div><div class="muted" style="font-size:10.5px;font-weight:600">CURRENT LEVEL</div></div><div style="flex:1;text-align:center;background:var(--surface-2);border-radius:12px;padding:14px"><div class="mono" style="font-size:22px;font-weight:700">${s.tier==='C'?'5':s.tier==='B'?'3':'2'}</div><div class="muted" style="font-size:10.5px;font-weight:600">TOTAL LEVELS</div></div></div>
+    ${s.sla==='breach'?'<div style="margin-top:12px;background:var(--red-soft);border-radius:11px;padding:11px;font-size:12px;color:var(--red);font-weight:600;display:flex;align-items:center;gap:9px"><i class="ti ti-alert-triangle"></i>SLA breached — auto-escalation triggered, Dept head notified</div>':''}
+    <button class="btn block" style="margin-top:14px" onclick="event.stopPropagation();toast('Manual escalation sent to next level')"><i class="ti ti-arrow-up-right"></i>Trigger manual escalation</button>
+    <button class="btn block" style="margin-top:8px" onclick="event.stopPropagation();toast('Reminder sent to pending reviewers')"><i class="ti ti-bell"></i>Nudge pending reviewers</button>
+   </div>
+  </div>`;
+}
+VIEWS.pipeline=function(){
+ const list=IDEAS.filter(d=>['evaluation','approval'].includes(d.stage));
+ const s=IDEAS.find(d=>d.id===SEL.pipeline);
+ const slaPill={ok:'<span class="pill ok"><i class="ti ti-clock"></i>On track</span>',warn:'<span class="pill warn"><i class="ti ti-clock"></i>Due soon</span>',breach:'<span class="pill bad"><i class="ti ti-alert-triangle"></i>Breached</span>'};
+ const slaBg={ok:'var(--emerald-soft)',warn:'var(--amber-soft)',breach:'var(--red-soft)'};
+ const slaClr={ok:'var(--emerald)',warn:'var(--amber)',breach:'var(--red)'};
+ const _ord={breach:0,warn:1,ok:2};const shown=[...list].sort((a,b)=>(_ord[a.sla]??3)-(_ord[b.sla]??3)||(a.id<b.id?-1:1)).slice(0,80);
+ topbar('Pipeline & SLA monitor — '+list.length+' in flight (showing '+shown.length+', breaches first)','Monitor','');
+ document.getElementById('view').innerHTML=`
+  <div class="card" style="overflow:hidden"><table class="tbl"><thead><tr><th></th><th>ID</th><th>Idea</th><th>Dept</th><th>Stage</th><th>Tier</th><th>Score</th><th>SLA</th></tr></thead><tbody>
+   ${shown.map(d=>{const open=s&&d.id===s.id;const bg=slaBg[d.sla]||'var(--ember-soft)';return `<tr class="piperow${open?' on':''}" onclick="selPipe('${d.id}')" style="${open?'background:'+bg:''}"><td class="exptog"><i class="ti ${open?'ti-chevron-down':'ti-chevron-right'} muted" ${open?`style="color:${slaClr[d.sla]||'var(--ember)'}"`:''}></i></td><td class="mono muted">${d.id}</td><td class="tt">${d.title}</td><td class="muted">${d.dept}</td><td><span class="pill ${d.stage==='approval'?'warn':'work'}">${STLAB[d.stage]}</span></td><td><span class="tier ${d.tier}">${d.tier}</span></td><td class="mono">${d.score?d.score+'/100':'—'}</td><td>${slaPill[d.sla]||'—'}</td></tr>${open?`<tr class="exprow"><td colspan="8" onclick="event.stopPropagation()" style="background:${bg}">${pipeDetail(s)}</td></tr>`:''}`;}).join('')}
+  </tbody></table></div>`;
+};
+
+/* ---------- KANBAN ---------- */
+function selKan(id){SEL.kanban=id;VIEWS.kanban();}
+
+/* standard implementation phases for a Kaizen project (logical order) */
+const IMPL_FLOW=[
+ ['Feasibility & baseline study','Design','Priya Iyer'],
+ ['Detailed engineering & control logic','Design','Deepak Kulkarni'],
+ ['Procure equipment & spares','Procure','Rakesh Nair'],
+ ['Vendor PO approval','Procure','Vikram Saxena'],
+ ['Mounting & cabling','Install','Anita Mehta'],
+ ['Setpoint & software configuration','Install','Manish Gupta'],
+ ['Trial run & data validation','Commission','Neha Shah'],
+ ['Safety & quality sign-off','Commission','Sunita Patil'],
+ ['SOP update & operator training','Rollout','Imran Sheikh'],
+ ['30-day ROI verification','Verify','Arjun Rao']];
+const PHASECLR={Design:'#5b4ad1',Procure:'#D98A12',Install:'#2A6FE0',Commission:'#0f8a8a',Rollout:'#159468',Verify:'#EF5026'};
+const KMONTH=['10 Jun','12 Jun','14 Jun','16 Jun','18 Jun','20 Jun','23 Jun','25 Jun','27 Jun','30 Jun'];
+const KCOLS=[['todo','To do','#9B9A92'],['inprogress','In progress','#2A6FE0'],['blocked','Blocked','#D8423A'],['review','Review','#D98A12'],['done','Done','#159468']];
+const KWIP={inprogress:3};
+const KTODAY=16; /* notional "today" — mid-June */
+const KPEOPLE=Object.keys(SUBS);
+
+/* deterministic seed so each project starts with a distinct, sensible state */
+function boardFor(s){
+ const N=IMPL_FLOW.length;
+ let done=Math.round(2+((s.score-66)/20)*4);done=Math.max(2,Math.min(7,done));
+ const blocked=(s.sla==='warn'||s.sla==='breach');
+ const cols={todo:[],inprogress:[],blocked:[],review:[],done:[]};
+ IMPL_FLOW.forEach(([t,ph,who],i)=>{
+  const card={t,ph,who,due:KMONTH[i]};
+  let col;
+  if(i<done)col='done';
+  else if(i===done)col='inprogress';
+  else if(i===done+1)col=blocked?'blocked':'inprogress';
+  else if(i===done+2)col='review';
+  else col='todo';
+  if(col==='blocked')card.reason=s.cat==='ML/Digital'?'Awaiting model validation data':'Awaiting vendor quote';
+  cols[col].push(card);
+ });
+ return {cols};
+}
+/* editable, persistent per-idea board state */
+const KAN_STATE={};let TASK_SEQ=1,KDRAG=null;
+function kanState(id){
+ if(!KAN_STATE[id]){
+  const b=boardFor(IDEAS.find(d=>d.id===id));
+  const cols={todo:[],inprogress:[],blocked:[],review:[],done:[]};
+  Object.keys(b.cols).forEach(k=>b.cols[k].forEach(c=>cols[k].push({id:'T'+(TASK_SEQ++),t:c.t,ph:c.ph,who:c.who,due:c.due,reason:c.reason||''})));
+  KAN_STATE[id]={cols,adding:null};
+ }
+ return KAN_STATE[id];
+}
+function kanFind(st,tid){for(const k in st.cols){const t=st.cols[k].find(x=>x.id===tid);if(t)return t;}return null;}
+function kanAssign(id,tid,v){const t=kanFind(kanState(id),tid);if(t)t.who=v;VIEWS.kanban();}
+function kanDue(id,tid,v){const t=kanFind(kanState(id),tid);if(t)t.due=v;VIEWS.kanban();}
+function kanReason(id,tid,v){const t=kanFind(kanState(id),tid);if(t)t.reason=v;}
+function kanDel(id,tid){const st=kanState(id);for(const k in st.cols){const i=st.cols[k].findIndex(x=>x.id===tid);if(i>=0){st.cols[k].splice(i,1);break;}}VIEWS.kanban();}
+function kanDragStart(e,tid,from){KDRAG={tid,from};e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',tid)}catch(_){}}
+function kanDragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';e.currentTarget.classList.add('kdrop');}
+function kanDragLeave(e){e.currentTarget.classList.remove('kdrop');}
+function kanDrop(e,to){e.preventDefault();e.currentTarget.classList.remove('kdrop');if(!KDRAG)return;const{tid,from}=KDRAG;KDRAG=null;if(from===to)return;const st=kanState(SEL.kanban);const i=st.cols[from].findIndex(x=>x.id===tid);if(i<0)return;const[t]=st.cols[from].splice(i,1);if(to==='blocked'){if(!t.reason)t.reason='Reason pending — add detail';}else{t.reason='';}st.cols[to].push(t);VIEWS.kanban();}
+function kanAddOpen(id,col){kanState(id).adding=col;VIEWS.kanban();setTimeout(()=>{const el=document.getElementById('ktTitle');if(el)el.focus();},0);}
+function kanAddCancel(id){kanState(id).adding=null;VIEWS.kanban();}
+function kanAddSubmit(id,col){const ti=(document.getElementById('ktTitle')||{}).value||'';if(!ti.trim()){toast('Task title is required');return;}const who=(document.getElementById('ktWho')||{}).value,ph=(document.getElementById('ktPhase')||{}).value,due=(document.getElementById('ktDue')||{}).value;const st=kanState(id);st.cols[col].push({id:'T'+(TASK_SEQ++),t:ti.trim(),ph,who,due,reason:col==='blocked'?'Reason pending — add detail':''});st.adding=null;VIEWS.kanban();toast('Task added');}
+function kanExport(id){const st=kanState(id),s=IDEAS.find(d=>d.id===id);const rows=[['Column','Phase','Task','Assignee','Due','Blocker reason']];KCOLS.forEach(([k,lab])=>st.cols[k].forEach(t=>rows.push([lab,t.ph,t.t,t.who,t.due,t.reason||''])));const csv=rows.map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n');try{const blob=new Blob([csv],{type:'text/csv'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=s.id+'_board.csv';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}catch(e){}toast('Board exported as CSV');}
+
+VIEWS.kanban=function(){
+ const list=IDEAS.filter(d=>d.stage==='implementation');
+ if(!list.find(d=>d.id===SEL.kanban))SEL.kanban=list[0].id;
+ const s=IDEAS.find(d=>d.id===SEL.kanban),st=kanState(s.id),cols=st.cols;
+ const total=Object.values(cols).reduce((a,c)=>a+c.length,0),done=cols.done.length,pct=total?Math.round(done/total*100):0,blockedN=cols.blocked.length;
+ const target='30 Jun';
+ topbar('Implementation board','Implement · '+list.length+' active',`<button class="btn sm" onclick="kanExport('${s.id}')"><i class="ti ti-file-export"></i>Export CSV</button>`);
+ const av=(nm,sz)=>{const a=SUBS[nm]||['?','#888'];return `<span class="avatar" title="${nm}" style="width:${sz}px;height:${sz}px;background:${a[1]};font-size:${sz<22?8:9}px">${a[0]}</span>`;};
+ const phaseTag=ph=>`<span class="phase" style="background:${(PHASECLR[ph]||'#888')}1a;color:${PHASECLR[ph]||'#888'}">${ph}</span>`;
+ const overdue=(t,key)=>key!=='done'&&(parseInt(t.due)||31)<KTODAY;
+ const renderCard=(t,key)=>{const isB=key==='blocked',isD=key==='done',ov=overdue(t,key);
+  return `<div class="kcard ${isB?'blocked':''} ${isD?'is-done':''}" draggable="true" ondragstart="kanDragStart(event,'${t.id}','${key}')">
+    <div class="ktop">${phaseTag(t.ph)}<span class="kt-actions"><i class="ti ti-grip-vertical kgrip" title="Drag to move"></i><button class="ktx" title="Delete task" onclick="kanDel('${s.id}','${t.id}')"><i class="ti ti-x"></i></button></span></div>
+    <div class="kt">${t.t}</div>
+    ${isB?`<input class="kreason-i" value="${(t.reason||'').replace(/"/g,'&quot;')}" placeholder="Blocker reason…" onchange="kanReason('${s.id}','${t.id}',this.value)">`:''}
+    <div class="kf"><span class="kassign">${av(t.who,20)}<select class="ksel" onchange="kanAssign('${s.id}','${t.id}',this.value)">${KPEOPLE.map(p=>`<option ${p===t.who?'selected':''}>${p}</option>`).join('')}</select></span><select class="ksel xs ${ov?'over':''}" title="Due date" onchange="kanDue('${s.id}','${t.id}',this.value)">${KMONTH.map(d=>`<option ${d===t.due?'selected':''}>${d}</option>`).join('')}</select></div>
+   </div>`;};
+ const addForm=col=>`<div class="kaddform">
+   <input id="ktTitle" class="kfi" placeholder="Task title" autofocus>
+   <div class="kfrow"><select id="ktPhase" class="kfi sm">${Object.keys(PHASECLR).map(p=>`<option>${p}</option>`).join('')}</select><select id="ktDue" class="kfi sm">${KMONTH.map(d=>`<option ${d==='30 Jun'?'selected':''}>${d}</option>`).join('')}</select></div>
+   <select id="ktWho" class="kfi sm" style="margin-top:6px">${KPEOPLE.map(p=>`<option>${p}</option>`).join('')}</select>
+   <div class="kfa"><button class="btn sm" onclick="kanAddCancel('${s.id}')">Cancel</button><button class="btn prim sm" onclick="kanAddSubmit('${s.id}','${col}')"><i class="ti ti-plus"></i>Add</button></div>
+  </div>`;
+ const column=(key,label,dot)=>{const cards=cols[key],wip=KWIP[key],over=wip&&cards.length>wip,ct=wip?`${cards.length} / ${wip}`:String(cards.length),adding=st.adding===key;
+  return `<div class="kcol" ondragover="kanDragOver(event)" ondragleave="kanDragLeave(event)" ondrop="kanDrop(event,'${key}')">
+    <div class="h"><span class="hl"><span class="dot" style="background:${dot}"></span>${label}</span><span class="ct ${over?'wipover':''}" ${over?'title="WIP limit exceeded"':''}>${ct}</span></div>
+    <div class="kbody">${cards.map(t=>renderCard(t,key)).join('')}${!cards.length&&!adding?'<div class="kempty">No tasks</div>':''}${adding?addForm(key):''}</div>
+    ${adding?'':`<button class="kadd" onclick="kanAddOpen('${s.id}','${key}')"><i class="ti ti-plus"></i>Add task</button>`}
+   </div>`;};
+ const opts=list.slice(0,100).map(d=>`<option value="${d.id}" ${d.id===s.id?'selected':''}>${d.id} · ${d.title}</option>`).join('');
+ document.getElementById('view').innerHTML=`
+  <div class="card cardp impsum">
+   <div class="impsum-head">
+    <select class="idsel" onchange="selKan(this.value)">${opts}</select>
+    <span class="tier ${s.tier}">${s.tier}</span>
+    <span class="pill work">${s.dept}</span>
+    <span class="pill ${blockedN?'bad':'ok'}" style="margin-left:auto"><i class="ti ${blockedN?'ti-alert-triangle':'ti-flag'}"></i>${blockedN?blockedN+' task'+(blockedN>1?'s':'')+' blocked':'On schedule'}</span>
+   </div>
+   <div class="impsum-stats">
+    <div class="ist"><div class="il">Progress</div><div class="iv">${pct}%</div></div>
+    <div class="ist"><div class="il">Tasks done</div><div class="iv">${done}<small>/${total}</small></div></div>
+    <div class="ist"><div class="il">Owner</div><div class="iv ow">${av(s.sub,22)}<span>${s.sub}</span></div></div>
+    <div class="ist"><div class="il">Target</div><div class="iv">${target}</div></div>
+    <div class="ist"><div class="il">Est. savings</div><div class="iv">${fmtL(s.est)}<small>/yr</small></div></div>
+   </div>
+   <div class="impbar"><i style="width:${pct}%"></i></div>
+  </div>
+  <div class="kanban">${KCOLS.map(([k,l,d])=>column(k,l,d)).join('')}</div>`;
+};
+
+/* ---------- REWARDS ---------- */
+function selRew(id){SEL.rewards=id;VIEWS.rewards();}
+
+/* ---- reward logic engine (editable) ---- */
+let rewFilter='all',rulesOpen=false;
+function rewMeta(d){const seed=parseInt((d.id||'').slice(-3))||0;
+ const likes=46+(seed*7%120)+Math.round(d.score*0.6),comments=6+(seed*3%26),endorse=2+(seed%10);
+ return {likes,comments,endorse,eng:likes+comments+endorse,safety:d.cat==='Safety',sustain:['Environment','Energy'].includes(d.cat),replicable:['Energy','Maintenance','Quality'].includes(d.cat)};}
+const REWARD_RULES=[
+ {id:'fin',on:true,icon:'ti-coin-rupee',clr:'var(--emerald)',label:'High financial impact',desc:'Realized savings at or above the threshold',unit:'₹ L',th:10,test:(d,m,r)=>(d.act||0)>=r.th,why:d=>fmtL(d.act)+' realized'},
+ {id:'eng',on:true,icon:'ti-heart',clr:'var(--red)',label:'Strong engagement',desc:'Likes + comments + endorsements above the threshold',unit:'pts',th:160,test:(d,m,r)=>m.eng>=r.th,why:(d,m)=>m.eng+' likes · comments · endorsements'},
+ {id:'safe',on:true,icon:'ti-shield-check',clr:'var(--red)',label:'Safety improvement',desc:'Idea improves plant or worker safety',th:null,test:(d,m)=>m.safety,why:()=>'Improves plant / worker safety'},
+ {id:'env',on:true,icon:'ti-leaf',clr:'var(--teal)',label:'Sustainability impact',desc:'Reduces energy, water, waste or emissions',th:null,test:(d,m)=>m.sustain,why:d=>d.cat+' — resource saving'},
+ {id:'score',on:true,icon:'ti-star',clr:'var(--amber)',label:'High evaluation score',desc:'Reward score at or above the threshold',unit:'/100',th:85,test:(d,m,r)=>d.score>=r.th,why:d=>'Reward score '+d.score},
+ {id:'beat',on:true,icon:'ti-trending-up',clr:'var(--blue)',label:'Beat the estimate',desc:'Realized exceeds the estimate by at least X%',unit:'%',th:10,test:(d,m,r)=>d.act&&d.est&&((d.act-d.est)/d.est*100)>=r.th,why:d=>'Beat estimate by '+Math.round((d.act-d.est)/d.est*100)+'%'},
+ {id:'repl',on:true,icon:'ti-copy',clr:'var(--violet)',label:'Replicable across plants',desc:'Can be standardised to other units',th:null,test:(d,m)=>m.replicable,why:()=>'Replicable to other units'}];
+function rewMatches(d){const m=rewMeta(d);return REWARD_RULES.filter(r=>r.on&&r.test(d,m,r));}
+
+/* ---- reward catalog: which reward applies when aspects cross thresholds (editable) ---- */
+const REWARD_CATALOG=[
+ {id:'gold',on:true,name:'Gold Medallion',short:'Gold',kind:'Medal',icon:'ti-medal',clr:'var(--amber)',desc:'Apex recognition for outstanding, high-impact ideas',join:'all',conds:[{a:'score',op:'gte',th:85},{a:'roi',op:'gte',th:10}]},
+ {id:'silver',on:true,name:'Silver Medallion',short:'Silver',kind:'Medal',icon:'ti-medal-2',clr:'#8a9099',desc:'Strong, well-executed improvements',join:'all',conds:[{a:'score',op:'gte',th:75}]},
+ {id:'bronze',on:true,name:'Bronze Medallion',short:'Bronze',kind:'Medal',icon:'ti-award',clr:'#b87333',desc:'Solid contributions that cleared the reward bar',join:'all',conds:[{a:'score',op:'gte',th:65}]},
+ {id:'cash',on:true,name:'Cash Incentive',short:'Cash',kind:'Monetary',icon:'ti-cash',clr:'var(--emerald)',desc:'Monetary reward shared from validated savings',join:'all',conds:[{a:'roi',op:'gte',th:5}]},
+ {id:'safety',on:true,name:'Safety Champion',short:'Safety',kind:'Themed',icon:'ti-shield-check',clr:'var(--red)',desc:'For ideas that measurably improve plant or worker safety',join:'all',conds:[{a:'safety',op:'is'}]},
+ {id:'green',on:true,name:'Green Award',short:'Green',kind:'Themed',icon:'ti-leaf',clr:'var(--teal)',desc:'For energy, water, waste or emissions reduction',join:'all',conds:[{a:'sustain',op:'is'}]},
+ {id:'innov',on:true,name:'Innovation Award',short:'Innovation',kind:'Themed',icon:'ti-bulb',clr:'var(--violet)',desc:'For original, digital-first or replicable ideas',join:'all',conds:[{a:'score',op:'gte',th:80},{a:'replicable',op:'is'}]},
+ {id:'spot',on:true,name:'Spot Recognition',short:'Spot',kind:'Recognition',icon:'ti-confetti',clr:'var(--blue)',desc:'Quick recognition for highly-endorsed ideas',join:'all',conds:[{a:'eng',op:'gte',th:170}]},
+ {id:'team',on:true,name:'Team Excellence',short:'Team',kind:'Recognition',icon:'ti-users-group',clr:'#0f8a8a',desc:'For cross-department or multi-plant collaboration',join:'any',conds:[{a:'replicable',op:'is'},{a:'eng',op:'gte',th:190}]},
+ {id:'cert',on:true,name:'Certificate of Appreciation',short:'Certificate',kind:'Recognition',icon:'ti-certificate',clr:'#7a7a72',desc:'Baseline acknowledgement for every implemented idea',join:'all',conds:[]}];
+const REWCOND={score:['Reward score','/100'],roi:['Realized savings','₹ L'],eng:['Engagement','pts'],variance:['Beat estimate','%'],safety:['Safety flag',''],sustain:['Sustainability flag',''],replicable:['Replicable flag','']};
+function rewAspect(d,a){const m=rewMeta(d);return {score:d.score,roi:(d.act||0),eng:m.eng,variance:(d.act&&d.est?((d.act-d.est)/d.est*100):0),safety:m.safety,sustain:m.sustain,replicable:m.replicable}[a];}
+function rewardApplies(d,r){if(!r.conds.length)return true;const res=r.conds.map(c=>c.op==='is'?!!rewAspect(d,c.a):rewAspect(d,c.a)>=c.th);return r.join==='any'?res.some(Boolean):res.every(Boolean);}
+function applicableRewards(d){const all=REWARD_CATALOG.filter(r=>r.on&&rewardApplies(d,r));const medals=all.filter(r=>r.kind==='Medal'),rest=all.filter(r=>r.kind!=='Medal');return medals.length?[medals[0]].concat(rest):rest;}
+function topReward(d){return applicableRewards(d)[0]||null;}
+function toggleReward(id){const r=REWARD_CATALOG.find(x=>x.id===id);if(r)r.on=!r.on;VIEWS.rewards();}
+function editCond(id,i,v){const r=REWARD_CATALOG.find(x=>x.id===id);if(r&&r.conds[i]){const n=parseFloat(v);if(!isNaN(n))r.conds[i].th=n;}VIEWS.rewards();}
+function nominateReward(id,rid){const r=REWARD_CATALOG.find(x=>x.id===rid);toast('Nominated '+id+' for '+(r?r.name:'reward')+' — submitted to HR / Payroll');}
+function rewardCatalogHtml(){
+ const condChip=(r,c,i)=>{const lab=REWCOND[c.a]?REWCOND[c.a][0]:c.a,unit=REWCOND[c.a]?REWCOND[c.a][1]:'';
+  return c.op==='is'?`<span class="condchip"><i class="ti ti-check"></i>${lab}</span>`:`<span class="condchip">${lab} ≥ <input type="number" step="0.1" class="thin xs" value="${c.th}" onchange="editCond('${r.id}',${i},this.value)" ${r.on?'':'disabled'}>${unit}</span>`;};
+ return `<div class="card cardp">
+  <div class="cardhead"><div><h3><i class="ti ti-gift"></i>Reward catalog</h3><div class="sub">Each reward becomes applicable when an idea meets its conditions · edit thresholds or turn a reward on / off</div></div></div>
+  <div class="rulelist">${REWARD_CATALOG.map(r=>`<div class="rule ${r.on?'':'off'}"><button class="switch ${r.on?'on':''}" onclick="toggleReward('${r.id}')"><span></span></button><span class="cric" style="background:${r.clr}1a;color:${r.clr}"><i class="ti ${r.icon}"></i></span><div class="rule-txt"><b>${r.name} <span class="rkind">${r.kind}</span></b><span class="muted">${r.desc}</span><div class="condrow">${r.conds.length?r.conds.map((c,i)=>condChip(r,c,i)).join(`<span class="condjoin">${r.join==='any'?'OR':'AND'}</span>`):'<span class="condchip none"><i class="ti ti-circle-check"></i>Applies to every implemented idea</span>'}</div></div></div>`).join('')}</div>
+ </div>`;}
+function toggleRules(){rulesOpen=!rulesOpen;VIEWS.rewards();}
+function setRewFilter(f){rewFilter=f;VIEWS.rewards();}
+function toggleRule(id){const r=REWARD_RULES.find(x=>x.id===id);if(r)r.on=!r.on;VIEWS.rewards();}
+function editRule(id,v){const r=REWARD_RULES.find(x=>x.id===id);if(r){const n=parseFloat(v);if(!isNaN(n))r.th=n;}VIEWS.rewards();}
+function roiValidate(id){const el=document.getElementById('roiInput'),v=parseFloat(el?el.value:'');if(isNaN(v)||v<0){toast('Enter a valid realized amount (₹ lakh)');return;}IDEAS.find(x=>x.id===id).act=v;toast('Realized ROI saved — variance recalculated, Finance notified');renderNav();VIEWS.rewards();}
+function nominate(id){toast('Nominated '+id+' — submitted to HR / Payroll');}
+function publishStory(id){const d=IDEAS.find(x=>x.id===id);if(d.act==null){toast('Enter realized ROI before publishing');return;}PUBLISHED.add(id);toast('Published as success story — now live in the employee feed');}
+function rstat(ic,label,val,clr){return `<div class="rstat"><div class="ic" ${clr?`style="color:${clr};background:${clr.replace('var(--','var(--').replace(')','')}-soft, var(--surface-2))"`:''}><i class="ti ${ic}"></i></div><div><div class="rs-v" ${clr?`style="color:${clr}"`:''}>${val}</div><div class="rs-l">${label}</div></div></div>`;}
+function rulesEditorHtml(){const suggN=IDEAS.filter(d=>d.stage==='done'&&rewMatches(d).length>0).length;
+ return `<div class="card cardp">
+  <div class="cardhead"><div><h3><i class="ti ti-adjustments"></i>Suggestion rules</h3><div class="sub">What flags an idea for the manager to review · an idea is suggested when it satisfies any enabled rule</div></div><button class="btn sm" onclick="toggleRules()"><i class="ti ti-check"></i>Done</button></div>
+  <div class="rulelist">${REWARD_RULES.map(r=>`<div class="rule ${r.on?'':'off'}"><button class="switch ${r.on?'on':''}" onclick="toggleRule('${r.id}')"><span></span></button><span class="cric" style="background:${r.clr}1a;color:${r.clr}"><i class="ti ${r.icon}"></i></span><div class="rule-txt"><b>${r.label}</b><span class="muted">${r.desc}</span></div>${r.th!=null?`<div class="rule-th">≥ <input type="number" step="0.1" class="thin" value="${r.th}" onchange="editRule('${r.id}',this.value)" ${r.on?'':'disabled'}><span class="muted">${r.unit||''}</span></div>`:`<span class="rule-th muted" style="font-size:11px">qualitative</span>`}</div>`).join('')}</div>
+  <div class="rulenote"><i class="ti ti-bulb"></i>An idea is auto-suggested when it satisfies <b>any</b> enabled rule. Right now <b>${suggN}</b> implemented idea${suggN===1?'':'s'} qualif${suggN===1?'ies':'y'}.</div>
+ </div>`;}
+
+VIEWS.rewards=function(){
+ const list=IDEAS.filter(d=>d.stage==='done');
+ const implN=list.length,roiReal=sum(list,d=>d.act),pendN=list.filter(d=>d.act==null).length,suggN=list.filter(d=>rewMatches(d).length>0).length;
+ topbar('Rewards & ROI','Recognise impact',`<button class="btn sm ${rulesOpen?'prim':''}" onclick="toggleRules()"><i class="ti ti-adjustments"></i>Reward logic</button>`);
+ const statStrip=`<div class="rew-stats">${rstat('ti-rosette','Implemented',implN,'')}${rstat('ti-coin-rupee','ROI realized',fmtL(roiReal),'var(--emerald)')}${rstat('ti-clock-pause','ROI pending',pendN,pendN?'var(--amber)':'')}${rstat('ti-sparkles','Suggested for reward',suggN,'var(--ember)')}</div>`;
+ if(rulesOpen){document.getElementById('view').innerHTML=`<div class="rew-wrap">${statStrip}${rulesEditorHtml()}${rewardCatalogHtml()}</div>`;return;}
+ let fl=list;
+ if(rewFilter==='suggested')fl=list.filter(d=>rewMatches(d).length>0);
+ else if(rewFilter==='pending')fl=list.filter(d=>d.act==null);
+ if(!fl.length)fl=list;
+ if(!fl.find(d=>d.id===SEL.rewards))SEL.rewards=fl[0].id;
+ const s=IDEAS.find(d=>d.id===SEL.rewards),m=rewMeta(s),matches=rewMatches(s);
+ const tier=rewardTier(s.score),tclr={Gold:'var(--amber)',Silver:'#9aa0a6',Award:'var(--violet)',None:'var(--muted)'}[tier];
+ const cr=[['Savings impact',Math.round(s.score*.34),30],['Replicability',Math.round(s.score*.24),25],['Effort & originality',Math.round(s.score*.28),30],['Safety / quality',Math.round(s.score*.14),15]];
+ const variance=s.act!=null&&s.est?Math.round((s.act-s.est)/s.est*100):null;
+ const listItems=fl.slice(0,30).map(d=>{const t=rewardTier(d.score),mm=rewMatches(d),pend=d.act==null,tr=topReward(d);
+   return `<div class="qitem rewitem" onclick="selRew('${d.id}')" style="${d.id===s.id?'border-color:var(--ember);background:var(--ember-soft)':''}"><div class="meta"><b>${d.title}</b><span>${d.dept} · ${pend?'<b style=\"color:var(--amber)\">ROI pending</b>':fmtL(d.act)+' realized'}</span></div><div class="rew-badges">${mm.length?`<span class="pill ember sm" title="${mm.length} reward rule(s) matched"><i class="ti ti-sparkles"></i>${mm.length}</span>`:''}${tr?`<span class="pill sm" style="background:${tr.clr}1a;color:${tr.clr}"><i class="ti ${tr.icon}"></i>${tr.short}</span>`:''}</div></div>`;}).join('');
+ document.getElementById('view').innerHTML=`<div class="rew-wrap">${statStrip}
+  <div class="g wr">
+   <div class="card cardp"><h3><i class="ti ti-award"></i>Implemented ideas</h3><div class="sub">Validate ROI · review for reward</div>
+    <div class="seg sm rewseg" style="margin:12px 0 10px">${[['all','All'],['suggested','Suggested'],['pending','ROI pending']].map(f=>`<button class="${rewFilter===f[0]?'on':''}" onclick="setRewFilter('${f[0]}')">${f[1]}</button>`).join('')}</div>
+    <div>${listItems||'<div class="muted" style="font-size:12px;padding:14px 0;text-align:center">None in this filter</div>'}</div>
+   </div>
+   <div class="card cardp">
+    <div style="display:flex;align-items:center;gap:10px"><span class="tag mono">${s.id}</span><b style="font-size:15px">${s.title}</b>${(()=>{const tr=topReward(s);return tr?`<span class="pill" style="margin-left:auto;background:${tr.clr}1a;color:${tr.clr}"><i class="ti ${tr.icon}"></i>${tr.short}</span>`:`<span class="pill muted" style="margin-left:auto">No reward</span>`;})()}</div>
+    <h3 style="margin-top:16px"><i class="ti ti-target-arrow"></i>ROI validation</h3>
+    <div class="g c2" style="margin-top:12px">
+     <div style="background:var(--surface-2);border-radius:13px;padding:15px"><div class="muted" style="font-size:11px;font-weight:600">ESTIMATED</div><div class="mono" style="font-size:24px;font-weight:700;margin-top:4px">${fmtL(s.est)}</div></div>
+     <div style="background:var(--emerald-soft);border-radius:13px;padding:15px"><div style="font-size:11px;font-weight:600;color:var(--emerald)">REALIZED${s.act==null?' · ENTER':''}</div><div style="display:flex;align-items:center;gap:6px;margin-top:6px">₹<input id="roiInput" class="roi-i" type="number" step="0.1" min="0" value="${s.act!=null?s.act:''}" placeholder="0.0"><span class="muted" style="font-size:11px">L/yr</span><button class="btn prim sm" style="margin-left:auto" onclick="roiValidate('${s.id}')"><i class="ti ti-check"></i>${s.act!=null?'Update':'Validate'}</button></div></div>
+    </div>
+    ${variance!=null?`<div style="margin-top:11px;background:var(--surface-2);border-radius:11px;padding:10px 12px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:9px"><i class="ti ti-trending-up" style="color:${variance>=0?'var(--emerald)':'var(--red)'}"></i>${variance>=0?'+':''}${variance}% vs estimate · variance verified by Finance</div>`:`<div style="margin-top:11px;background:var(--amber-soft);border-radius:11px;padding:10px 12px;font-size:12.5px;font-weight:600;color:var(--amber);display:flex;align-items:center;gap:9px"><i class="ti ti-clock-pause"></i>Realized ROI not yet entered — enter it above to validate this idea</div>`}
+    <hr class="sep"/>
+    <h3><i class="ti ti-sparkles"></i>Reward suggestion</h3>
+    ${matches.length?`<div class="sugbar"><i class="ti ti-bell-ringing"></i>Auto-flagged — matched <b>${matches.length}</b> reward rule${matches.length>1?'s':''}. Review and publish as a success story.</div><div class="critlist">${matches.map(r=>`<div class="critrow"><span class="cric" style="background:${r.clr}1a;color:${r.clr}"><i class="ti ${r.icon}"></i></span><div><b>${r.label}</b><span class="muted"> · ${r.why(s,m,r)}</span></div></div>`).join('')}</div>`:`<div class="muted" style="font-size:12.5px;padding:6px 0">Not currently flagged — matched 0 active reward rules. You can still review and publish manually, or adjust the reward logic.</div>`}
+    <div class="engrow"><span><i class="ti ti-heart"></i>${m.likes} likes</span><span><i class="ti ti-message-circle"></i>${m.comments} comments</span><span><i class="ti ti-thumb-up"></i>${m.endorse} endorsements</span></div>
+    <hr class="sep"/>
+    <h3><i class="ti ti-list-numbers"></i>Reward score · ${s.score}/100</h3>
+    <div style="margin-top:11px;display:flex;flex-direction:column;gap:9px">${cr.map((c,i)=>`<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>${c[0]}</span><span class="mono">${c[1]} / ${c[2]}</span></div><div class="bar"><i style="width:${c[1]/c[2]*100}%;background:${['#159468','#2A6FE0','#D98A12','#5b4ad1'][i]}"></i></div></div>`).join('')}</div>
+    <hr class="sep"/>
+    <h3><i class="ti ti-gift"></i>Applicable rewards <span class="sub" style="font-weight:500;text-transform:none">from the reward catalog</span></h3>
+    <div class="rcards">${applicableRewards(s).map(r=>`<div class="rcard"><span class="cric" style="background:${r.clr}1a;color:${r.clr}"><i class="ti ${r.icon}"></i></span><div class="rc-t"><b>${r.name}</b><span class="muted">${r.kind}</span></div><button class="btn sm" onclick="nominateReward('${s.id}','${r.id}')"><i class="ti ti-send"></i>Nominate</button></div>`).join('')}</div>
+    <button class="btn prim block" style="margin-top:14px" onclick="publishStory('${s.id}')"><i class="ti ti-broadcast"></i>Publish as success story</button>
+   </div>
+  </div></div>`;
+};
+
+/* ---------- STORIES ---------- */
+const PUBLISHED=new Set();
+['Vision check for label alignment','Counter-current wash-water recycling','Cooling-tower fan VFD retrofit','Steam-trap audit & replacement','Auto shut-off on idle conveyor line 3'].forEach(t=>{const d=IDEAS.find(x=>x.title===t);if(d)PUBLISHED.add(d.id);});
+let storyMode='list';
+function storyOpen(id){SEL.stories=id;storyMode='compose';VIEWS.stories();}
+function storyBack(){storyMode='list';VIEWS.stories();}
+function publishCurrentStory(id){const d=IDEAS.find(x=>x.id===id);if(d.act==null){toast('Enter realized ROI in Rewards & ROI before publishing');return;}if(PUBLISHED.has(d.id)){toast('Already live — story updated in the employee feed');return;}PUBLISHED.add(d.id);toast('Published plant-wide — now live in the employee feed');VIEWS.stories();}
+function storyStatusPill(d){return PUBLISHED.has(d.id)?'<span class="pill ok sm"><i class="ti ti-broadcast"></i>Live</span>':d.act==null?'<span class="pill warn sm"><i class="ti ti-clock-pause"></i>ROI pending</span>':'<span class="pill muted sm"><i class="ti ti-pencil"></i>Draft</span>';}
+VIEWS.stories=function(){
+ const done=IDEAS.filter(d=>d.stage==='done');
+ const pubIdeas=done.filter(d=>PUBLISHED.has(d.id));
+ const readyN=done.filter(d=>!PUBLISHED.has(d.id)&&d.act!=null).length,pendN=done.filter(d=>d.act==null).length;
+ topbar('Success stories','Close the loop','');
+ const rank=d=>PUBLISHED.has(d.id)?1:(d.act==null?2:0); /* drafts ready first, then live, then pending */
+ const ordered=[...done].sort((a,b)=>rank(a)-rank(b)||(b.act||0)-(a.act||0));
+ const pubGrid=`<div class="card cardp"><h3><i class="ti ti-speakerphone"></i>Published stories</h3><div class="sub">${pubIdeas.length} live across all plants</div>
+   ${pubIdeas.length?`<div class="g c2" style="margin-top:14px">${pubIdeas.map(d=>{const tr=topReward(d);return `<div onclick="storyOpen('${d.id}')" style="border:1px solid ${storyMode==='compose'&&d.id===SEL.stories?'var(--ember)':'var(--line)'};border-radius:13px;overflow:hidden;cursor:pointer"><div style="height:74px;background:linear-gradient(135deg,${d.clr},#0f6e54);display:flex;align-items:flex-end;padding:11px;color:#fff;font-weight:600;font-size:12.5px;font-family:var(--disp);line-height:1.2">${d.title}</div><div style="padding:11px"><div style="display:flex;align-items:center;justify-content:space-between"><span class="mono" style="font-weight:700;color:var(--emerald)">${fmtL(d.act)}</span>${tr?`<span class="pill sm" style="background:${tr.clr}1a;color:${tr.clr}"><i class="ti ${tr.icon}"></i>${tr.short}</span>`:''}</div><div class="muted" style="font-size:11px;margin-top:6px">${d.sub} · ${d.plant}</div></div></div>`;}).join('')}</div>`:'<div class="muted" style="font-size:12px;padding:16px 0;text-align:center">No stories published yet — pick an idea on the left.</div>'}
+  </div>`;
+
+ if(storyMode==='list'){
+  document.getElementById('view').innerHTML=`<div class="g wr">
+   <div class="card cardp"><h3><i class="ti ti-pencil"></i>Compose &amp; publish</h3><div class="sub">Pick an implemented idea to feature it as a success story in the employee feed</div>
+    <div class="storymeta">${done.length} implemented${readyN?` · <b>${readyN}</b> ready to publish`:''}${pendN?` · ${pendN} awaiting ROI`:''}</div>
+    <div class="storylist">${ordered.slice(0,30).map(d=>{const tr=topReward(d),pend=d.act==null;return `<div class="qitem storyli" onclick="storyOpen('${d.id}')"><div class="avatar" style="width:32px;height:32px;background:${d.clr};font-size:11px">${d.init}</div><div class="meta"><b>${d.title}</b><span>${d.dept} · ${d.plant} · ${pend?'<b style=\\"color:var(--amber)\\">ROI pending</b>':fmtL(d.act)+' realized'}</span></div><div class="storyli-r">${tr&&!pend?`<span class="pill sm" style="background:${tr.clr}1a;color:${tr.clr}"><i class="ti ${tr.icon}"></i>${tr.short}</span>`:''}${storyStatusPill(d)}<i class="ti ti-chevron-right chev"></i></div></div>`;}).join('')}</div>
+   </div>
+   ${pubGrid}
+  </div>`;
+  return;
+ }
+
+ /* compose mode */
+ if(!done.find(d=>d.id===SEL.stories))SEL.stories=done[0].id;
+ const s=IDEAS.find(d=>d.id===SEL.stories),pending=s.act==null,live=PUBLISHED.has(s.id);
+ const pubBtn=pending
+   ?`<button class="btn block" style="margin-top:12px;opacity:.7" onclick="publishCurrentStory('${s.id}')"><i class="ti ti-lock"></i>Enter ROI in Rewards &amp; ROI to publish</button>`
+   :live
+   ?`<button class="btn block" style="margin-top:12px" onclick="publishCurrentStory('${s.id}')"><i class="ti ti-refresh"></i>Already live · update story</button>`
+   :`<button class="btn prim block" style="margin-top:12px" onclick="publishCurrentStory('${s.id}')"><i class="ti ti-broadcast"></i>Publish plant-wide</button>`;
+ document.getElementById('view').innerHTML=`<div class="g wr">
+  <div class="card cardp">
+   <button class="backlink" onclick="storyBack()"><i class="ti ti-arrow-left"></i>All implemented ideas</button>
+   <div class="storyhead"><span class="tag mono">${s.id}</span><h3 style="margin:0"><i class="ti ti-pencil"></i>${s.title}</h3>${storyStatusPill(s)}</div>
+   <div class="muted" style="font-size:11.5px;margin:2px 0 14px">${s.dept} · ${s.plant} · by ${s.sub} · ${pending?'<b style="color:var(--amber)">realized ROI not entered</b>':fmtL(s.act)+' realized'}</div>
+   <div class="field"><label>Headline</label><input class="input" value="${s.title}${pending?'':` saves ${fmtL(s.act)} a year`}"></div>
+   <div class="g c2"><div class="field"><label>Audience</label><div class="chips"><button class="on">Plant-wide</button><button>Cross-plant</button></div></div><div class="field"><label>Verified savings</label><input class="input mono" value="${pending?'ROI pending':fmtL(s.act)+' / yr'}"></div></div>
+   <div style="border:1px solid var(--line);border-radius:13px;overflow:hidden;margin-top:6px">
+    <div class="qitem" style="margin:0;border:none;border-radius:0;cursor:default"><div class="avatar" style="width:36px;height:36px;background:${s.clr}">${s.init}</div><div class="meta"><b>${s.sub}</b><span>${s.dept} · ${s.plant} · ${live?'published':'preview'}</span></div><span class="pill ok"><i class="ti ti-circle-check"></i>Implemented</span></div>
+    <div style="display:flex;gap:8px;padding:0 14px"><div style="flex:1;height:74px;border-radius:10px;background:linear-gradient(150deg,${s.clr},#0f6e54)"></div><div style="flex:1;height:74px;border-radius:10px;background:linear-gradient(150deg,#1fae7d,#0f7d54)"></div></div>
+    <div style="padding:12px 14px"><div style="font-family:var(--disp);font-weight:600;margin-bottom:8px">${s.title}</div>${pending?`<div style="background:var(--amber-soft);color:var(--amber);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:600"><i class="ti ti-clock-pause"></i> Realized ROI not yet validated</div>`:`<div style="background:var(--emerald-soft);color:var(--emerald);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:600"><i class="ti ti-trending-up"></i> ${fmtL(s.act)} / yr saved · verified</div>`}</div>
+   </div>
+   ${pubBtn}
+  </div>
+  ${pubGrid}
+ </div>`;
+};
+
+/* ---------- GROUPS (reviewer registry behind the workflow tracks) ---------- */
+const GROUPS=[
+ {key:'technical',track:'technical',name:'Technical & feasibility',phase:'eval',lead:'Deepak Kulkarni',members:['Deepak Kulkarni','Anita Mehta','Rakesh Nair'],depts:['All plants'],tiers:['A','B','C'],sla:2,note:'Always present on every workflow (core feasibility)'},
+ {key:'safety',track:'safety',name:'Safety / EHS',phase:'eval',lead:'Sunita Patil',members:['Sunita Patil','Imran Sheikh'],depts:['All plants'],tiers:['A','B','C'],sla:2,note:'Auto-added when an idea is flagged Safety'},
+ {key:'environment',track:'environment',name:'Environmental',phase:'eval',lead:'Imran Sheikh',members:['Imran Sheikh','Kavita Joshi'],depts:['All plants'],tiers:['B','C'],sla:2,note:'Auto-added for emissions / waste / water impact'},
+ {key:'quality',track:'quality',name:'Quality / ISO',phase:'eval',lead:'Manish Gupta',members:['Manish Gupta','Neha Shah'],depts:['All plants'],tiers:['A','B','C'],sla:2},
+ {key:'digital',track:'digital',name:'IT / OT / Digital',phase:'eval',lead:'Priya Iyer',members:['Priya Iyer','Manish Gupta'],depts:['All plants'],tiers:['B','C'],sla:3,note:'Auto-added when an idea is tagged ML / Digital'},
+ {key:'equipment',track:'equipment',name:'Machine / Equipment',phase:'eval',lead:'Rakesh Nair',members:['Rakesh Nair','Anita Mehta'],depts:['All plants'],tiers:['B','C'],sla:2},
+ {key:'finance',track:'finance',name:'Finance',phase:'both',lead:'Vikram Saxena',members:['Vikram Saxena','Arjun Rao'],depts:['All plants'],tiers:['A','B','C'],sla:1,note:'Evaluates cost estimate, then releases budget at approval'},
+ {key:'compliance',track:'compliance',name:'Compliance / Legal',phase:'both',lead:'Neha Shah',members:['Neha Shah'],depts:['All plants'],tiers:['C'],sla:2,note:'Single reviewer — add a backup to remove the SLA risk'},
+ {key:'operations',track:'operations',name:'Operations / Production',phase:'appr',lead:'Anita Mehta',members:['Anita Mehta','Suresh Menon'],depts:['All plants'],tiers:['B','C'],sla:1},
+ {key:'hr',track:'hr',name:'HR / People',phase:'appr',lead:'Kavita Joshi',members:['Kavita Joshi'],depts:['All plants'],tiers:['C'],sla:2,note:'Single reviewer — add a backup to remove the SLA risk'},
+ {key:'procurement',track:'procurement',name:'Procurement / SCM',phase:'appr',lead:'Arjun Rao',members:['Arjun Rao','Rakesh Nair'],depts:['All plants'],tiers:['B','C'],sla:2},
+ {key:'commercial',track:'commercial',name:'Commercial',phase:'appr',lead:'Suresh Menon',members:['Suresh Menon'],depts:['All plants'],tiers:['C'],sla:3,note:'Single reviewer — add a backup to remove the SLA risk'},
+ {key:'plantci',track:null,name:'Plant CI Head',phase:'decision',lead:'Vikram Saxena',members:['Vikram Saxena'],depts:['All departments'],tiers:['A','B','C'],sla:1,note:'Final go / no-go authority · capex < ₹2 L'},
+ {key:'buhead',track:null,name:'Business-Unit Head',phase:'decision',lead:'Kavita Joshi',members:['Kavita Joshi'],depts:['All departments'],tiers:['C'],sla:2,note:'Second approval · capex ≥ ₹2 L'}];
+const GPHASE={eval:['work','ti-checklist','Evaluation'],appr:['warn','ti-stamp','Approval'],both:['violet','ti-arrows-shuffle','Eval + Approval'],decision:['ember','ti-gavel','Decision authority']};
+let GSEL=0;
+/* _sc moved to top (live-data loader needs it) */
+const _fn=m=>m.split(' ')[0];
+function gsel(i){GSEL=i;clearCharts();VIEWS.groups();}
+function gLoad(g){const ev=IDEAS.filter(d=>d.stage==='evaluation').length,ap=IDEAS.filter(d=>d.stage==='approval').length;return g.phase==='eval'?ev:(g.phase==='appr'||g.phase==='decision')?ap:g.phase==='both'?ev+ap:0;}
+function gHealth(g){const n=g.members.length;return n===0?['bad','Uncovered']:n===1?['warn','Thin']:['ok','Healthy'];}
+function gAddMember(i,name){if(!name)return;const g=GROUPS[i];if(g.members.includes(name))return;g.members.push(name);toast(name+' added to '+g.name);VIEWS.groups();}
+function gRemoveMember(i,name){const g=GROUPS[i];if(g.members.length<=1){toast('A group needs at least one reviewer');return;}g.members=g.members.filter(m=>m!==name);if(g.lead===name)g.lead=g.members[0];toast(name+' removed from '+g.name+' — logged');VIEWS.groups();}
+function gSetLead(i,name){GROUPS[i].lead=name;toast(_fn(name)+' is now the lead of '+GROUPS[i].name);VIEWS.groups();}
+function gSetSLA(i,v){GROUPS[i].sla=+v;VIEWS.groups();}
+/* linkage used by the intake workflow assembly */
+function trackGroup(key){return GROUPS.find(g=>g.track===key);}
+function reviewersForTrack(key){const g=trackGroup(key);if(!g||!g.members.length)return Object.keys(SUBS);return [g.lead].concat(g.members.filter(m=>m!==g.lead));}
+function leadForTrack(key){const g=trackGroup(key);return g?g.lead:(TRACKS[key]?TRACKS[key].lead:Object.keys(SUBS)[0]);}
+
+VIEWS.groups=function(){
+ const reviewers=[...new Set(GROUPS.flatMap(g=>g.members))];
+ const tkeys=Object.keys(TRACKS);
+ const covered=tkeys.filter(k=>{const g=trackGroup(k);return g&&g.members.length;}).length;
+ const thin=tkeys.filter(k=>{const g=trackGroup(k);return g&&g.members.length===1;}).length;
+ const g=GROUPS[GSEL],pm=GPHASE[g.phase],hh=gHealth(g);
+ topbar('Evaluator & approver groups','Reviewer registry · '+GROUPS.length+' groups',`<button class="btn sm" onclick="toast('New group — name it, set phase, the track it serves, members & SLA')"><i class="ti ti-plus"></i>New group</button>`);
+ const k=(ic,clr,l,v)=>`<div class="kpi"><div class="ic" style="background:${clr}22;color:${clr}"><i class="ti ${ic}"></i></div><div class="lab">${l}</div><div class="val">${v}</div></div>`;
+ const hdot=h=>`<span class="hdot" style="background:var(--${h[0]==='ok'?'emerald':h[0]==='warn'?'amber':'red'})" title="${h[1]}"></span>`;
+ const litem=gg=>{const i=GROUPS.indexOf(gg),p=GPHASE[gg.phase],h=gHealth(gg);return `<div class="qitem" onclick="gsel(${i})" style="${i===GSEL?'border-color:var(--ember);background:var(--ember-soft)':''}"><span class="pill ${p[0]}"><i class="ti ${p[1]}"></i></span><div class="meta"><b>${gg.name}</b><span>Lead ${_fn(gg.lead)} · ${gg.members.length} member${gg.members.length>1?'s':''} · ${gLoad(gg)} active</span></div>${hdot(h)}<i class="ti ti-chevron-right muted"></i></div>`;};
+ const sect=(t,arr)=>arr.length?`<div style="font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--muted-2);margin:14px 4px 8px">${t}</div>${arr.map(litem).join('')}`:'';
+ const members=g.members.map(m=>{const isLead=m===g.lead,homeTrack=tkeys.find(tk=>TRACKS[tk].lead===m),home=homeTrack?TRACKS[homeTrack].domain:((IDEAS.find(d=>d.sub===m)||{}).dept||'Reviewer'),active=(m.length+g.depts.length)%4,ta=(1+m.length%3)+'.'+(m.charCodeAt(1)%9)+'d';
+   return `<tr style="cursor:default"><td><div style="display:flex;align-items:center;gap:9px"><div class="avatar" style="width:30px;height:30px;background:${_sc(m)[1]}">${_sc(m)[0]}</div><div><b>${m}</b><br><span class="muted" style="font-size:11px">${home}</span></div></div></td><td>${isLead?'<span class="pill ember sm"><i class="ti ti-star"></i>Lead</span>':`<button class="btn sm" onclick="gSetLead(${GSEL},'${m}')"><i class="ti ti-star"></i>Make lead</button>`}</td><td><span class="pill ${active?'work':'muted'} sm">${active} active</span></td><td class="muted">${ta}</td><td style="text-align:right">${g.members.length>1?`<button class="btn sm" onclick="gRemoveMember(${GSEL},'${m}')" title="Remove"><i class="ti ti-user-minus"></i></button>`:'<span class="muted" style="font-size:11px">last member</span>'}</td></tr>`;}).join('');
+ const avail=Object.keys(SUBS).filter(n=>!g.members.includes(n));
+ const trackChip=g.track?`<span class="tag" style="background:${TRACKS[g.track].clr}1a;color:${TRACKS[g.track].clr};border-color:${TRACKS[g.track].clr}55">${TRACKS[g.track].name} · ${TRACKS[g.track].domain}</span>`:'<span class="tag">Decision / approval node</span>';
+ const detail=`<div class="card cardp"><div style="display:flex;align-items:center;gap:11px;flex-wrap:wrap"><span class="pill ${pm[0]}"><i class="ti ${pm[1]}"></i>${pm[2]}</span><h3 style="font-size:16px;margin:0">${g.name}</h3><span style="margin-left:auto" class="pill ${hh[0]}"><i class="ti ${hh[0]==='ok'?'ti-circle-check':hh[0]==='warn'?'ti-alert-triangle':'ti-x'}"></i>${hh[1]}</span></div>
+   ${g.note?`<div style="margin-top:10px;font-size:12.5px;color:var(--muted)"><i class="ti ti-info-circle"></i> ${g.note}</div>`:''}
+   <div class="g c2" style="margin-top:14px;gap:14px"><div><div style="font-size:10.5px;font-weight:700;color:var(--muted-2);letter-spacing:.05em;margin-bottom:7px">SERVES WORKFLOW TRACK</div><div class="chips" style="display:flex;flex-wrap:wrap;gap:6px">${trackChip}</div></div>
+    <div><div style="font-size:10.5px;font-weight:700;color:var(--muted-2);letter-spacing:.05em;margin-bottom:7px">USED IN TIERS</div><div style="display:flex;gap:6px">${g.tiers.map(t=>`<span class="tier ${t}">Tier ${t}</span>`).join('')}</div></div></div>
+   <div style="display:flex;gap:10px;margin-top:14px">
+    <div style="flex:1;background:var(--surface-2);border-radius:11px;padding:11px;text-align:center"><div class="mono" style="font-weight:700;font-size:18px">${g.members.length}</div><div class="muted" style="font-size:10px;font-weight:600">REVIEWERS</div></div>
+    <div style="flex:1;background:var(--surface-2);border-radius:11px;padding:11px;text-align:center"><div class="mono" style="font-weight:700;font-size:18px;color:var(--ember)">${gLoad(g)}</div><div class="muted" style="font-size:10px;font-weight:600">ACTIVE IDEAS</div></div>
+    <div style="flex:1;background:var(--surface-2);border-radius:11px;padding:11px;text-align:center"><div style="display:flex;align-items:center;justify-content:center;gap:5px"><span class="mono" style="font-weight:700;font-size:18px">SLA</span><select class="tsel" onchange="gSetSLA(${GSEL},this.value)">${[1,2,3,5].map(dd=>`<option ${g.sla===dd?'selected':''} value="${dd}">${dd}d</option>`).join('')}</select></div><div class="muted" style="font-size:10px;font-weight:600">TURNAROUND TARGET</div></div></div>
+   <hr class="sep"/>
+   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><h3 style="margin:0"><i class="ti ti-users"></i>Reviewers</h3></div>
+   <table class="tbl"><thead><tr><th>Member</th><th>Role</th><th>Active</th><th>Avg turnaround</th><th></th></tr></thead><tbody>${members}</tbody></table>
+   <div class="addtrk" style="margin-top:12px;padding-top:12px"><span class="muted" style="font-size:12px;display:flex;align-items:center;gap:5px"><i class="ti ti-user-plus"></i>Add a reviewer to this group</span><select class="minisel" ${avail.length?'':'disabled'} onchange="gAddMember(${GSEL},this.value)"><option value="">${avail.length?'Select a person…':'Everyone added'}</option>${avail.map(n=>`<option>${n}</option>`).join('')}</select></div>
+   <div style="margin-top:16px"><div style="font-size:10.5px;font-weight:700;color:var(--muted-2);letter-spacing:.05em;margin-bottom:8px">WORKLOAD · IDEAS REVIEWED</div><div class="chartbox sm"><canvas id="gWork"></canvas></div></div>
+  </div>`;
+ const covRow=key=>{const gg=trackGroup(key),t=TRACKS[key],h=gg?gHealth(gg):['bad','Uncovered'];return `<div class="covrow" style="border-left:3px solid ${t.clr}" ${gg?`onclick="gsel(${GROUPS.indexOf(gg)})"`:''}><div class="cov-t"><b>${t.name}</b><span class="muted">${gg?'→ '+gg.name+' · lead '+_fn(gg.lead):'No group assigned'}</span></div><span class="covm">${gg?gg.members.length:0} rev</span><span class="pill ${h[0]} sm"><i class="ti ${h[0]==='ok'?'ti-check':h[0]==='warn'?'ti-alert-triangle':'ti-x'}"></i>${h[1]}</span></div>`;};
+ document.getElementById('view').innerHTML=`
+  <div class="kpis" style="grid-template-columns:repeat(4,1fr)">${k('ti-checklist','#2A6FE0','Reviewer groups',GROUPS.filter(x=>x.track).length)}${k('ti-gavel','#D98A12','Approval authorities',GROUPS.filter(x=>x.phase==='decision').length)}${k('ti-users','#159468','Active reviewers',reviewers.length)}${k('ti-shield-check',covered<tkeys.length?'#D8423A':'#159468','Tracks staffed',covered+'/'+tkeys.length)}</div>
+  <div class="g wr" style="align-items:start"><div class="card cardp"><h3><i class="ti ti-folders"></i>All groups</h3>${sect('EVALUATION',GROUPS.filter(x=>x.phase==='eval'))}${sect('EVAL + APPROVAL',GROUPS.filter(x=>x.phase==='both'))}${sect('APPROVAL',GROUPS.filter(x=>x.phase==='appr'))}${sect('DECISION AUTHORITY',GROUPS.filter(x=>x.phase==='decision'))}</div>${detail}</div>`;
+ mk('gWork',{type:'bar',data:{labels:g.members.map(m=>_sc(m)[0]),datasets:[{data:g.members.map(m=>9+m.charCodeAt(0)%15),backgroundColor:g.members.map(m=>m===g.lead?'#EF5026':_sc(m)[1]),borderRadius:6,barThickness:34}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:GRID,ticks:{precision:0}},x:noGrid}}});
+};
+renderNav();go('dashboard');
+
+/* ===================== LIVE DATA (kaizen.db via the Flask backend) =====================
+   Renders the built-in demo data instantly, then replaces IDEAS with ALL ideas from the
+   database (compact rows, gzipped ~380 KB) so every chart, KPI, funnel and table on this
+   console aggregates the real 20k-idea dataset client-side. Read-only. */
+const API_BASE='';
+let CYCLE=null,CONTRIB_LIVE=null;
+function mapRow(r){const[id,title,dept,cat,tier,stage,est,act,score,sla,month,sub,plant,endo]=r;const sc=_sc(sub);
+ return {id,title,dept,cat,tier,stage,est,act,score,sla,month:month||'-',sub,plant,init:sc[0],clr:sc[1],endo};}
+async function loadLive(){
+ try{
+  const j=async u=>{const r=await fetch(API_BASE+u);if(!r.ok)throw new Error(u+' '+r.status);return r.json();};
+  const [all,boot]=await Promise.all([j('/api/portal/all-ideas'),j('/api/portal/bootstrap?plant=All')]);
+  IDEAS.length=0;all.ideas.forEach(r=>IDEAS.push(mapRow(r)));
+  PLANTS_CYCLE.length=0;boot.plants.forEach(p=>PLANTS_CYCLE.push(p));
+  CYCLE=boot.cycle_times||null;CONTRIB_LIVE=boot.contributors||null;
+  const mgr=boot.personas&&boot.personas.ci_manager;
+  if(mgr){const sc=_sc(mgr.name);const w=document.getElementById('whoBox');
+   if(w)w.innerHTML=`<div class="avatar" style="width:32px;height:32px;background:${sc[1]}">${sc[0]}</div><div><b>${mgr.name}</b>CI Manager · ${mgr.plant}</div>`;}
+  PUBLISHED.clear();
+  IDEAS.filter(d=>d.stage==='done'&&d.act!=null).sort((a,b)=>b.act-a.act).slice(0,4).forEach(d=>PUBLISHED.add(d.id));
+  renderNav();clearCharts();go(cur);
+  console.log('Kaizen console: live data loaded —',IDEAS.length,'ideas ·',PLANTS_CYCLE.length,'plants');
+ }catch(e){console.warn('Kaizen console: backend unreachable — showing built-in demo data.',e);}
+}
+loadLive();
+
+</script>
+</body>
+</html>

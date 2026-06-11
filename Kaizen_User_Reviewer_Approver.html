@@ -414,9 +414,9 @@ input[type=range]{width:100%;accent-color:var(--ember)}
 <script>
 /* ===== DATA (shared) ===== */
 const SUBS={'Priya Iyer':['PI','#5b4ad1'],'Rakesh Nair':['RN','#159468'],'Suresh Menon':['SM','#D98A12'],'Arjun Rao':['AR','#2A6FE0'],'Deepak Kulkarni':['DK','#159468'],'Neha Shah':['NS','#2A6FE0'],'Anita Mehta':['AM','#D98A12'],'Kavita Joshi':['KJ','#c2476a'],'Imran Sheikh':['IS','#0f8a8a'],'Manish Gupta':['MG','#7a5cd1'],'Sunita Patil':['SP','#c2476a'],'R. Khanna':['RK','#2A6FE0']};
-const CATCLR={'Energy':'#D98A12','Maintenance':'#2A6FE0','Process':'#5b4ad1','Quality':'#159468','Safety':'#D8423A','Environment':'#0f8a8a','ML/Digital':'#EF5026'};
+const CATCLR={'Energy':'#D98A12','Maintenance':'#2A6FE0','Process':'#5b4ad1','Quality':'#159468','Safety':'#D8423A','Environment':'#0f8a8a','ML/Digital':'#EF5026','Energy Conservation':'#D98A12','Cost Reduction':'#5b4ad1','Sustainability':'#0f8a8a','Productivity':'#2A6FE0','Digitalization':'#EF5026','5S & Housekeeping':'#7a5cd1'};
 const STAGES=['intake','evaluation','approval','implementation','done','rejected'];
-const STLAB={intake:'Intake',evaluation:'Evaluation',approval:'Approval',implementation:'Implementation',done:'Done',rejected:'Rejected'};
+const STLAB={intake:'Intake',evaluation:'Evaluation',approval:'Approval',implementation:'Implementation',done:'Done',rejected:'Rejected',on_hold:'On hold'};
 const MONTHS=['Dec','Jan','Feb','Mar','Apr','May','Jun'];
 const PLANTS=['Nagda','Kharach','Vilayat','Harihar'];
 const RAW=[
@@ -461,6 +461,7 @@ const RAW=[
  ['Duplicate conveyor guard proposal','Maintenance','Safety','A','rejected',0.8,null,35,'-','Apr','Rakesh Nair']];
 const IDEAS=RAW.map((r,i)=>{const[title,dept,cat,tier,stage,est,act,score,sla,month,sub]=r;return {id:'KZ-2026-'+String(481+i).padStart(4,'0'),title,dept,cat,tier,stage,est,act,score,sla,month,sub,plant:PLANTS[i%4],init:SUBS[sub][0],clr:SUBS[sub][1]};});
 
+function _sc(n){if(SUBS[n])return SUBS[n];const cl=['#5b4ad1','#159468','#D98A12','#2A6FE0','#c2476a','#0f8a8a','#7a5cd1','#EF5026'];let h=0;for(const ch of String(n))h=(h*31+ch.charCodeAt(0))>>>0;return [String(n).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(),cl[h%cl.length]];}
 const fmtL=v=>v>=100?('₹'+(v/100).toFixed(2)+' Cr'):('₹'+(+v).toFixed(1)+' L');
 const cnt=(a,f)=>{const m={};a.forEach(x=>{const k=f(x);m[k]=(m[k]||0)+1});return m;};
 const sum=(a,f)=>a.reduce((s,x)=>s+(f(x)||0),0);
@@ -474,7 +475,9 @@ function mk(id,cfg){const el=document.getElementById(id);if(!el)return;const c=n
 function toast(m){const t=document.getElementById('toast');t.innerHTML='<i class="ti ti-circle-check"></i>'+m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
 
 /* ===== persona shell ===== */
+const API_BASE=''; // same origin as the Flask app
 const ME={user:'Priya Iyer',reviewer:'Deepak Kulkarni',approver:'R. Khanna'};
+let LB=[],PINFO=null;const PDEPT=()=>PINFO&&PINFO.employee?PINFO.employee.dept:'Spinning';const PPLANT=()=>PINFO&&PINFO.employee?PINFO.employee.plant:'Nagda';
 const PERSONAS=[['user'],['reviewer'],['approver']];
 const ROLEMETA={user:['Employee','ti-user'],reviewer:['Reviewer · Evaluator','ti-checklist'],approver:['Approver','ti-gavel']};
 let PERSONA='user',roleMenuOpen=false;
@@ -487,13 +490,13 @@ function render(){APPS[PERSONA]();}
 let userView='home',userSel=null,revView='queue',revSel=null,appView='queue',appSel=null;
 
 /* ===== USER (employee, phone) ===== */
-function stagePill(s){const m={done:['ok','ti-circle-check','Implemented'],implementation:['work','ti-tool','In implementation'],approval:['warn','ti-stamp','In approval'],evaluation:['work','ti-loader','In evaluation'],intake:['muted','ti-inbox','Submitted'],rejected:['bad','ti-x','Closed']};const p=m[s];return `<span class="pill ${p[0]}"><i class="ti ${p[1]}"></i>${p[2]}</span>`;}
+function stagePill(s){const m={on_hold:['muted','ti-player-pause','On hold'],done:['ok','ti-circle-check','Implemented'],implementation:['work','ti-tool','In implementation'],approval:['warn','ti-stamp','In approval'],evaluation:['work','ti-loader','In evaluation'],intake:['muted','ti-inbox','Submitted'],rejected:['bad','ti-x','Closed']};const p=m[s];return `<span class="pill ${p[0]}"><i class="ti ${p[1]}"></i>${p[2]}</span>`;}
 function ptl(stage){const labs=['Submitted','Evaluation','Approval','Implement','Done'],order=['intake','evaluation','approval','implementation','done'],ci=order.indexOf(stage);
  return `<div class="timeline">${labs.map((l,i)=>{const c=stage==='done'?'done':(i<ci?'done':i===ci?'now':'');const ic=c==='done'?'<i class="ti ti-check"></i>':c==='now'?'<i class="ti ti-dots"></i>':(i+1);return `<div class="st ${c}"><span class="d">${ic}</span><span class="lab">${l}</span></div>`;}).join('')}</div>`;}
 function actRow(e){const av=e.c?`<div class="avatar" style="width:30px;height:30px;background:${e.c};font-size:11px">${e.ic}</div>`:`<div class="avatar" style="width:30px;height:30px;background:var(--surface-2);border:1.5px dashed var(--line-2);color:var(--muted);font-size:14px">${e.ic}</div>`;
  return `<div style="display:flex;gap:11px;margin-bottom:14px${e.pending?';opacity:.72':''}">${av}<div style="font-size:12.5px;padding-top:1px"><b>${e.t}</b><br><span class="muted">${e.s}</span></div></div>`;}
 function activityFor(d){const order=['intake','evaluation','approval','implementation','done'],si=order.indexOf(d.stage),ev=[];const A=(c,ic,t,s,p)=>ev.push({c,ic,t,s,pending:p});
- A('#5b4ad1',(SUBS[ME.user]||['PI'])[0],'Idea submitted',`${ME.user} · ${d.plant} · 6d ago`);
+ A('#5b4ad1',_sc(ME.user)[0],'Idea submitted',`${ME.user} · ${d.plant} · 6d ago`);
  if(d.stage==='rejected'){A('#159468','EV',`Evaluation completed${d.score?' · score '+d.score+'/100':''}`,`Line engineering group · ${d.plant} · 4d ago`);A('#D8423A','<i class="ti ti-x"></i>','Idea not taken forward','Closed with reviewer feedback — open to resubmit · 2d ago');return ev;}
  if(si>1)A('#159468','EV',`Evaluation cleared${d.score?' · score '+d.score+'/100':''}`,`Line engineering group · ${d.plant} · 4d ago`);
  else if(si===1)A(null,'<i class="ti ti-loader"></i>','Evaluation in progress',`With ${ME.reviewer}, the evaluator · score pending`,true);
@@ -519,9 +522,17 @@ function endorse(id,ev){if(ev)ev.stopPropagation();const s=ENDO[id]||(ENDO[id]={
 function fcard(d){const likes=60+(d.id.charCodeAt(8)*7%180);const es=endoState(d);const body=d.act?`<div class="fc-ba"><div class="b">Before</div><div class="a">After</div></div><div class="fc-stat"><i class="ti ti-trending-up"></i>${fmtL(d.act)} / yr saved · verified</div>`:`<p style="font-size:13px;color:var(--muted);line-height:1.5">${d.dept} idea · estimated ${fmtL(d.est)}/yr impact</p>`;
  return `<div class="feedcard"><div class="fc-top"><div class="avatar" style="width:38px;height:38px;background:${d.clr}">${d.init}</div><div class="meta"><b>${d.sub}</b><span>${d.dept} · ${d.plant}</span></div>${stagePill(d.stage)}</div><div class="fc-body"><div class="fc-title">${d.title}</div>${body}</div><div class="fc-act"><span><i class="ti ti-heart"></i>${likes}</span><span><i class="ti ti-message-circle"></i>${likes%40}</span><button id="end-${d.id}" class="endo${es.on?' on':''}" title="I support this idea" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button><span style="margin-left:auto"><i class="ti ti-share-2"></i></span></div></div>`;}
 function ugo(v){userView=v;APPS.user();}
-function uopen(id){userSel=id;userView='detail';APPS.user();}
+const DETAIL={};
+function uopen(id){userSel=id;userView='detail';APPS.user();
+ if(!DETAIL[id]){fetch(API_BASE+'/api/idea/'+id).then(r=>r.ok?r.json():null).then(j=>{if(j&&!j.error){DETAIL[id]=j;if(userView==='detail'&&userSel===id)APPS.user();}}).catch(()=>{});}}
+function detailExtras(d){const dt=DETAIL[d.id];if(!dt)return '';const i=dt.idea;let h='';
+ if(i.problem_statement||i.proposed_solution)h+=`<div style="margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px;font-size:12.5px;line-height:1.55"><b>Problem</b><br><span class="muted">${i.problem_statement||'—'}</span><div style="height:8px"></div><b>Proposed solution</b><br><span class="muted">${i.proposed_solution||'—'}</span></div>`;
+ if(dt.benefits&&dt.benefits.length)h+=`<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">${dt.benefits.map(b=>`<span class="tag"><i class="ti ti-trending-up"></i>${b.benefit}: ${b.quantified_value} ${b.unit}</span>`).join('')}</div>`;
+ return h;}
+function detailActivity(d){const dt=DETAIL[d.id];if(!dt||!dt.history||!dt.history.length)return null;
+ return dt.history.slice(-4).map(h=>{const nm=h.actor||'System';const sc=_sc(nm);return `<div style="display:flex;gap:11px;margin-bottom:13px"><div class="avatar" style="width:28px;height:28px;background:${sc[1]};font-size:10px">${sc[0]}</div><div style="font-size:12px"><b>${h.action||((h.from_stage?h.from_stage+' → ':'')+(h.to_stage||''))}</b><br><span class="muted">${nm} · ${h.ts||''}${h.comment?' · '+h.comment:''}</span></div></div>`;}).join('');}
 APPS.user=function(){
- const me=ME.user, mine=IDEAS.filter(d=>d.sub===me), feed=IDEAS.filter(d=>['done','implementation','approval','evaluation'].includes(d.stage)).slice(0,6), stories=IDEAS.filter(d=>d.stage==='done');
+ const me=ME.user, mine=IDEAS.filter(d=>d.sub===me), feed=IDEAS.filter(d=>['done','implementation','approval','evaluation'].includes(d.stage)).slice(0,12), stories=IDEAS.filter(d=>d.stage==='done');
  let body='';
  if(userView==='home'){
   body=`<div class="appbar"><div class="logo"><span class="mk">K</span>Kaizen</div><div style="flex:1"></div><span class="pill muted"><i class="ti ti-map-pin"></i>Packaging</span><i class="ti ti-bell" style="font-size:20px"></i></div>
@@ -535,9 +546,10 @@ APPS.user=function(){
   body=`<div class="appbar"><i class="ti ti-arrow-left" style="font-size:20px" onclick="ugo('mine')"></i><div class="logo" style="font-size:16px">Idea detail</div><div style="flex:1"></div>${stagePill(d.stage)}</div>
    <div class="pad"><div style="font-family:var(--disp);font-size:17px;font-weight:600">${d.title}</div><div style="display:flex;gap:9px;align-items:center;margin:8px 0 16px"><span class="tag mono">${d.id}</span>${d.sla&&d.sla!=='-'?`<span class="pill ${d.sla==='breach'?'bad':'warn'}"><i class="ti ti-clock"></i>SLA ${d.sla==='breach'?'breached':'1d 4h left'}</span>`:''}</div>
     ${ptl(d.stage)}
+    ${detailExtras(d)}
     <div style="font-size:11px;font-weight:700;letter-spacing:.07em;color:var(--muted-2);margin:18px 0 12px">ACTIVITY</div>
-    <div style="display:flex;gap:11px;margin-bottom:13px"><div class="avatar" style="width:28px;height:28px;background:#159468;font-size:10px">EV</div><div style="font-size:12px"><b>Evaluation ${['intake','evaluation'].includes(d.stage)?'in progress':'cleared'}</b>${d.score?' · score '+d.score+'/100':''}<br><span class="muted">Line engineering group</span></div></div>
-    <div style="display:flex;gap:11px;margin-bottom:13px"><div class="avatar" style="width:28px;height:28px;background:#2A6FE0;font-size:10px">AP</div><div style="font-size:12px"><b>Approver note</b><br><span class="muted">${d.stage==='done'?'Approved — moved to implementation':'Confirm payback period?'}</span></div></div>
+    ${detailActivity(d)||`<div style="display:flex;gap:11px;margin-bottom:13px"><div class="avatar" style="width:28px;height:28px;background:#159468;font-size:10px">EV</div><div style="font-size:12px"><b>Evaluation ${['intake','evaluation'].includes(d.stage)?'in progress':'cleared'}</b>${d.score?' · score '+d.score+'/100':''}<br><span class="muted">Line engineering group</span></div></div>
+    <div style="display:flex;gap:11px;margin-bottom:13px"><div class="avatar" style="width:28px;height:28px;background:#2A6FE0;font-size:10px">AP</div><div style="font-size:12px"><b>Approver note</b><br><span class="muted">${d.stage==='done'?'Approved — moved to implementation':'Confirm payback period?'}</span></div></div>`}
     <div style="background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 14px;display:flex;align-items:center;gap:8px;box-shadow:var(--sh)"><input class="input" style="border:none;background:none;padding:8px 0" placeholder="Reply…"><button class="btn prim" style="padding:9px 12px"><i class="ti ti-send"></i></button></div>
    </div><div style="height:8px"></div>`;
  } else if(userView==='submit'){
@@ -553,12 +565,12 @@ APPS.user=function(){
   body=`<div class="appbar"><div class="logo"><i class="ti ti-trophy" style="color:var(--ember)"></i>Success stories</div></div>${stories.map(d=>`<div class="feedcard"><div style="height:96px;background:linear-gradient(135deg,${d.clr},#0f6e54);display:flex;align-items:flex-end;padding:13px"><div style="color:#fff;font-family:var(--disp);font-size:15px;font-weight:600;line-height:1.25">${d.title}</div></div><div class="fc-body" style="padding:13px 14px"><div style="display:flex;align-items:center;justify-content:space-between"><span class="mono" style="font-weight:700;font-size:17px;color:var(--emerald)">${fmtL(d.act)}</span><span class="pill ${rewardTier(d.score)==='Gold'?'warn':'muted'}"><i class="ti ti-award"></i>${rewardTier(d.score)}</span></div><div class="fc-top" style="padding:10px 0 0"><div class="avatar" style="width:30px;height:30px;background:${d.clr}">${d.init}</div><div class="meta"><b>${d.sub}</b><span>${d.dept} · ${d.plant}</span></div></div></div></div>`).join('')}<div style="height:8px"></div>`;
  } else { // profile
   const impl=mine.filter(d=>d.stage==='done'),sav=sum(impl,d=>d.act);
-  const board=Object.entries((()=>{const m={};IDEAS.filter(d=>d.act).forEach(d=>m[d.sub]=(m[d.sub]||0)+d.act);return m;})()).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  const board=(LB&&LB.length)?LB.slice(0,4).map(l=>[l.name,l.saved]):Object.entries((()=>{const m={};IDEAS.filter(d=>d.act).forEach(d=>m[d.sub]=(m[d.sub]||0)+d.act);return m;})()).sort((a,b)=>b[1]-a[1]).slice(0,4);
   body=`<div class="appbar"><div class="logo">Profile</div></div>
-   <div class="pad"><div style="display:flex;align-items:center;gap:13px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px;box-shadow:var(--sh)"><div class="avatar" style="width:52px;height:52px;background:#5b4ad1;font-size:18px">PI</div><div><div style="font-weight:700;font-size:16px;font-family:var(--disp)">Priya Iyer</div><div class="muted" style="font-size:12px">Spinning · Nagda</div></div></div>
+   <div class="pad"><div style="display:flex;align-items:center;gap:13px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px;box-shadow:var(--sh)"><div class="avatar" style="width:52px;height:52px;background:${_sc(ME.user)[1]};font-size:18px">${_sc(ME.user)[0]}</div><div><div style="font-weight:700;font-size:16px;font-family:var(--disp)">${ME.user}</div><div class="muted" style="font-size:12px">${PDEPT()} · ${PPLANT()}</div></div></div>
     <div style="display:flex;gap:8px;margin:14px 0"><div style="flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px;text-align:center"><div class="mono" style="font-size:19px;font-weight:700">${mine.length}</div><div class="muted" style="font-size:10px;font-weight:600">IDEAS</div></div><div style="flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px;text-align:center"><div class="mono" style="font-size:19px;font-weight:700;color:var(--emerald)">${impl.length}</div><div class="muted" style="font-size:10px;font-weight:600">LIVE</div></div><div style="flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px;text-align:center"><div class="mono" style="font-size:19px;font-weight:700;color:var(--ember)">${fmtL(sav)}</div><div class="muted" style="font-size:10px;font-weight:600">SAVED</div></div></div>
     <div style="font-size:11px;font-weight:700;letter-spacing:.07em;color:var(--muted-2);margin:6px 0 10px">PLANT LEADERBOARD</div>
-    ${board.map(([n,v],i)=>`<div class="qitem" style="cursor:default"><span class="mono" style="font-weight:700;width:18px;color:var(--muted)">${i+1}</span><div class="avatar" style="width:30px;height:30px;background:${SUBS[n][1]}">${SUBS[n][0]}</div><div class="meta"><b>${n}</b></div><span class="mono" style="color:var(--emerald);font-weight:700">${fmtL(v)}</span></div>`).join('')}
+    ${board.map(([n,v],i)=>`<div class="qitem" style="cursor:default"><span class="mono" style="font-weight:700;width:18px;color:var(--muted)">${i+1}</span><div class="avatar" style="width:30px;height:30px;background:${_sc(n)[1]}">${_sc(n)[0]}</div><div class="meta"><b>${n}</b></div><span class="mono" style="color:var(--emerald);font-weight:700">${fmtL(v)}</span></div>`).join('')}
    </div>`;
  }
  const tab=(v,i,l)=>`<a class="${userView===v||(v==='mine'&&userView==='detail')?'on':''}" onclick="ugo('${v}')"><i class="ti ${i}"></i>${l}</a>`;
@@ -585,7 +597,7 @@ function evalTot(){let t=0;for(let i=0;i<4;i++){t+=+document.getElementById('c'+
 APPS.reviewer=function(){
  const queue=IDEAS.filter(d=>d.stage==='evaluation'), past=IDEAS.filter(d=>['approval','implementation','done','rejected'].includes(d.stage)&&d.score);
  if(!queue.find(d=>d.id===revSel))revSel=queue[0].id;
- const who={role:'Evaluator workspace',name:'Priya Iyer',sub:'Reviewer · Spinning',init:'PI',clr:'#5b4ad1'};
+ const who={role:'Evaluator workspace',name:ME.reviewer,sub:'Reviewer · '+PPLANT(),init:_sc(ME.reviewer)[0],clr:_sc(ME.reviewer)[1]};
  const nav=[{k:'queue',t:'My queue',i:'ti-checklist',c:queue.length,fn:"rgo('queue')"},{k:'evaluate',t:'Evaluate',i:'ti-edit',fn:"rgo('evaluate')"},{k:'history',t:'History',i:'ti-history',c:past.length,fn:"rgo('history')"}];
  let body,title,crumb,right='',charts=false;
  if(revView==='queue'){
@@ -636,7 +648,7 @@ function asel(id){appSel=id;appView='approve';clearCharts();APPS.approver();}
 APPS.approver=function(){
  const queue=IDEAS.filter(d=>d.stage==='approval'), approved=IDEAS.filter(d=>['implementation','done'].includes(d.stage)), rejected=IDEAS.filter(d=>d.stage==='rejected');
  if(!queue.find(d=>d.id===appSel))appSel=queue[0].id;
- const who={role:'Approver workspace',name:'Priya Iyer',sub:'Approver · Spinning',init:'PI',clr:'#5b4ad1'};
+ const who={role:'Approver workspace',name:ME.approver,sub:'Approver · '+PPLANT(),init:_sc(ME.approver)[0],clr:_sc(ME.approver)[1]};
  const nav=[{k:'queue',t:'My approvals',i:'ti-checkbox',c:queue.length,fn:"ago('queue')"},{k:'approve',t:'Approve',i:'ti-gavel',fn:"ago('approve')"},{k:'history',t:'History',i:'ti-history',c:approved.length+rejected.length,fn:"ago('history')"}];
  let body,title,crumb,charts=false;
  if(appView==='queue'){
@@ -685,19 +697,19 @@ function ideaCard(d){const order=['intake','evaluation','approval','implementati
  return `<div class="card cardp" style="cursor:pointer" onclick="uopen('${d.id}')"><div style="display:flex;align-items:center;gap:11px;margin-bottom:11px"><div class="avatar" style="width:38px;height:38px;border-radius:11px;background:${CATCLR[d.cat]}"><i class="ti ti-bulb"></i></div><div style="flex:1;min-width:0"><div style="font-weight:600;font-family:var(--disp);font-size:14.5px">${d.title}</div><span class="tag mono">${d.id}</span></div>${stagePill(d.stage)}</div><div class="bar"><i style="width:${pct}%;background:${d.stage==='rejected'?'var(--red)':'var(--ember)'}"></i></div><div class="muted" style="font-size:11.5px;margin-top:9px">${d.dept} · ${d.plant} · est ${fmtL(d.est)}/yr${d.act?' · realized '+fmtL(d.act):''}</div></div>`;}
 function storyCard(d){const es=endoState(d);return `<div class="card" style="overflow:hidden"><div style="height:120px;background:linear-gradient(135deg,${d.clr},#0f6e54);display:flex;align-items:flex-end;padding:14px"><div style="color:#fff;font-family:var(--disp);font-weight:600;font-size:15px;line-height:1.2">${d.title}</div></div><div class="cardp"><div style="display:flex;align-items:center;justify-content:space-between"><span class="mono" style="font-weight:700;font-size:18px;color:var(--emerald)">${fmtL(d.act)}</span><span class="pill ${rewardTier(d.score)==='Gold'?'warn':'muted'}"><i class="ti ti-award"></i>${rewardTier(d.score)}</span></div><div style="display:flex;align-items:center;gap:9px;margin-top:11px"><div class="avatar" style="width:30px;height:30px;background:${d.clr}">${d.init}</div><div style="font-size:12.5px"><b>${d.sub}</b><br><span class="muted">${d.dept} · ${d.plant}</span></div></div><button id="end-${d.id}" class="endo${es.on?' on':''}" style="width:100%;justify-content:center;margin-top:12px" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button></div></div>`;}
 APPS.user=function(){
- const me=ME.user, mine=IDEAS.filter(d=>d.sub===me), feed=IDEAS.filter(d=>['done','implementation','approval','evaluation'].includes(d.stage)).slice(0,6), stories=IDEAS.filter(d=>d.stage==='done');
+ const me=ME.user, mine=IDEAS.filter(d=>d.sub===me), feed=IDEAS.filter(d=>['done','implementation','approval','evaluation'].includes(d.stage)).slice(0,12), stories=IDEAS.filter(d=>d.stage==='done');
  const impl=mine.filter(d=>d.stage==='done'), saved=sum(impl,d=>d.act);
- const board=Object.entries((()=>{const m={};IDEAS.filter(d=>d.act).forEach(d=>m[d.sub]=(m[d.sub]||0)+d.act);return m;})()).sort((a,b)=>b[1]-a[1]).slice(0,5);
+ const board=(LB&&LB.length)?LB.slice(0,5).map(l=>[l.name,l.saved]):Object.entries((()=>{const m={};IDEAS.filter(d=>d.act).forEach(d=>m[d.sub]=(m[d.sub]||0)+d.act);return m;})()).sort((a,b)=>b[1]-a[1]).slice(0,5);
  const navI=[['home','Feed','ti-news'],['mine','My ideas','ti-bulb'],['stories','Stories','ti-trophy'],['profile','Profile','ti-user-circle']];
  const active=userView==='detail'?'mine':userView;
- const sidebar=`<aside class="side" style="background:var(--d-bg)"><div class="lg"><span class="mark" style="background:var(--ember)">K</span><div>Kaizen<small>Idea Hub</small></div></div>${roleSwitch()}<div class="sec">Workspace</div><nav class="nav">${navI.map(n=>`<a class="${n[0]===active?'on':''}" onclick="ugo('${n[0]}')"><i class="ti ${n[2]}"></i>${n[1]}</a>`).join('')}</nav><button class="btn prim" style="margin:16px 6px 4px" onclick="ugo('submit')"><i class="ti ti-plus"></i>Submit idea</button><div class="who"><div class="avatar" style="width:32px;height:32px;background:#5b4ad1">PI</div><div><b>Priya Iyer</b>Spinning · Nagda</div></div></aside>`;
+ const sidebar=`<aside class="side" style="background:var(--d-bg)"><div class="lg"><span class="mark" style="background:var(--ember)">K</span><div>Kaizen<small>Idea Hub</small></div></div>${roleSwitch()}<div class="sec">Workspace</div><nav class="nav">${navI.map(n=>`<a class="${n[0]===active?'on':''}" onclick="ugo('${n[0]}')"><i class="ti ${n[2]}"></i>${n[1]}</a>`).join('')}</nav><button class="btn prim" style="margin:16px 6px 4px" onclick="ugo('submit')"><i class="ti ti-plus"></i>Submit idea</button><div class="who"><div class="avatar" style="width:32px;height:32px;background:${_sc(ME.user)[1]}">${_sc(ME.user)[0]}</div><div><b>${ME.user}</b>${PDEPT()} · ${PPLANT()}</div></div></aside>`;
  const TT={home:['Idea Hub · Feed','Ideas in your department'],mine:['Idea Hub · My ideas','My ideas'],stories:['Idea Hub · Stories','Success stories'],profile:['Idea Hub · Profile','My profile'],detail:['Idea Hub · Tracking','Idea detail'],submit:['Idea Hub · New idea','Submit an idea']};
  const tt=TT[userView]||['Idea Hub','Idea Hub'];
  const topbar=`<div class="topbar"><h1>${tt[1]}</h1><div style="flex:1"></div><div class="wsrch"><i class="ti ti-search"></i>Search ideas…</div><i class="ti ti-bell" style="font-size:19px;color:var(--muted)"></i><div class="avatar" style="width:32px;height:32px;background:#5b4ad1">PI</div></div>`;
  const profMini=`<div class="railcard"><div style="display:flex;align-items:center;gap:11px"><div class="avatar" style="width:44px;height:44px;background:#5b4ad1;font-size:15px">PI</div><div><div style="font-weight:700;font-family:var(--disp)">Priya Iyer</div><div class="muted" style="font-size:12px">Spinning · Nagda</div></div></div>
    <div style="display:flex;gap:8px;margin-top:14px"><div style="flex:1;text-align:center;background:var(--surface-2);border-radius:10px;padding:9px"><div class="mono" style="font-weight:700;font-size:17px">${mine.length}</div><div class="muted" style="font-size:9.5px;font-weight:600">IDEAS</div></div><div style="flex:1;text-align:center;background:var(--surface-2);border-radius:10px;padding:9px"><div class="mono" style="font-weight:700;font-size:17px;color:var(--emerald)">${impl.length}</div><div class="muted" style="font-size:9.5px;font-weight:600">LIVE</div></div><div style="flex:1;text-align:center;background:var(--surface-2);border-radius:10px;padding:9px"><div class="mono" style="font-weight:700;font-size:17px;color:var(--ember)">${fmtL(saved)}</div><div class="muted" style="font-size:9.5px;font-weight:600">SAVED</div></div></div>
    <button class="btn prim block" style="margin-top:14px" onclick="ugo('submit')"><i class="ti ti-plus"></i>Submit an idea</button></div>`;
- const boardCard=`<div class="railcard"><h3><i class="ti ti-star"></i>Top contributors</h3><div style="margin-top:12px;display:flex;flex-direction:column;gap:11px">${board.map(([n,v],i)=>`<div style="display:flex;align-items:center;gap:10px"><span class="mono muted" style="font-weight:700;width:14px">${i+1}</span><div class="avatar" style="width:28px;height:28px;background:${SUBS[n][1]}">${SUBS[n][0]}</div><div style="flex:1;font-size:12.5px;font-weight:600">${n}</div><span class="mono" style="color:var(--emerald);font-weight:700;font-size:12px">${fmtL(v)}</span></div>`).join('')}</div></div>`;
+ const boardCard=`<div class="railcard"><h3><i class="ti ti-star"></i>Top contributors</h3><div style="margin-top:12px;display:flex;flex-direction:column;gap:11px">${board.map(([n,v],i)=>`<div style="display:flex;align-items:center;gap:10px"><span class="mono muted" style="font-weight:700;width:14px">${i+1}</span><div class="avatar" style="width:28px;height:28px;background:${_sc(n)[1]}">${_sc(n)[0]}</div><div style="flex:1;font-size:12.5px;font-weight:600">${n}</div><span class="mono" style="color:var(--emerald);font-weight:700;font-size:12px">${fmtL(v)}</span></div>`).join('')}</div></div>`;
  let content='',subbar='';
  if(userView==='home'){
   const all=DEPTFEED;
@@ -709,7 +721,7 @@ APPS.user=function(){
     <div class="feedmain">${dfeed.length?dfeed.map(ideaCardX).join(''):`<div class="card cardp" style="text-align:center;color:var(--muted);font-size:13px;padding:34px 18px">No ideas match this view yet.</div>`}</div>
    <div class="feedrail">
     <div class="railcard rc-compact"><h3 style="font-size:13px"><i class="ti ti-progress-check" style="color:var(--blue)"></i>Active department initiatives</h3><p style="font-size:11px;color:var(--muted);margin:4px 0 2px;line-height:1.45">Projects already underway in your department.</p>${INITIATIVES.map(initRow).join('')}</div>
-    <div class="railcard rc-compact" style="margin-top:16px"><h3 style="font-size:13px"><i class="ti ti-star"></i>Top contributors</h3><div class="cb-list">${SPINBOARD.map(([n,v],i)=>`<div class="cb-row"><span class="cb-rank">${i+1}</span><div class="avatar" style="width:24px;height:24px;font-size:9px;background:${SUBS[n][1]}">${SUBS[n][0]}</div><span class="cb-name">${n}</span><span class="cb-val">${fmtL(v)}</span></div>`).join('')}</div></div>
+    <div class="railcard rc-compact" style="margin-top:16px"><h3 style="font-size:13px"><i class="ti ti-star"></i>Top contributors</h3><div class="cb-list">${SPINBOARD.map(([n,v],i)=>`<div class="cb-row"><span class="cb-rank">${i+1}</span><div class="avatar" style="width:24px;height:24px;font-size:9px;background:${_sc(n)[1]}">${_sc(n)[0]}</div><span class="cb-name">${n}</span><span class="cb-val">${fmtL(v)}</span></div>`).join('')}</div></div>
    </div>
   </div>`;
  } else if(userView==='mine'){
@@ -880,7 +892,7 @@ function ideaCardX(d){const es=endoState(d),ls=likeState(d),cat=CATCLR[d.cat],cm
    <h3 class="ic-t">${d.title}</h3><p class="ic-d">${descFor(d)}</p>${d.photos?`<div class="ic-photos">${d.photos.map(g=>`<div class="ic-photo" style="background:${g}"><span class="ic-pcap"><i class="ti ti-photo"></i>Shop-floor photo</span></div>`).join('')}</div>`:''}${impact}
    <div class="ic-bar"><button class="iact${ls.on?' liked':''}" id="like-${d.id}" onclick="likeToggle('${d.id}',event)"><i class="ti ti-heart${ls.on?'-filled':''}"></i>${ls.n}</button>
      <button class="iact" onclick="cmt('${d.id}',event)"><i class="ti ti-message-circle"></i>${cmts}</button>
-     <div class="endrs"><div class="endstack">${endorsers.map(n=>`<div class="avatar" style="background:${SUBS[n][1]}">${SUBS[n][0]}</div>`).join('')}</div><button id="end-${d.id}" class="endo${es.on?' on':''}" title="I support this idea" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button></div></div>
+     <div class="endrs"><div class="endstack">${endorsers.map(n=>`<div class="avatar" style="background:${_sc(n)[1]}">${_sc(n)[0]}</div>`).join('')}</div><button id="end-${d.id}" class="endo${es.on?' on':''}" title="I support this idea" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button></div></div>
  </div></div>`;}
 function initRow(p){const sc={'In progress':'#2A6FE0','Piloting':'#5b4ad1','Final phase':'#159468','Planning':'#9B9A92'}[p.status]||'#9B9A92';
  return `<div class="initrow" onclick="toast('${p.title} — ${p.status}, led by ${p.team}')"><span class="idot" style="background:${sc}"></span><div class="ir-main"><b>${p.title}</b><span>${p.team} · ${p.status}</span><div class="ir-insight"><i class="ti ti-target-arrow"></i>${p.target}</div><div class="ir-insight"><i class="ti ti-calendar-event"></i>${p.timeline}</div></div></div>`;}
@@ -895,6 +907,40 @@ function attach(inp){const box=document.getElementById('attachList');if(!box){in
 function setFeed(f){feedFilter=f;APPS.user();}
 /*APPS*/
 render();
+
+/* ===================== LIVE DATA (kaizen.db via the Flask backend) =====================
+   Renders the built-in demo data immediately, then replaces it with real ideas from
+   the database: my-ideas + department feed + success stories + evaluation & approval
+   queues + the plant leaderboard. The 5 seeded similar-idea cards are kept because the
+   voice duplicate-check demo matches against their keywords. Read-only. */
+function mapIdea(r){const sc=_sc(r.sub);ENDO[r.id]={n:r.endo||0,on:false};
+ return {id:r.id,title:r.title,dept:r.dept,cat:r.cat,tier:r.tier,stage:r.stage,est:r.est,act:r.act,score:r.score,sla:r.sla||'-',month:r.month||'-',sub:r.sub,plant:r.plant,init:sc[0],clr:sc[1]};}
+async function loadLive(){
+ try{
+  const j=async u=>{const r=await fetch(API_BASE+u);if(!r.ok)throw new Error(u+' '+r.status);return r.json();};
+  const boot=await j('/api/portal/bootstrap?plant=Nagda');
+  PINFO=boot.personas; const emp=PINFO.employee;
+  ME.user=emp.name;
+  if(PINFO.evaluator)ME.reviewer=PINFO.evaluator.name;
+  if(PINFO.approver)ME.approver=PINFO.approver.name;
+  const enc=encodeURIComponent;
+  const [feed,mine,stories,evq,apq,lb]=await Promise.all([
+   j('/api/feed?plant='+enc(emp.plant)+'&department='+enc(emp.dept)),
+   j('/api/my-ideas?user_id='+emp.id),
+   j('/api/stories?plant='+enc(emp.plant)),
+   j('/api/evaluation-queue?plant='+enc(emp.plant)),
+   j('/api/approval-queue?plant='+enc(emp.plant)),
+   j('/api/leaderboard?plant='+enc(emp.plant))]);
+  LB=lb.leaders||[];
+  const seedIdeas=IDEAS.filter(d=>d.kw); // keep dup-check demo cards
+  const seen=new Set(seedIdeas.map(d=>d.id)),merged=[];
+  [...mine.ideas,...feed.ideas,...stories.ideas,...evq.ideas,...apq.ideas].forEach(r=>{if(seen.has(r.id))return;seen.add(r.id);merged.push(mapIdea(r));});
+  IDEAS.length=0;IDEAS.push(...merged,...seedIdeas);
+  clearCharts();render();
+  console.log('Kaizen portal: live data loaded —',merged.length,'ideas from kaizen.db · user',ME.user);
+ }catch(e){console.warn('Kaizen portal: backend unreachable — showing built-in demo data.',e);}
+}
+loadLive();
 
 /* ===================== KAIZEN VOICE (client-side, no backend) =====================
    Conversational idea capture, re-skinned to the portal. Uses the browser Web Speech
