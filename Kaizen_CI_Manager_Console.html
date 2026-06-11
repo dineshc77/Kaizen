@@ -754,7 +754,7 @@ VIEWS.intake=function(){
    <div class="card cardp">
     <div class="ihead"><span class="tag mono">${s.id}</span><b>${s.title}</b><span class="pill ember"><i class="ti ti-wand"></i>${TIERLAB[st.tier]}</span><span class="pill warn" style="margin-left:auto"><i class="ti ti-clock"></i>Intake SLA · 1 business day</span></div>
     <div class="g c2" style="margin-top:14px;align-items:start">
-     <div class="sec"><div class="sec-h">SECTION A · THE IDEA</div><p class="idesc">${m.desc||''}</p>
+     <div class="sec"><div class="sec-h">SECTION A · THE IDEA</div><p class="idesc">${(m.desc||'').replace(/\n/g,'<br>')}</p>
       <div class="submeta"><div class="avatar" style="width:30px;height:30px;background:${s.clr}">${s.init}</div><div style="font-size:12.5px"><b>${s.sub}</b><br><span class="muted">${s.dept} · ${s.plant}${m.cls&&m.cls.Scope?' · '+m.cls.Scope[0]:''}</span></div></div>
       <div class="atts"><span class="tag"><i class="ti ti-photo"></i>${(m.att||[0,0])[0]} photos</span><span class="tag"><i class="ti ti-paperclip"></i>${(m.att||[0,0])[1]} docs</span><span class="tag"><i class="ti ti-coins"></i>Est. ${fmtL(s.est)}</span></div></div>
      <div class="sec"><div class="sec-h">SECTION B · SYSTEM CLASSIFICATION<span class="sec-sub">LLM Pass 1 + Pass 2 · confidence shown</span></div><div class="clsgrid">${clsHtml}</div></div>
