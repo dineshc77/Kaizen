@@ -354,6 +354,13 @@ for e in ev:
     evu.append((r.choice(pool).format(dept=e["dept"]), e["id"]))
 cur.executemany("UPDATE evaluations SET comment=? WHERE id=?", evu)
 
+# align evaluation total_score with the idea's reward score (same 100-point scale)
+ev2 = cur.execute("""SELECT e.id, i.idea_code code, i.score FROM evaluations e
+                     JOIN ideas i ON i.id=e.idea_id WHERE i.score IS NOT NULL""").fetchall()
+cur.executemany("UPDATE evaluations SET total_score=? WHERE id=?",
+    [(max(30, min(98, (e["score"] or 70) + rng_for(e["code"], "ts"+str(e["id"])).randint(-4, 4))), e["id"]) for e in ev2])
+print("evaluation scores aligned to idea scale:", len(ev2))
+
 ap = cur.execute("""SELECT a.id, i.idea_code code FROM approvals a
                     JOIN ideas i ON i.id=a.idea_id""").fetchall()
 apu = [(rng_for(a["code"], "ap"+str(a["id"])).choice(APPR_NOTES), a["id"]) for a in ap]

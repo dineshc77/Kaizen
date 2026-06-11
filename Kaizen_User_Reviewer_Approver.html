@@ -597,7 +597,7 @@ function rsel(id){revSel=id;revView='evaluate';clearCharts();APPS.reviewer();
 function evalTot(){let t=0,mx=0,i=0;for(;;i++){const el=document.getElementById('c'+i);if(!el)break;t+=+el.value;mx+=+el.max;}document.getElementById('etot').textContent=(mx&&mx<100)?Math.round(t/mx*100)+' / 100':t+' / 100';}
 APPS.reviewer=function(){
  const queue=IDEAS.filter(vis).filter(d=>d.stage==='evaluation'), past=IDEAS.filter(vis).filter(d=>['approval','implementation','done','rejected'].includes(d.stage)&&d.score);
- if(!queue.find(d=>d.id===revSel))revSel=queue[0].id;
+ if(!IDEAS.find(d=>d.id===revSel))revSel=(queue[0]||IDEAS[0]).id;
  const who={role:'Evaluator workspace',name:ME.reviewer,sub:'Reviewer · '+PPLANT(),init:_sc(ME.reviewer)[0],clr:_sc(ME.reviewer)[1]};
  const nav=[{k:'queue',t:'My queue',i:'ti-checklist',c:queue.length,fn:"rgo('queue')"},{k:'evaluate',t:'Evaluate',i:'ti-edit',fn:"rgo('evaluate')"},{k:'history',t:'History',i:'ti-history',c:past.length,fn:"rgo('history')"}];
  let body,title,crumb,right='',charts=false;
@@ -627,14 +627,16 @@ APPS.reviewer=function(){
    <div class="card cardp"><h3><i class="ti ti-adjustments-star"></i>Score this idea</h3><div class="sub">Drag to set each criterion</div>
     <div style="margin-top:16px">${cr.map((c,i)=>`<div class="crit"><span class="lab">${c[0]}</span><input id="c${i}" type="range" min="0" max="${c[2]}" value="${c[1]}" oninput="evalTot()"><span class="val" id="cv${i}">${c[1]}/${c[2]}</span></div>`).join('')}</div>
     <div style="display:flex;align-items:center;justify-content:space-between;background:var(--ink);color:#fff;border-radius:12px;padding:13px 16px;margin-top:6px"><span style="font-size:12.5px;font-weight:600">Total score</span><span class="mono" id="etot" style="font-size:20px;font-weight:700">${s.score} / 100</span></div>
-    <div class="field" style="margin-top:14px"><label>Evaluator note</label><textarea class="input area" placeholder="Rationale for your score…"></textarea></div>
+    ${s.stage==='evaluation'?`<div class="field" style="margin-top:14px"><label>Evaluator note</label><textarea class="input area" placeholder="Rationale for your score…">${ev0&&ev0.comment?ev0.comment:''}</textarea></div>
     <div style="display:flex;gap:8px"><button class="btn ok block" onclick="toast('Vote submitted — recommended to advance')"><i class="ti ti-thumb-up"></i>Recommend</button><button class="btn block" onclick="toast('Sent back for clarification')"><i class="ti ti-message-2"></i>Clarify</button></div>
-    <button class="btn block" style="margin-top:8px;color:var(--red);border-color:var(--red-soft)" onclick="toast('Marked not viable — reason logged')"><i class="ti ti-thumb-down"></i>Reject as not viable</button>
+    <button class="btn block" style="margin-top:8px;color:var(--red);border-color:var(--red-soft)" onclick="toast('Marked not viable — reason logged')"><i class="ti ti-thumb-down"></i>Reject as not viable</button>`:`
+    ${ev0&&ev0.comment?`<div class="field" style="margin-top:14px"><label>Evaluator note</label><div style="background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:11px 13px;font-size:12.5px;line-height:1.55">${ev0.comment}</div></div>`:''}
+    <div style="margin-top:12px">${s.stage==='rejected'?'<span class="pill bad"><i class="ti ti-x"></i>Closed — rejected</span>':s.stage==='done'?'<span class="pill ok"><i class="ti ti-check"></i>Closed — implemented</span>':'<span class="pill work">'+(STLAB[s.stage]||s.stage)+' — read only</span>'}</div>`}
    </div></div>`;
  } else {
   title='Evaluation history';crumb='Reviewer · '+past.length+' reviewed';
   body=`<div class="card" style="overflow:hidden"><table class="tbl"><thead><tr><th>Idea</th><th>Dept</th><th>My score</th><th>Outcome</th></tr></thead><tbody>
-   ${past.map(d=>`<tr style="cursor:default"><td class="tt">${d.title}</td><td class="muted">${d.dept}</td><td class="mono">${d.score}/100</td><td>${d.stage==='rejected'?'<span class="pill bad">Rejected</span>':d.stage==='done'?'<span class="pill ok">Implemented</span>':'<span class="pill work">'+STLAB[d.stage]+'</span>'}</td></tr>`).join('')}
+   ${past.map(d=>`<tr onclick="rsel('${d.id}')"><td class="tt">${d.title}</td><td class="muted">${d.dept}</td><td class="mono">${d.score}/100</td><td>${d.stage==='rejected'?'<span class="pill bad">Rejected</span>':d.stage==='done'?'<span class="pill ok">Implemented</span>':'<span class="pill work">'+STLAB[d.stage]+'</span>'}</td></tr>`).join('')}
   </tbody></table></div>`;
  }
  document.getElementById('app').innerHTML=consoleShell(nav,revView,who,title,crumb,body,right);
@@ -651,7 +653,7 @@ function asel(id){appSel=id;appView='approve';clearCharts();APPS.approver();
  if(!DETAIL[id]){fetch(API_BASE+'/api/idea/'+id).then(r=>r.ok?r.json():null).then(j=>{if(j&&!j.error){DETAIL[id]=j;if(appView==='approve'&&appSel===id)APPS.approver();}}).catch(()=>{});}}
 APPS.approver=function(){
  const queue=IDEAS.filter(vis).filter(d=>d.stage==='approval'), approved=IDEAS.filter(vis).filter(d=>['implementation','done'].includes(d.stage)), rejected=IDEAS.filter(vis).filter(d=>d.stage==='rejected');
- if(!queue.find(d=>d.id===appSel))appSel=queue[0].id;
+ if(!IDEAS.find(d=>d.id===appSel))appSel=(queue[0]||IDEAS[0]).id;
  const who={role:'Approver workspace',name:ME.approver,sub:'Approver · '+PPLANT(),init:_sc(ME.approver)[0],clr:_sc(ME.approver)[1]};
  const nav=[{k:'queue',t:'My approvals',i:'ti-checkbox',c:queue.length,fn:"ago('queue')"},{k:'approve',t:'Approve',i:'ti-gavel',fn:"ago('approve')"},{k:'history',t:'History',i:'ti-history',c:approved.length+rejected.length,fn:"ago('history')"}];
  let body,title,crumb,charts=false;
@@ -669,24 +671,28 @@ APPS.approver=function(){
   const add=DETAIL[s.id];const evs=(add&&add.evaluations&&add.evaluations.length)?add.evaluations.slice(0,3).map(e=>[e.evaluator,_sc(e.evaluator)[1],e.total_score,e.comment||'']):[['Evaluation panel','#159468',s.score,'']];
   body=`<a onclick="ago('queue')" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:14px;cursor:pointer"><i class="ti ti-arrow-left"></i>Back to my approvals</a><div class="g wr"><div class="card cardp"><div style="display:flex;align-items:center;gap:10px"><span class="tag mono">${s.id}</span><span class="tier ${s.tier}">${s.tier}</span><span class="pill muted">${s.dept}</span><span style="margin-left:auto">${slaPill[s.sla]}</span></div>
     <h3 style="margin-top:12px;font-size:16px">${s.title}</h3>
-    <div style="font-size:11px;font-weight:700;color:var(--muted-2);letter-spacing:.05em;margin:14px 0 10px">EVALUATION SUMMARY</div>
+    <div style="font-size:11px;font-weight:700;color:var(--muted-2);letter-spacing:.05em;margin:14px 0 10px">THE IDEA</div>
+    ${(()=>{const dd2=DETAIL[s.id];if(dd2&&dd2.idea.problem_statement)return `<p style="font-size:13px;line-height:1.6;color:var(--ink-2);margin:0 0 8px">${dd2.idea.problem_statement.replace(/\n/g,'<br>')}</p><p style="font-size:13px;line-height:1.6;color:var(--ink-2);margin:0 0 14px"><b>Proposed:</b> ${(dd2.idea.proposed_solution||'').replace(/\n/g,'<br>')}</p>`;return `<p style="font-size:13px;line-height:1.6;color:var(--ink-2);margin:0 0 14px">${s.desc||descFor(s)}</p>`;})()}
+    <hr class="sep"/><div style="font-size:11px;font-weight:700;color:var(--muted-2);letter-spacing:.05em;margin-bottom:10px">EVALUATION SUMMARY</div>
     <div style="background:var(--emerald-soft);border-radius:11px;padding:11px;display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:600;color:var(--emerald);margin-bottom:10px"><i class="ti ti-calculator"></i>Average evaluation score · ${s.score} / 100</div>
     ${evs.map(e=>`<div style="display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:8px"><div class="avatar" style="width:30px;height:30px;background:${e[1]}">${_sc(e[0])[0]}</div><div style="flex:1;font-size:12.5px"><b>${e[0]}</b><br><span class="muted">Scored ${e[2]}/100${e[3]?` · ${e[3]}`:``}</span></div><span class="pill ok" style="flex:none"><i class="ti ti-check"></i>Voted</span></div>`).join('')}
-    <hr class="sep"/><div style="font-size:11px;font-weight:700;color:var(--muted-2);letter-spacing:.05em;margin-bottom:10px">REQUIRED DOCUMENTS</div>
-    <div style="display:flex;flex-direction:column;gap:7px;font-size:12.5px"><div style="display:flex;gap:9px"><i class="ti ti-circle-check" style="color:var(--emerald)"></i>Cost estimate</div><div style="display:flex;gap:9px"><i class="ti ti-circle-check" style="color:var(--emerald)"></i>Payback calculation</div><div style="display:flex;gap:9px"><i class="ti ti-circle-dashed" style="color:var(--amber)"></i>Vendor quote · pending</div></div>
+    <hr class="sep"/><div style="font-size:11px;font-weight:700;color:var(--muted-2);letter-spacing:.05em;margin-bottom:10px">ATTACHED DOCUMENTS</div>
+    ${(()=>{const dd3=DETAIL[s.id],fl=dd3&&dd3.attachments&&dd3.attachments.files||[];if(fl.length)return `<div style="display:flex;flex-direction:column;gap:7px;font-size:12.5px">${fl.map(f=>`<div style="display:flex;gap:9px"><i class="ti ${f.type==='photo'?'ti-photo':'ti-file-text'}" style="color:var(--emerald)"></i>${f.filename}</div>`).join('')}</div>`;return `<div class="muted" style="font-size:12.5px">No documents attached to this idea.</div>`;})()}
    </div>
    <div class="card cardp"><h3><i class="ti ti-target-arrow"></i>Business case</h3>
     <div class="g c2" style="margin-top:12px"><div style="background:var(--surface-2);border-radius:12px;padding:14px"><div class="muted" style="font-size:11px;font-weight:600">EST. SAVINGS</div><div class="mono" style="font-size:23px;font-weight:700;margin-top:3px">${fmtL(s.est)}</div><div class="muted" style="font-size:11px">per year</div></div><div style="background:var(--surface-2);border-radius:12px;padding:14px"><div class="muted" style="font-size:11px;font-weight:600">CATEGORY · TIER</div><div style="font-weight:700;margin-top:5px">${s.cat}</div><div class="muted" style="font-size:11px">Tier ${s.tier}</div></div></div>
     ${s.sla==='breach'?'<div style="margin-top:12px;background:var(--red-soft);border-radius:11px;padding:11px;font-size:12px;color:var(--red);font-weight:600;display:flex;gap:9px"><i class="ti ti-alert-triangle"></i>Approval SLA breached — please action</div>':''}
-    <div class="field" style="margin-top:14px"><label>Approval note</label><textarea class="input area" placeholder="Conditions or comments…"></textarea></div>
+    ${s.stage==='approval'?`<div class="field" style="margin-top:14px"><label>Approval note</label><textarea class="input area" placeholder="Conditions or comments…"></textarea></div>
     <button class="btn ok block" onclick="toast('Approved — advances to implementation')"><i class="ti ti-check"></i>Approve & advance</button>
-    <div style="display:flex;gap:8px;margin-top:8px"><button class="btn block" onclick="toast('Sent back for clarification')"><i class="ti ti-message-2"></i>Clarify</button><button class="btn block" style="color:var(--red);border-color:var(--red-soft)" onclick="toast('Rejected — reason logged, submitter notified')"><i class="ti ti-x"></i>Reject</button></div>
+    <div style="display:flex;gap:8px;margin-top:8px"><button class="btn block" onclick="toast('Sent back for clarification')"><i class="ti ti-message-2"></i>Clarify</button><button class="btn block" style="color:var(--red);border-color:var(--red-soft)" onclick="toast('Rejected — reason logged, submitter notified')"><i class="ti ti-x"></i>Reject</button></div>`:`
+    ${(()=>{const ddn=DETAIL[s.id],apn=ddn&&ddn.approvals&&ddn.approvals[0];return apn&&apn.comment?`<div class="field" style="margin-top:14px"><label>Approval note</label><div style="background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:11px 13px;font-size:12.5px;line-height:1.55">${apn.comment}</div></div>`:'';})()}
+    <div style="margin-top:12px">${s.stage==='rejected'?'<span class="pill bad"><i class="ti ti-x"></i>Closed — rejected</span>':s.stage==='done'?'<span class="pill ok"><i class="ti ti-check"></i>Closed — implemented</span>':'<span class="pill work">'+(STLAB[s.stage]||s.stage)+' — read only</span>'}</div>`}
    </div></div>`;
  } else {
   title='Approval history';crumb='Approver · decisions';
   const list=[...approved,...rejected];
   body=`<div class="card" style="overflow:hidden"><table class="tbl"><thead><tr><th>Idea</th><th>Dept</th><th>Value</th><th>Decision</th></tr></thead><tbody>
-   ${list.map(d=>`<tr style="cursor:default"><td class="tt">${d.title}</td><td class="muted">${d.dept}</td><td class="mono">${fmtL(d.est)}</td><td>${d.stage==='rejected'?'<span class="pill bad"><i class="ti ti-x"></i>Rejected</span>':'<span class="pill ok"><i class="ti ti-check"></i>Approved</span>'}</td></tr>`).join('')}
+   ${list.map(d=>`<tr onclick="asel('${d.id}')"><td class="tt">${d.title}</td><td class="muted">${d.dept}</td><td class="mono">${fmtL(d.est)}</td><td>${d.stage==='rejected'?'<span class="pill bad"><i class="ti ti-x"></i>Rejected</span>':'<span class="pill ok"><i class="ti ti-check"></i>Approved</span>'}</td></tr>`).join('')}
   </tbody></table></div>`;
  }
  document.getElementById('app').innerHTML=consoleShell(nav,appView,who,title,crumb,body);
@@ -716,7 +722,7 @@ APPS.user=function(){
  const boardCard=`<div class="railcard"><h3><i class="ti ti-star"></i>Top contributors</h3><div style="margin-top:12px;display:flex;flex-direction:column;gap:11px">${board.map(([n,v],i)=>`<div style="display:flex;align-items:center;gap:10px"><span class="mono muted" style="font-weight:700;width:14px">${i+1}</span><div class="avatar" style="width:28px;height:28px;background:${_sc(n)[1]}">${_sc(n)[0]}</div><div style="flex:1;font-size:12.5px;font-weight:600">${n}</div><span class="mono" style="color:var(--emerald);font-weight:700;font-size:12px">${fmtL(v)}</span></div>`).join('')}</div></div>`;
  let content='',subbar='';
  if(userView==='home'){
-  const all=DEPTFEED;
+  const all=window.__LIVE?IDEAS.filter(vis).filter(d=>d.dept===PDEPT()&&d.plant===PPLANT()).sort((a,b)=>b.id.localeCompare(a.id)).slice(0,20):DEPTFEED;
   const filt={all:()=>true,review:d=>['evaluation','approval'].includes(d.stage),implemented:d=>d.stage==='done',trending:d=>endoState(d).n>=38};
   const dfeed=all.filter(filt[feedFilter]||filt.all);
   const tab=(k,l)=>`<button class="${feedFilter===k?'on':''}" onclick="setFeed('${k}')">${l}</button>`;
@@ -724,8 +730,8 @@ APPS.user=function(){
   content=`<div class="web-feed2">
     <div class="feedmain">${dfeed.length?dfeed.map(ideaCardX).join(''):`<div class="card cardp" style="text-align:center;color:var(--muted);font-size:13px;padding:34px 18px">No ideas match this view yet.</div>`}</div>
    <div class="feedrail">
-    <div class="railcard rc-compact"><h3 style="font-size:13px"><i class="ti ti-progress-check" style="color:var(--blue)"></i>Active department initiatives</h3><p style="font-size:11px;color:var(--muted);margin:4px 0 2px;line-height:1.45">Projects already underway in your department.</p>${INITIATIVES.map(initRow).join('')}</div>
-    <div class="railcard rc-compact" style="margin-top:16px"><h3 style="font-size:13px"><i class="ti ti-star"></i>Top contributors</h3><div class="cb-list">${SPINBOARD.map(([n,v],i)=>`<div class="cb-row"><span class="cb-rank">${i+1}</span><div class="avatar" style="width:24px;height:24px;font-size:9px;background:${_sc(n)[1]}">${_sc(n)[0]}</div><span class="cb-name">${n}</span><span class="cb-val">${fmtL(v)}</span></div>`).join('')}</div></div>
+    <div class="railcard rc-compact"><h3 style="font-size:13px"><i class="ti ti-progress-check" style="color:var(--blue)"></i>Active department initiatives</h3><p style="font-size:11px;color:var(--muted);margin:4px 0 2px;line-height:1.45">Projects already underway in your department.</p>${(INITIATIVES_LIVE&&INITIATIVES_LIVE.length?INITIATIVES_LIVE:INITIATIVES).map(initRow).join('')}</div>
+    <div class="railcard rc-compact" style="margin-top:16px"><h3 style="font-size:13px"><i class="ti ti-star"></i>Top contributors</h3><div class="cb-list">${(window.__LIVE&&LB.length?LB.slice(0,5).map(l=>[l.name,l.saved]):SPINBOARD).map(([n,v],i)=>`<div class="cb-row"><span class="cb-rank">${i+1}</span><div class="avatar" style="width:24px;height:24px;font-size:9px;background:${_sc(n)[1]}">${_sc(n)[0]}</div><span class="cb-name">${n}</span><span class="cb-val">${fmtL(v)}</span></div>`).join('')}</div></div>
    </div>
   </div>`;
  } else if(userView==='mine'){
@@ -737,6 +743,8 @@ APPS.user=function(){
     <div style="display:flex;align-items:center;gap:10px"><span class="tag mono">${d.id}</span>${stagePill(d.stage)}${d.sla&&d.sla!=='-'&&!['done','rejected'].includes(d.stage)?`<span class="pill ${d.sla==='breach'?'bad':'warn'}"><i class="ti ti-clock"></i>SLA ${d.sla==='breach'?'breached':'1d 4h left'}</span>`:''}</div>
     <h2 class="vh" style="margin:12px 0 18px">${d.title}</h2>
     ${ptl(d.stage)}
+    <hr class="sep"/><div style="font-size:11px;font-weight:700;letter-spacing:.07em;color:var(--muted-2);margin-bottom:10px">DESCRIPTION</div>
+    ${(()=>{const dd=DETAIL[d.id];if(dd&&dd.idea.problem_statement)return `<p style="font-size:13px;line-height:1.6;color:var(--ink-2);margin:0 0 8px">${dd.idea.problem_statement.replace(/\n/g,'<br>')}</p><p style="font-size:13px;line-height:1.6;color:var(--ink-2);margin:0 0 16px"><b>Proposed solution:</b> ${(dd.idea.proposed_solution||'').replace(/\n/g,'<br>')}</p>`;return `<p style="font-size:13px;line-height:1.6;color:var(--ink-2);margin:0 0 16px">${d.desc||descFor(d)}</p>`;})()}
     <hr class="sep"/><div style="font-size:11px;font-weight:700;letter-spacing:.07em;color:var(--muted-2);margin-bottom:14px">ACTIVITY</div>
     ${activityFor(d).map(actRow).join('')}
     ${['evaluation','approval','implementation'].includes(d.stage)?`<div style="background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:5px 5px 5px 14px;display:flex;align-items:center;gap:8px"><input class="input" style="border:none;background:none;padding:9px 0" placeholder="Reply to reviewer…"><button class="btn prim sm" onclick="toast('Reply sent')"><i class="ti ti-send"></i></button></div>`:`<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px"><i class="ti ti-lock"></i>${d.stage==='done'?'Implemented and closed — the review thread is no longer active.':d.stage==='rejected'?'This idea is closed. You can submit a revised version any time.':'No reviewer is assigned yet — you can reply once evaluation begins.'}</div>`}
@@ -832,6 +840,7 @@ function openDupModal(dup){
   </div></div>`;
 }
 /* ===== department initiatives + dept idea cards ===== */
+let INITIATIVES_LIVE=null;
 const INITIATIVES=[
  {title:'Spinneret bank replacement program',team:'Spinning',status:'In progress',sp:'work',si:'ti-replace',desc:'Phased replacement of worn spinneret banks to cut filament breaks and steady output.',progress:55,target:'−25% filament breaks',timeline:'Phase 2 from Aug'},
  {title:'Spin-bath circulation upgrade',team:'Spinning · Process',status:'In progress',sp:'work',si:'ti-droplet',desc:'Rebalanced spin-bath circulation for uniform coagulation across the spinning line.',progress:60,target:'+6% line yield',timeline:'Commissioning Sep'},
@@ -886,17 +895,15 @@ const LIKES={};
 function likeState(d){if(!LIKES[d.id])LIKES[d.id]={n:60+(idnum(d.id)*7%180),on:false};return LIKES[d.id];}
 function likeToggle(id,ev){if(ev)ev.stopPropagation();const s=LIKES[id]||(LIKES[id]={n:80,on:false});s.on=!s.on;s.n+=s.on?1:-1;const el=document.getElementById('like-'+id);if(el){el.className='iact'+(s.on?' liked':'');el.innerHTML='<i class="ti ti-heart'+(s.on?'-filled':'')+'"></i>'+s.n;}}
 function cmt(id,ev){if(ev)ev.stopPropagation();toast('Comment thread opened — join the discussion');}
-function ideaCardX(d){const es=endoState(d),ls=likeState(d),cat=CATCLR[d.cat],cmts=d.cm||0;
- const endorsers=Object.keys(SUBS).filter(n=>n!==d.sub).slice(0,3);
+function ideaCardX(d){const es=endoState(d),cat=CATCLR[d.cat],cmts=d.cm||0;
  const impact=d.act?`<span class="fc-impact real"><i class="ti ti-trending-up"></i>${fmtL(d.act)}/yr saved</span>`:`<span class="fc-impact est"><i class="ti ti-target"></i>est ${fmtL(d.est)}/yr impact</span>`;
  const trend=es.n>=38?`<span class="catchip" style="background:var(--ember-soft);color:var(--ember-d)"><i class="ti ti-flame"></i>Trending</span>`:'';
  return `<div class="ideac" style="--cat:${cat}"><div class="ideac-in">
    <div class="ic-head"><div class="avatar" style="width:40px;height:40px;background:${d.clr}">${d.init}</div><div class="who"><b>${d.sub}</b><span>${d.dept} · ${d.plant} · 2d ago</span></div>${stagePill(d.stage)}</div>
    <div class="ic-catrow"><span class="catchip" style="background:${cat}1f;color:${cat}">${d.cat}</span>${trend}</div>
-   <h3 class="ic-t">${d.title}</h3><p class="ic-d">${descFor(d)}</p>${d.photos?`<div class="ic-photos">${d.photos.map(g=>`<div class="ic-photo" style="background:${g}"><span class="ic-pcap"><i class="ti ti-photo"></i>Shop-floor photo</span></div>`).join('')}</div>`:''}${impact}
-   <div class="ic-bar"><button class="iact${ls.on?' liked':''}" id="like-${d.id}" onclick="likeToggle('${d.id}',event)"><i class="ti ti-heart${ls.on?'-filled':''}"></i>${ls.n}</button>
-     <button class="iact" onclick="cmt('${d.id}',event)"><i class="ti ti-message-circle"></i>${cmts}</button>
-     <div class="endrs"><div class="endstack">${endorsers.map(n=>`<div class="avatar" style="background:${_sc(n)[1]}">${_sc(n)[0]}</div>`).join('')}</div><button id="end-${d.id}" class="endo${es.on?' on':''}" title="I support this idea" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button></div></div>
+   <h3 class="ic-t">${d.title}</h3><p class="ic-d">${descFor(d)}</p>${(d.photos&&d.photos.length)||d.ph?`<div class="ic-photos">${(d.photos||['linear-gradient(135deg,#26425a,#0e2233)','linear-gradient(135deg,#3a2d4f,#161024)'].slice(0,Math.min(2,d.ph||1))).map(g=>`<div class="ic-photo" style="background:${g}"><span class="ic-pcap"><i class="ti ti-photo"></i>Shop-floor photo</span></div>`).join('')}</div>`:''}${impact}
+   <div class="ic-bar"><button class="iact" onclick="cmt('${d.id}',event)"><i class="ti ti-message-circle"></i>${cmts}</button>
+     <div class="endrs"><button id="end-${d.id}" class="endo${es.on?' on':''}" title="I support this idea" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button></div></div>
  </div></div>`;}
 function initRow(p){const sc={'In progress':'#2A6FE0','Piloting':'#5b4ad1','Final phase':'#159468','Planning':'#9B9A92'}[p.status]||'#9B9A92';
  return `<div class="initrow" onclick="toast('${p.title} — ${p.status}, led by ${p.team}')"><span class="idot" style="background:${sc}"></span><div class="ir-main"><b>${p.title}</b><span>${p.team} · ${p.status}</span><div class="ir-insight"><i class="ti ti-target-arrow"></i>${p.target}</div><div class="ir-insight"><i class="ti ti-calendar-event"></i>${p.timeline}</div></div></div>`;}
@@ -918,7 +925,7 @@ document.getElementById('app').innerHTML='<div style="display:grid;place-items:c
    queues + the plant leaderboard. The 5 seeded similar-idea cards are kept because the
    voice duplicate-check demo matches against their keywords. Read-only. */
 function mapIdea(r){const sc=_sc(r.sub);ENDO[r.id]={n:r.endo||0,on:false};
- return {id:r.id,title:r.title,dept:r.dept,cat:r.cat,tier:r.tier,stage:r.stage,est:r.est,act:r.act,score:r.score,sla:r.sla||'-',month:r.month||'-',sub:r.sub,plant:r.plant,init:sc[0],clr:sc[1],cm:r.cm||0};}
+ return {id:r.id,title:r.title,dept:r.dept,cat:r.cat,tier:r.tier,stage:r.stage,est:r.est,act:r.act,score:r.score,sla:r.sla||'-',month:r.month||'-',sub:r.sub,plant:r.plant,init:sc[0],clr:sc[1],cm:r.cm||0,desc:r.desc||'',ph:r.ph||0};}
 async function loadLive(){
  try{
   const j=async u=>{const r=await fetch(API_BASE+u);if(!r.ok)throw new Error(u+' '+r.status);return r.json();};
@@ -942,6 +949,10 @@ async function loadLive(){
   [...mine.ideas,...feed.ideas,...stories.ideas,...evq.ideas,...apq.ideas].forEach(r=>{if(seen.has(r.id))return;seen.add(r.id);merged.push(mapIdea(r));});
   IDEAS.length=0;IDEAS.push(...merged,...dupIdeas);
   clearCharts();render();
+  try{const iv=await j('/api/initiatives?plant='+encodeURIComponent(PPLANT())+'&department='+encodeURIComponent(PDEPT()));
+   if(iv.initiatives&&iv.initiatives.length)INITIATIVES_LIVE=iv.initiatives.map(x=>({title:x.name,team:x.department,status:x.status,sp:x.status==='Planning'?'plan':'work',si:'ti-progress-check',desc:x.metric,when:x.milestone}));
+  }catch(e){}
+  window.__LIVE=true;
   console.log('Kaizen portal: live data loaded —',merged.length,'ideas from kaizen.db · user',ME.user);
  }catch(e){console.warn('Kaizen portal: backend unreachable — showing built-in demo data.',e);clearCharts();render();}
 }

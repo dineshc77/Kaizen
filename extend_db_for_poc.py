@@ -266,10 +266,50 @@ for title, dept, trk, tier, stage, est, score, prob, sol, kws in DUP:
     added += 1
 print("dup-check ideas added:", added, "(+ keywords)")
 
+
+# ------------------------------------------------------------------ 7. department initiatives
+cur.execute("""CREATE TABLE IF NOT EXISTS department_initiatives(
+  id INTEGER PRIMARY KEY AUTOINCREMENT, plant_id INTEGER, department_id INTEGER,
+  name TEXT, status TEXT, metric TEXT, milestone TEXT)""")
+cur.execute("DELETE FROM department_initiatives")
+INIT_TPL = {
+ "Spinning": [("Spinneret bank replacement program","-25% filament breaks"),("Godet drive VFD retrofit","₹{v} L/yr energy"),("Doffing automation trial","-30% manual doffing"),("Acid mist hood upgrade","aisle exposure to zero")],
+ "Viscose": [("Churn instrumentation upgrade","±2s viscosity band"),("Filter bank duplexing","+{v} hrs between cleans"),("Ripening recipe standardisation","gamma band halved")],
+ "Spin Bath": [("Evaporator economy drive","steam economy +0.{v}"),("Zinc recovery loop rollout","-{v} kg/day to drain"),("HX cleaning automation","approach held < 3 °C")],
+ "Auxiliary & CS2": [("Adsorber changeover revamp","fugitive odour to zero"),("Condenser pre-separation","+{v} weeks run length")],
+ "Pulp": [("Consistency control upgrade","±0.{v}% band"),("Dewiring camera screening","zero wire escapes")],
+ "Acid & Aux Chemicals": [("Unloading bay dry-break program","zero weeping receipts"),("Dilution loop tempering","exotherm within band")],
+ "Utilities (Power & Steam)": [("Compressed air leak elimination","-{v}0 cfm leakage"),("Condensate recovery push","+{v}0% return"),("Capacitor bank retuning","PF ≥ 0.98 sustained"),("Boiler O2 trim program","-{v}% fuel")],
+ "ETP & Environment": [("Blower VFD conversion","-{v}% aeration power"),("Polymer auto-dosing","-{v}% polymer"),("MEE antiscalant trial","+{v}0 hrs uptime")],
+ "Maintenance": [("Vibration route consolidation","MTBF +{v}0%"),("QR lube route rollout","right-quantity greasing"),("Oil analysis program","{v}0 critical drives covered")],
+ "Quality & Lab": [("LIMS barcode tracking","TAT -{v}0%"),("Tester correlation program","inter-tester < 2%")],
+ "Packing & Baling": [("Checkweigher line fitment","±1 kg held"),("Dock slot booking","-{v}0 min/truck")],
+ "Safety": [("Near-miss mobile reporting","{v}x reporting rate"),("Photo-verified LOTO","zero deviations"),("Pedestrian corridor program","forklift conflicts to zero")],
+}
+STAT = ["In progress","Piloting","Planning","Phase 2"]
+MILE = ["Phase 2 from Aug","Commissioning Sep","Pilot on line {n}","Kickoff next month","Review in Oct CI meet"]
+pd_rows = cur.execute("SELECT plant_id, department_id FROM plant_departments").fetchall()
+if not pd_rows:
+    pd_rows = [(p, d) for (p,) in cur.execute("SELECT id FROM plants") for (d,) in cur.execute("SELECT id FROM departments")]
+ini = 0
+for (pid, did) in [(r[0], r[1]) for r in pd_rows]:
+    dname = cur.execute("SELECT name FROM departments WHERE id=?", [did]).fetchone()[0]
+    tpls = INIT_TPL.get(dname, INIT_TPL["Maintenance"])
+    for k, (nm, met) in enumerate(tpls[:4]):
+        key = f"{pid}-{did}-{k}"
+        v = h(key, 7, 2); n = h(key + "n", 12, 1)
+        cur.execute("""INSERT INTO department_initiatives
+            (plant_id,department_id,name,status,metric,milestone) VALUES (?,?,?,?,?,?)""",
+            (pid, did, nm, STAT[h(key+"s", len(STAT))], met.format(v=v),
+             MILE[h(key+"m", len(MILE))].format(n=n)))
+        ini += 1
+print("department_initiatives:", ini)
+
 con.commit()
 # verify
+# verify
 for t in ["workflow_tracks","idea_classifications","implementation_tasks",
-          "award_definitions","award_highlight_rules","idea_keywords"]:
+          "award_definitions","award_highlight_rules","idea_keywords","department_initiatives"]:
     print(" verify", t, "=", cur.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0])
 print(" verify ideas total =", cur.execute("SELECT COUNT(*) FROM ideas").fetchone()[0])
 con.close()

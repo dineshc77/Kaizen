@@ -503,7 +503,14 @@ function go(k){cur=k;renderNav();clearCharts();VIEWS[k]();window.scrollTo(0,0);}
 const VIEWS={};
 const DEPTCLR=['#5b4ad1','#2A6FE0','#159468','#D98A12','#EF5026','#0f8a8a','#c2476a','#7a5cd1','#2A6FE0','#159468','#D98A12','#EF5026'];
 const SEL={intake:null,pipeline:null,kanban:null,rewards:null};
-function setPlant(p){filterPlant=p;go(cur);}
+const BOOT_CACHE={};
+function setPlant(p){filterPlant=p;go(cur);
+ const key=p||'All';
+ const apply=b=>{CONTRIB_LIVE=b.c;CYCLE=b.y;if(filterPlant===p&&cur==='dashboard'){clearCharts();go(cur);}};
+ if(BOOT_CACHE[key]){apply(BOOT_CACHE[key]);return;}
+ fetch(API_BASE+'/api/portal/bootstrap?plant='+encodeURIComponent(key)).then(r=>r.ok?r.json():null).then(b=>{
+  if(!b)return;BOOT_CACHE[key]={c:b.contributors||CONTRIB_LIVE,y:b.cycle_times||CYCLE};apply(BOOT_CACHE[key]);
+ }).catch(()=>{});}
 function plantSeg(){return `<div class="seg">${['All',...PLANTS_CYCLE].map(p=>`<button class="${filterPlant===p?'on':''}" onclick="setPlant('${p}')">${p}</button>`).join('')}</div>`;}
 
 /* ---------- DASHBOARD ---------- */
@@ -863,14 +870,15 @@ function boardFor(s){
 }
 /* editable, persistent per-idea board state */
 const KAN_STATE={};let TASK_SEQ=1,KDRAG=null;
-const KAN_FETCHED={};
+const KAN_FETCHED={};const KAN_TARGET={};
 function kanDate(iso){if(!iso)return '';const d=new Date(iso);return d.getDate()+' '+d.toLocaleString('en',{month:'short'});}
 function kanFetch(id){ /* load this idea's real task board from implementation_tasks */
  if(KAN_FETCHED[id])return;KAN_FETCHED[id]=1;
  fetch(API_BASE+'/api/idea/'+encodeURIComponent(id)).then(r=>r.ok?r.json():null).then(dt=>{
   if(!dt||!dt.tasks||!dt.tasks.length)return;
   const cols={todo:[],inprogress:[],blocked:[],review:[],done:[]};
-  dt.tasks.forEach(t=>{(cols[t.status]||cols.todo).push({id:'T'+(TASK_SEQ++),t:t.title,ph:t.phase,who:t.assignee||'—',due:kanDate(t.due_date),reason:t.blocked_reason||''});});
+  let mx='';dt.tasks.forEach(t=>{if(t.due_date>mx)mx=t.due_date;(cols[t.status]||cols.todo).push({id:'T'+(TASK_SEQ++),t:t.title,ph:t.phase,who:t.assignee||'—',due:kanDate(t.due_date),reason:t.blocked_reason||''});});
+  if(mx)KAN_TARGET[id]=mx;
   KAN_STATE[id]={cols,adding:null};
   if(cur==='kanban'&&SEL.kanban===id)VIEWS.kanban();
  }).catch(()=>{});
@@ -904,7 +912,7 @@ VIEWS.kanban=function(){
  if(!list.find(d=>d.id===SEL.kanban))SEL.kanban=list[0].id;
  const s=IDEAS.find(d=>d.id===SEL.kanban),st=kanState(s.id),cols=st.cols;
  const total=Object.values(cols).reduce((a,c)=>a+c.length,0),done=cols.done.length,pct=total?Math.round(done/total*100):0,blockedN=cols.blocked.length;
- const target='30 Jun';
+ const target=KAN_TARGET[s.id]?kanDate(KAN_TARGET[s.id]):kanDate(new Date(Date.now()+19*864e5).toISOString());
  topbar('Implementation board','Implement · '+list.length+' active',`<button class="btn sm" onclick="kanExport('${s.id}')"><i class="ti ti-file-export"></i>Export CSV</button>`);
  const av=(nm,sz)=>{const a=_sc(nm||'?');return `<span class="avatar" title="${nm}" style="width:${sz}px;height:${sz}px;background:${a[1]};font-size:${sz<22?8:9}px">${a[0]}</span>`;};
  const phaseTag=ph=>`<span class="phase" style="background:${(PHASECLR[ph]||'#888')}1a;color:${PHASECLR[ph]||'#888'}">${ph}</span>`;

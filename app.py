@@ -257,7 +257,9 @@ SELECT i.idea_code AS id, i.title, d.name AS dept, t.name AS cat, ti.name AS tie
        s.code AS stage, i.estimated_savings AS est, bs.v AS act, i.score,
        i.sla_status AS sla, i.submitted_date AS sd, u.name AS sub, p.name AS plant,
        i.endorsement_count AS endo, i.collaborator_count AS collab,
-       COALESCE(cmt.c, 0) AS cm
+       COALESCE(cmt.c, 0) AS cm,
+       SUBSTR(COALESCE(i.problem_statement,''), 1, 240) AS pdesc,
+       COALESCE(att2.p, 0) AS ph
 FROM ideas i
 JOIN departments d ON d.id = i.department_id
 JOIN tracks t      ON t.id = i.track_id
@@ -270,6 +272,9 @@ LEFT JOIN (SELECT idea_id, ROUND(SUM(quantified_value),1) v
        ON bs.idea_id = i.id
 LEFT JOIN (SELECT idea_id, COUNT(*) c FROM comments GROUP BY idea_id) cmt
        ON cmt.idea_id = i.id
+LEFT JOIN (SELECT idea_id, SUM(CASE WHEN type='photo' THEN 1 ELSE 0 END) p
+           FROM idea_attachments GROUP BY idea_id) att2
+       ON att2.idea_id = i.id
 """
 
 
@@ -280,7 +285,7 @@ def shape(r):
         "tier": r["tier"], "stage": r["stage"], "est": r["est"], "act": r["act"],
         "score": r["score"], "sla": SLA_MAP.get(r["sla"], "-"),
         "month": month_label(r["sd"]), "date": r["sd"], "sub": r["sub"],
-        "plant": r["plant"], "endo": r["endo"], "collab": r["collab"], "cm": r["cm"],
+        "plant": r["plant"], "endo": r["endo"], "collab": r["collab"], "cm": r["cm"], "desc": r["pdesc"], "ph": r["ph"],
     }
 
 
@@ -415,6 +420,8 @@ def api_idea_detail(code):
     att = con.execute(
         """SELECT SUM(CASE WHEN type IN ('photo','image') THEN 1 ELSE 0 END) photos,
                   COUNT(*) total FROM idea_attachments WHERE idea_id=?""", [iid]).fetchone()
+    att_files = rows(con.execute(
+        "SELECT type, filename FROM idea_attachments WHERE idea_id=? LIMIT 8", [iid]))
     collaborators = rows(con.execute(
         """SELECT u.name, c.role, c.joined_date FROM collaborators c
            JOIN users u ON u.id=c.user_id WHERE c.idea_id=?""", [iid]))
@@ -423,7 +430,7 @@ def api_idea_detail(code):
                     "benefits": benefits, "history": history, "evaluations": evals,
                     "approvals": apprs, "comments": comments, "collaborators": collaborators,
                     "classifications": cls, "tasks": tasks,
-                    "attachments": {"photos": att["photos"] or 0, "total": att["total"] or 0}})
+                    "attachments": {"photos": att["photos"] or 0, "total": att["total"] or 0, "files": att_files}})
 
 
 # ------------------------------------------------------------------ console: ALL ideas (compact)
@@ -736,6 +743,19 @@ def api_intake_meta():
                     "photos": att["photos"] or 0, "total": att["total"] or 0})
     con.close()
     return jsonify({"meta": out})
+
+
+@app.route("/api/initiatives")
+def api_initiatives():
+    plant = request.args.get("plant"); dept = request.args.get("department")
+    con = db(); params = []
+    sql = """SELECT di.name, di.status, di.metric, di.milestone, d.name AS department, p.name AS plant
+             FROM department_initiatives di JOIN plants p ON p.id=di.plant_id
+             JOIN departments d ON d.id=di.department_id WHERE 1=1"""
+    if plant: sql += " AND p.name=?"; params.append(plant)
+    if dept: sql += " AND d.name=?"; params.append(dept)
+    data = rows(con.execute(sql + " LIMIT 8", params)); con.close()
+    return jsonify({"initiatives": data})
 
 
 @app.route("/api/award-config")
