@@ -520,7 +520,7 @@ const SEED=[
 SEED.forEach((r,i)=>{const id="KZ-2026-"+String(521+i).padStart(4,"0");const sc=SUBS[r.sub]||["??","#888"];IDEAS.push(Object.assign({id:id,plant:"Nagda",init:sc[0],clr:sc[1]},r));ENDO[id]={n:24+i*9,on:false};COLLAB[id]=(r.collab||[]).slice();});
 function endorse(id,ev){if(ev)ev.stopPropagation();const s=ENDO[id]||(ENDO[id]={n:9,on:false});s.on=!s.on;s.n+=s.on?1:-1;const el=document.getElementById('end-'+id);if(el){el.className='endo'+(s.on?' on':'');el.innerHTML='<i class="ti ti-rosette-discount-check'+(s.on?'-filled':'')+'"></i>'+(s.on?'Endorsed':'Endorse')+' · '+s.n;}if(s.on)toast('You endorsed this idea — your support is now visible to the submitter');}
 function fcard(d){const es=endoState(d);const body=d.act?`<div class="fc-ba"><div class="b">Before</div><div class="a">After</div></div><div class="fc-stat"><i class="ti ti-trending-up"></i>${fmtL(d.act)} / yr saved · verified</div>`:`<p style="font-size:13px;color:var(--muted);line-height:1.5">${d.dept} idea · estimated ${fmtL(d.est)}/yr impact</p>`;
- return `<div class="feedcard"><div class="fc-top"><div class="avatar" style="width:38px;height:38px;background:${d.clr}">${d.init}</div><div class="meta"><b>${d.sub}</b><span>${d.dept} · ${d.plant}</span></div>${stagePill(d.stage)}</div><div class="fc-body"><div class="fc-title">${d.title}</div>${body}</div><div class="fc-act"><span><i class="ti ti-message-circle"></i>${d.cm||0}</span><button id="end-${d.id}" class="endo${es.on?' on':''}" title="I support this idea" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button><span style="margin-left:auto"><i class="ti ti-share-2"></i></span></div></div>`;}
+ return `<div class="feedcard"><div class="fc-top"><div class="avatar" style="width:38px;height:38px;background:${d.clr}">${d.init}</div><div class="meta"><b>${d.sub}</b><span>${d.dept} · ${d.plant}</span></div>${stagePill(d.stage)}</div><div class="fc-body"><div class="fc-title">${d.title}</div>${body}</div><div class="fc-act"><span><i class="ti ti-heart"></i>${likeState(d).n}</span><span><i class="ti ti-message-circle"></i>${d.cm||0}</span><button id="end-${d.id}" class="endo${es.on?' on':''}" title="I support this idea" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button><span style="margin-left:auto"><i class="ti ti-share-2"></i></span></div></div>`;}
 function ugo(v){userView=v;APPS.user();}
 const DETAIL={};
 function uopen(id){userSel=id;userView='detail';APPS.user();
@@ -888,21 +888,21 @@ const DEPTFEED=[
 DEPTFEED.forEach(d=>{d.dept='Spinning';d.plant='Nagda';d.init=SUBS[d.sub][0];d.clr=SUBS[d.sub][1];ENDO[d.id]={n:d.end,on:false};});
 const SPINBOARD=[['Anita Mehta',8.2],['Deepak Kulkarni',6.5],['Rakesh Nair',5.1],['Neha Shah',4.4],['Manish Gupta',3.8]];
 function deptCard(d){const es=endoState(d);const impact=d.act?`<span class="fc-impact real"><i class="ti ti-trending-up"></i>${fmtL(d.act)}/yr saved</span>`:`<span class="fc-impact est"><i class="ti ti-target"></i>est ${fmtL(d.est)}/yr</span>`;
- return `<div class="feedcard"><div class="fc-top"><div class="avatar" style="width:38px;height:38px;background:${d.clr}">${d.init}</div><div class="meta"><b>${d.sub}</b><span>${d.dept} · ${d.plant}</span></div>${stagePill(d.stage)}</div><div class="fc-body"><div class="fc-title">${d.title}</div><p class="fc-desc">${descFor(d)}</p>${impact}</div><div class="fc-act"><span><i class="ti ti-message-circle"></i>${d.cm||0}</span><button id="end-${d.id}" class="endo${es.on?' on':''}" title="I support this idea" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button><span style="margin-left:auto"><i class="ti ti-share-2"></i></span></div></div>`;}
+ return `<div class="feedcard"><div class="fc-top"><div class="avatar" style="width:38px;height:38px;background:${d.clr}">${d.init}</div><div class="meta"><b>${d.sub}</b><span>${d.dept} · ${d.plant}</span></div>${stagePill(d.stage)}</div><div class="fc-body"><div class="fc-title">${d.title}</div><p class="fc-desc">${descFor(d)}</p>${impact}</div><div class="fc-act"><span><i class="ti ti-heart"></i>${likeState(d).n}</span><span><i class="ti ti-message-circle"></i>${d.cm||0}</span><button id="end-${d.id}" class="endo${es.on?' on':''}" title="I support this idea" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button><span style="margin-left:auto"><i class="ti ti-share-2"></i></span></div></div>`;}
 /* ===== focused feed: interactive idea card + rail initiatives ===== */
 function idnum(s){let n=0;for(let i=0;i<s.length;i++)n+=s.charCodeAt(i)*(i+1);return n;}
 const LIKES={};
-function likeState(d){if(!LIKES[d.id])LIKES[d.id]={n:60+(idnum(d.id)*7%180),on:false};return LIKES[d.id];}
+function likeState(d){if(!LIKES[d.id])LIKES[d.id]={n:(d.lk!=null?d.lk:60+(idnum(d.id)*7%180)),on:false};return LIKES[d.id];}
 function likeToggle(id,ev){if(ev)ev.stopPropagation();const s=LIKES[id]||(LIKES[id]={n:80,on:false});s.on=!s.on;s.n+=s.on?1:-1;const el=document.getElementById('like-'+id);if(el){el.className='iact'+(s.on?' liked':'');el.innerHTML='<i class="ti ti-heart'+(s.on?'-filled':'')+'"></i>'+s.n;}}
 function cmt(id,ev){if(ev)ev.stopPropagation();toast('Comment thread opened — join the discussion');}
-function ideaCardX(d){const es=endoState(d),cat=CATCLR[d.cat],cmts=d.cm||0;
+function ideaCardX(d){const es=endoState(d),ls=likeState(d),cat=CATCLR[d.cat],cmts=d.cm||0;
  const impact=d.act?`<span class="fc-impact real"><i class="ti ti-trending-up"></i>${fmtL(d.act)}/yr saved</span>`:`<span class="fc-impact est"><i class="ti ti-target"></i>est ${fmtL(d.est)}/yr impact</span>`;
  const trend=es.n>=38?`<span class="catchip" style="background:var(--ember-soft);color:var(--ember-d)"><i class="ti ti-flame"></i>Trending</span>`:'';
  return `<div class="ideac" style="--cat:${cat}"><div class="ideac-in">
    <div class="ic-head"><div class="avatar" style="width:40px;height:40px;background:${d.clr}">${d.init}</div><div class="who"><b>${d.sub}</b><span>${d.dept} · ${d.plant} · 2d ago</span></div>${stagePill(d.stage)}</div>
    <div class="ic-catrow"><span class="catchip" style="background:${cat}1f;color:${cat}">${d.cat}</span>${trend}</div>
    <h3 class="ic-t">${d.title}</h3><p class="ic-d">${descFor(d)}</p>${(d.photos&&d.photos.length)||d.ph?`<div class="ic-photos">${(d.photos||['linear-gradient(135deg,#26425a,#0e2233)','linear-gradient(135deg,#3a2d4f,#161024)'].slice(0,Math.min(2,d.ph||1))).map(g=>`<div class="ic-photo" style="background:${g}"><span class="ic-pcap"><i class="ti ti-photo"></i>Shop-floor photo</span></div>`).join('')}</div>`:''}${impact}
-   <div class="ic-bar"><button class="iact" onclick="cmt('${d.id}',event)"><i class="ti ti-message-circle"></i>${cmts}</button>
+   <div class="ic-bar"><button class="iact${ls.on?' liked':''}" id="like-${d.id}" onclick="likeToggle('${d.id}',event)"><i class="ti ti-heart${ls.on?'-filled':''}"></i>${ls.n}</button><button class="iact" onclick="cmt('${d.id}',event)"><i class="ti ti-message-circle"></i>${cmts}</button>
      <div class="endrs"><button id="end-${d.id}" class="endo${es.on?' on':''}" title="I support this idea" onclick="endorse('${d.id}',event)"><i class="ti ti-rosette-discount-check${es.on?'-filled':''}"></i>${es.on?'Endorsed':'Endorse'} · ${es.n}</button></div></div>
  </div></div>`;}
 function initRow(p){const sc={'In progress':'#2A6FE0','Piloting':'#5b4ad1','Final phase':'#159468','Planning':'#9B9A92'}[p.status]||'#9B9A92';
@@ -925,7 +925,7 @@ document.getElementById('app').innerHTML='<div style="display:grid;place-items:c
    queues + the plant leaderboard. The 5 seeded similar-idea cards are kept because the
    voice duplicate-check demo matches against their keywords. Read-only. */
 function mapIdea(r){const sc=_sc(r.sub);ENDO[r.id]={n:r.endo||0,on:false};
- return {id:r.id,title:r.title,dept:r.dept,cat:r.cat,tier:r.tier,stage:r.stage,est:r.est,act:r.act,score:r.score,sla:r.sla||'-',month:r.month||'-',sub:r.sub,plant:r.plant,init:sc[0],clr:sc[1],cm:r.cm||0,desc:r.desc||'',ph:r.ph||0};}
+ return {id:r.id,title:r.title,dept:r.dept,cat:r.cat,tier:r.tier,stage:r.stage,est:r.est,act:r.act,score:r.score,sla:r.sla||'-',month:r.month||'-',sub:r.sub,plant:r.plant,init:sc[0],clr:sc[1],cm:r.cm||0,desc:r.desc||'',ph:r.ph||0,lk:r.lk||0};}
 async function loadLive(){
  try{
   const j=async u=>{const r=await fetch(API_BASE+u);if(!r.ok)throw new Error(u+' '+r.status);return r.json();};

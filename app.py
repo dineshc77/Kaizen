@@ -259,6 +259,7 @@ SELECT i.idea_code AS id, i.title, d.name AS dept, t.name AS cat, ti.name AS tie
        i.endorsement_count AS endo, i.collaborator_count AS collab,
        COALESCE(cmt.c, 0) AS cm,
        SUBSTR(COALESCE(i.problem_statement,''), 1, 240) AS pdesc,
+       COALESCE(i.likes_count, 0) AS lk,
        COALESCE(att2.p, 0) AS ph
 FROM ideas i
 JOIN departments d ON d.id = i.department_id
@@ -285,7 +286,7 @@ def shape(r):
         "tier": r["tier"], "stage": r["stage"], "est": r["est"], "act": r["act"],
         "score": r["score"], "sla": SLA_MAP.get(r["sla"], "-"),
         "month": month_label(r["sd"]), "date": r["sd"], "sub": r["sub"],
-        "plant": r["plant"], "endo": r["endo"], "collab": r["collab"], "cm": r["cm"], "desc": r["pdesc"], "ph": r["ph"],
+        "plant": r["plant"], "endo": r["endo"], "collab": r["collab"], "cm": r["cm"], "desc": r["pdesc"], "ph": r["ph"], "lk": r["lk"],
     }
 
 
@@ -446,12 +447,12 @@ def api_all_ideas():
     con = db()
     data = [[r["id"], r["title"], r["dept"], r["cat"], r["tier"], r["stage"],
              r["est"], r["act"], r["score"], SLA_MAP.get(r["sla"], "-"),
-             month_label(r["sd"]), r["sub"], r["plant"], r["endo"], r["cm"], r["collab"]]
+             month_label(r["sd"]), r["sub"], r["plant"], r["endo"], r["cm"], r["collab"], r["lk"]]
             for r in con.execute(IDEA_SELECT + f" WHERE {wsql}", params)]
     con.close()
     return jsonify({"count": len(data),
                     "cols": ["id", "title", "dept", "cat", "tier", "stage", "est", "act",
-                             "score", "sla", "month", "sub", "plant", "endo", "cm", "collab"],
+                             "score", "sla", "month", "sub", "plant", "endo", "cm", "collab", "lk"],
                     "ideas": data})
 
 

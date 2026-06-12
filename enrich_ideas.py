@@ -409,6 +409,17 @@ for it in rows2:
 cur.executemany("INSERT INTO comments(idea_id,user_id,text,ts) VALUES (?,?,?,?)", crow)
 print("clarification/peer comments:", len(crow))
 
+# ============================================================================
+# 5. LIKES — lightweight appreciation count per idea (distinct from endorsements)
+# ============================================================================
+cols = [c[1] for c in cur.execute("PRAGMA table_info(ideas)")]
+if "likes_count" not in cols:
+    cur.execute("ALTER TABLE ideas ADD COLUMN likes_count INTEGER DEFAULT 0")
+lk = [( (r["endorsement_count"] or 0) * 2 + rng_for(r["idea_code"], "lk").randint(3, 36), r["id"])
+      for r in cur.execute("SELECT id, idea_code, endorsement_count FROM ideas")]
+cur.executemany("UPDATE ideas SET likes_count=? WHERE id=?", lk)
+print("likes_count set on", len(lk), "ideas")
+
 con.commit()
 
 # ---- verification ----

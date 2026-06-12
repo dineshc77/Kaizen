@@ -963,7 +963,7 @@ function selRew(id){SEL.rewards=id;VIEWS.rewards();}
 /* ---- reward logic engine (editable) ---- */
 let rewFilter='all',rulesOpen=false;
 function rewMeta(d){
- const comments=d.cm||0,endorse=d.endo||0,likes=endorse; /* engagement = real endorsements + comments */
+ const comments=d.cm||0,endorse=d.endo||0,likes=d.lk!=null?d.lk:endorse; /* likes_count + endorsements + comments — all from DB */
  return {likes,comments,endorse,eng:endorse*4+comments*10,safety:d.cat==='Safety',sustain:['Environment','Energy'].includes(d.cat),replicable:['Energy','Maintenance','Quality'].includes(d.cat)};}
 const REWARD_RULES=[
  {id:'fin',on:true,icon:'ti-coin-rupee',clr:'var(--emerald)',label:'High financial impact',desc:'Realized savings at or above the threshold',unit:'₹ L',th:10,test:(d,m,r)=>(d.act||0)>=r.th,why:d=>fmtL(d.act)+' realized'},
@@ -1193,8 +1193,8 @@ document.getElementById('view').innerHTML='<div style="display:grid;place-items:
    Renders the built-in demo data instantly, then replaces IDEAS with ALL ideas from the
    database (compact rows, gzipped ~380 KB) so every chart, KPI, funnel and table on this
    console aggregates the real 20k-idea dataset client-side. Read-only. */
-function mapRow(r){const[id,title,dept,cat,tier,stage,est,act,score,sla,month,sub,plant,endo,cm,collab]=r;const sc=_sc(sub);
- return {id,title,dept,cat,tier,stage,est,act,score,sla,month:month||'-',sub,plant,init:sc[0],clr:sc[1],endo,cm:cm||0,collab:collab||0};}
+function mapRow(r){const[id,title,dept,cat,tier,stage,est,act,score,sla,month,sub,plant,endo,cm,collab,lk]=r;const sc=_sc(sub);
+ return {id,title,dept,cat,tier,stage,est,act,score,sla,month:month||'-',sub,plant,init:sc[0],clr:sc[1],endo,cm:cm||0,collab:collab||0,lk:lk||0};}
 async function loadLive(){
  try{
   const j=async u=>{const r=await fetch(API_BASE+u);if(!r.ok)throw new Error(u+' '+r.status);return r.json();};
