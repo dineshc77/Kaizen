@@ -1195,7 +1195,7 @@ document.getElementById('view').innerHTML='<div style="display:grid;place-items:
    console aggregates the real 20k-idea dataset client-side. Read-only. */
 function mapRow(r){const[id,title,dept,cat,tier,stage,est,act,score,sla,month,sub,plant,endo,cm,collab,lk]=r;const sc=_sc(sub);
  return {id,title,dept,cat,tier,stage,est,act,score,sla,month:month||'-',sub,plant,init:sc[0],clr:sc[1],endo,cm:cm||0,collab:collab||0,lk:lk||0};}
-async function loadLive(){
+async function loadLive(attempt){
  try{
   const j=async u=>{const r=await fetch(API_BASE+u);if(!r.ok)throw new Error(u+' '+r.status);return r.json();};
   const [all,boot]=await Promise.all([j('/api/portal/all-ideas'),j('/api/portal/bootstrap?plant=All')]);
@@ -1245,7 +1245,9 @@ async function loadLive(){
   }catch(e){console.warn('groups load failed',e);}
   renderNav();clearCharts();go(cur);
   console.log('Kaizen console: live data loaded —',IDEAS.length,'ideas ·',PLANTS_CYCLE.length,'plants');
- }catch(e){console.warn('Kaizen console: backend unreachable — showing built-in demo data.',e);renderNav();clearCharts();go(cur);}
+ }catch(e){
+  if(!attempt||attempt<2){console.warn('Kaizen console: live load failed, retrying…',e);setTimeout(()=>loadLive((attempt||0)+1),2500);return;}
+  console.warn('Kaizen console: backend unreachable — showing built-in demo data.',e);renderNav();clearCharts();go(cur);}
 }
 loadLive();
 

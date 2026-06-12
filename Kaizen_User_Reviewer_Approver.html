@@ -926,7 +926,7 @@ document.getElementById('app').innerHTML='<div style="display:grid;place-items:c
    voice duplicate-check demo matches against their keywords. Read-only. */
 function mapIdea(r){const sc=_sc(r.sub);ENDO[r.id]={n:r.endo||0,on:false};
  return {id:r.id,title:r.title,dept:r.dept,cat:r.cat,tier:r.tier,stage:r.stage,est:r.est,act:r.act,score:r.score,sla:r.sla||'-',month:r.month||'-',sub:r.sub,plant:r.plant,init:sc[0],clr:sc[1],cm:r.cm||0,desc:r.desc||'',ph:r.ph||0,lk:r.lk||0};}
-async function loadLive(){
+async function loadLive(attempt){
  try{
   const j=async u=>{const r=await fetch(API_BASE+u);if(!r.ok)throw new Error(u+' '+r.status);return r.json();};
   const boot=await j('/api/portal/bootstrap?plant=Nagda');
@@ -950,11 +950,13 @@ async function loadLive(){
   IDEAS.length=0;IDEAS.push(...merged,...dupIdeas);
   clearCharts();render();
   try{const iv=await j('/api/initiatives?plant='+encodeURIComponent(PPLANT())+'&department='+encodeURIComponent(PDEPT()));
-   if(iv.initiatives&&iv.initiatives.length)INITIATIVES_LIVE=iv.initiatives.map(x=>({title:x.name,team:x.department,status:x.status,sp:x.status==='Planning'?'plan':'work',si:'ti-progress-check',desc:x.metric,when:x.milestone}));
+   if(iv.initiatives&&iv.initiatives.length)INITIATIVES_LIVE=iv.initiatives.map(x=>({title:x.name,team:x.department,status:x.status,sp:x.status==='Planning'?'plan':'work',si:'ti-progress-check',desc:x.metric+' · '+x.milestone,progress:x.status==='Planning'?15:x.status==='Piloting'?45:65,target:x.metric,timeline:x.milestone}));
   }catch(e){}
   window.__LIVE=true;
   console.log('Kaizen portal: live data loaded —',merged.length,'ideas from kaizen.db · user',ME.user);
- }catch(e){console.warn('Kaizen portal: backend unreachable — showing built-in demo data.',e);clearCharts();render();}
+ }catch(e){
+  if(!attempt||attempt<2){console.warn('Kaizen portal: live load failed, retrying…',e);setTimeout(()=>loadLive((attempt||0)+1),2500);return;}
+  console.warn('Kaizen portal: backend unreachable — showing built-in demo data.',e);clearCharts();render();}
 }
 loadLive();
 
