@@ -1,0 +1,3 @@
+# Dependencies for the Kaizen MCP server (separate Render service: kaizen-mcp)
+mcp>=1.27
+uvicorn>=0.49
